@@ -41,15 +41,11 @@ public class ValueDuration extends ValueSimple<Long> {
 	
 	@Override
 	public Type getType() {
-		// TODO
-		throw new UnsupportedOperationException("Not yet implemented");
+		return TypePrimitive.DURATION;
 	}
 	
 	@Override
-	public Value getDefaultValue() {
-		// TODO
-		throw new UnsupportedOperationException("Not yet implemented");
-	}
+	public Value getDefaultValue() { return new ValueDuration(0l); }
 	
 	/**
 	 * Constructs a new <code>ValueDuration</code> object from the specified amounts of different time units.
@@ -125,20 +121,26 @@ public class ValueDuration extends ValueSimple<Long> {
 	
 	@Override
 	public ValueBoolean isLowerThan(Value value) {
-		// TODO
-		throw new UnsupportedOperationException("Not yet implemented");
+		sameTypesOrThrow(value, Operation.COMPARE);
+		if(isNull() || value.isNull())
+			return new ValueBoolean(null);
+		return new ValueBoolean(getValue() < ((ValueDuration)value).getValue());
 	}
 	
 	@Override
 	public ValueDuration addValue(Value value) {
-		// TODO
-		throw new UnsupportedOperationException("Not yet implemented");
+		sameTypesOrThrow(value, Operation.ADD);
+		if(isNull() || value.isNull())
+			return new ValueDuration((Long)null);
+		return new ValueDuration(getValue() + ((ValueDuration)value).getValue());
 	}
 	
 	@Override
 	public ValueDuration subtract(Value value) {
-		// TODO
-		throw new UnsupportedOperationException("Not yet implemented");
+		sameTypesOrThrow(value, Operation.SUBTRACT);
+		if(isNull() || value.isNull())
+			return new ValueDuration((Long)null);
+		return new ValueDuration(getValue() - ((ValueDuration)value).getValue());
 	}
 	
 	@Override
@@ -167,7 +169,19 @@ public class ValueDuration extends ValueSimple<Long> {
 	
 	@Override
 	public Value convertTo(Type type) {
-		// TODO
-		throw new UnsupportedOperationException("Not yet implemented");
+		switch(type.getPrimaryType()) {
+			case DOUBLE:
+				return new ValueDouble(getValue() == null? null : getValue().doubleValue());
+			case DURATION:
+				return this;
+			case INT:
+				return new ValueInt(getValue());
+			case STRING:
+				// TODO
+				return getValue() == null? ValueString.NULL_STRING : new ValueString(Long.toString(getValue()
+						.longValue()));
+			default:
+				throw new UnsupportedConversionException(getType(), type);
+		}
 	}
 }
