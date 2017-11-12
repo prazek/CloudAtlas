@@ -13,7 +13,7 @@ public class Client {
             System.setSecurityManager(new SecurityManager());
         }
         try {
-            
+
 
         } catch (Exception e) {
             System.err.println("ComputeEngine exception:");
