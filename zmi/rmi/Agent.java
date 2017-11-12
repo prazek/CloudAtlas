@@ -7,6 +7,8 @@ import java.rmi.RemoteException;
 import java.util.HashSet;
 
 public class Agent implements Remote {
+    private MachineStats machineStats;
+
     public HashSet<ZMI> zones() throws RemoteException {
         return null;
     }
@@ -21,5 +23,10 @@ public class Agent implements Remote {
     }
     public void setZoneValue(String zoneName) throws RemoteException {
 
+    }
+
+
+    public void updateMachineStats(MachineStats machineStats) {
+        this.machineStats = machineStats;
     }
 }
