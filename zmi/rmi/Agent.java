@@ -8,8 +8,9 @@ import java.util.HashSet
 
 public class Agent implements Remote {
     public HashSet<ZMI> zones() {}
-    public void installQuery() {}
-    public void uninstallQuery() {}
+    public ZMI zone(String zoneName) {}
+    public void installQuery(String query) {}
+    public void uninstallQuery(String query) {}
     // or string?
-    public void setZoneValue(ZMI zmi) {}
+    public void setZoneValue(String zoneName) {}
 }
