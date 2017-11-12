@@ -26,7 +26,7 @@ public class Test
     {
       interpreter.query.Absyn.Program parse_tree = p.pProgram();
       System.out.println();
-      System.out.println("Parse Succesful!");
+      System.out.println("Parse Successful!");
       System.out.println();
       System.out.println("[Abstract Syntax]");
       System.out.println();
