@@ -10,5 +10,7 @@ import org.hyperic.sigar.SigarException;
 
 public class Fetcher {
 
+    
+
 
 }
