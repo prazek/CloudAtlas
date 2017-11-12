@@ -1,1 +1,0 @@
-SELECT epoch() AS epoch, land(timestamp > epoch()) AS afterY2K
