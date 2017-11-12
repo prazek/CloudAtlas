@@ -22,7 +22,7 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package pl.edu.mimuw.cloudatlas.model;
+package model;
 
 /**
  * Convenient class for wrapping Java types into <code>Value</code> objects.

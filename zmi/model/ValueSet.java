@@ -22,7 +22,7 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package pl.edu.mimuw.cloudatlas.model;
+package model;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,9 +32,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import pl.edu.mimuw.cloudatlas.model.TypeCollection;
-import pl.edu.mimuw.cloudatlas.model.Value;
-import pl.edu.mimuw.cloudatlas.model.ValueSet;
+import model.TypeCollection;
+import model.Value;
+import model.ValueSet;
 
 /**
  * A value representing a set of values of the specified type. Implements <code>Set</code> interface.

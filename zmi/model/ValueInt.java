@@ -22,11 +22,11 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package pl.edu.mimuw.cloudatlas.model;
+package model;
 
-import pl.edu.mimuw.cloudatlas.model.Type.PrimaryType;
-import pl.edu.mimuw.cloudatlas.model.Value;
-import pl.edu.mimuw.cloudatlas.model.ValueInt;
+import model.Type.PrimaryType;
+import model.Value;
+import model.ValueInt;
 
 /**
  * A class that wraps a Java <code>Long</code> object.

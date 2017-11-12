@@ -22,14 +22,14 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package pl.edu.mimuw.cloudatlas.model;
+package model;
 
 import java.util.Collection;
 
-import pl.edu.mimuw.cloudatlas.model.Type;
-import pl.edu.mimuw.cloudatlas.model.TypePrimitive;
-import pl.edu.mimuw.cloudatlas.model.Value;
-import pl.edu.mimuw.cloudatlas.model.ValueNull;
+import model.Type;
+import model.TypePrimitive;
+import model.Value;
+import model.ValueNull;
 
 /**
  * Represents a collection type with specified element type.

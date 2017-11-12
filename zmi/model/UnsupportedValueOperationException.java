@@ -22,9 +22,9 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package pl.edu.mimuw.cloudatlas.model;
+package model;
 
-import pl.edu.mimuw.cloudatlas.model.Value.Operation;
+import model.Value.Operation;
 
 /**
  * An exception caused by calling an unsupported unary operation on value.

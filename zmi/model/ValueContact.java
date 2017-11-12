@@ -22,12 +22,12 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package pl.edu.mimuw.cloudatlas.model;
+package model;
 
 import java.net.InetAddress;
 
-import pl.edu.mimuw.cloudatlas.model.Value;
-import pl.edu.mimuw.cloudatlas.model.ValueContact;
+import model.Value;
+import model.ValueContact;
 
 /**
  * A class that represents a contact to a node. The contact consists of a full path name of this node and its IP

@@ -22,10 +22,10 @@
  * WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package pl.edu.mimuw.cloudatlas.model;
+package model;
 
-import pl.edu.mimuw.cloudatlas.model.Value;
-import pl.edu.mimuw.cloudatlas.model.ValueNull;
+import model.Value;
+import model.ValueNull;
 
 /**
  * A special null value of an unknown type introduced to deal with nulls. This class is a singleton.
