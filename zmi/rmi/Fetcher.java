@@ -11,6 +11,8 @@ import org.hyperic.sigar.SigarException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import static java.lang.Thread.sleep;
+
 
 public class Fetcher {
     private static Sigar sigar = new Sigar();
@@ -23,7 +25,7 @@ public class Fetcher {
 
 
     public Fetcher() {
-        statsHistory = new ArrayDeque<MachineStats>();
+        statsHistory = new ArrayDeque<>();
     }
 
     public void updateHistory() throws SigarException {
@@ -58,6 +60,7 @@ public class Fetcher {
                 combined = combined.div(fetcher.statsHistory.size());
 
                 stub.updateMachineStats(combined);
+                sleep(collectionInterval);
             }
         } catch (Exception e) {
             System.err.println("Fetcher exception:");
