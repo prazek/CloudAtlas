@@ -83,14 +83,9 @@ import interpreter.query.Absyn.Statement;
 import interpreter.query.Absyn.StatementC;
 import interpreter.query.Absyn.Where;
 import interpreter.query.Absyn.WhereC;
-import model.Attribute;
-import model.TypePrimitive;
-import model.Value;
-import model.ValueBoolean;
-import model.ValueDouble;
-import model.ValueInt;
-import model.ValueString;
-import model.ZMI;
+import model.*;
+
+import javax.swing.table.TableColumn;
 
 public class Interpreter {
 	private static class ValuesPair {
@@ -279,15 +274,22 @@ public class Interpreter {
 	}
 
 	public class SelItemInterpreter implements SelItem.Visitor<QueryResult, Table> {
+		private Environment prepareEnvironment(Table table) {
+			List<String> cols = table.getColumns();
+			Value values[] = new Value[cols.size()];
+			for (int i = 0; i < cols.size(); ++i) {
+				values[i] = table.getColumn(cols.get(i));
+			}
+			return new Environment(new TableRow(values), cols);
+		}
+
 		public QueryResult visit(SelItemC selItem, Table table) {
-			Environment env = new Environment(table.iterator().next(), table.getColumns()); // TODO
-			Result result = selItem.condexpr_.accept(new CondExprInterpreter(), env);
+			Result result = selItem.condexpr_.accept(new CondExprInterpreter(), prepareEnvironment(table));
 			return new QueryResult(result.getValue());
 		}
 
 		public QueryResult visit(AliasedSelItemC selItem, Table table) {
-			Environment env = new Environment(table.iterator().next(), table.getColumns()); // TODO
-			Result result = selItem.condexpr_.accept(new CondExprInterpreter(), env);
+			Result result = selItem.condexpr_.accept(new CondExprInterpreter(), prepareEnvironment(table));
 			return new QueryResult(new Attribute(selItem.qident_), result.getValue());
 		}
 	}
