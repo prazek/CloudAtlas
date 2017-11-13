@@ -1,7 +1,12 @@
 package changelater;
 
 
-public class MachineStats {
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+
+public class MachineStats implements Serializable {
 
     public double cpuLoad;
     public long freeDisc, totalDisc, freeRam, totalRam, freeSwap, totalSwap;
@@ -30,7 +35,6 @@ public class MachineStats {
         res.totalSwap = totalSwap;
         return res;
     }
-
 
     public MachineStats div(long divider) {
         MachineStats res = clone();
@@ -61,6 +65,13 @@ public class MachineStats {
         sb.append(totalSwap);
 
         return sb.toString();
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.writeObject(toString());
+    }
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.readObject();
     }
 
 }
