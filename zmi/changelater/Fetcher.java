@@ -58,18 +58,9 @@ public class Fetcher {
                 Fetcher fetcher = new Fetcher();
                 fetcher.updateHistory();
                 AttributesMap combined = new AttributesMap();
-                for (AttributesMap states: fetcher.statsHistory) {
-                    for (Map.Entry<Attribute, Value> stat : states) {
-                        Value accumulated = combined.getOrNull(stat.getKey());
-                        Value toAccumulate = stat.getValue();
-                        if (accumulated == null)
-                            accumulated = toAccumulate;
-                        else
-                            accumulated = accumulated.addValue(toAccumulate);
+                for (AttributesMap states: fetcher.statsHistory)
+                    addMaps(combined, states);
 
-                        combined.addOrChange(stat.getKey(), accumulated);
-                    }
-                }
                 for (Map.Entry<Attribute, Value> stat : combined) {
                     Value val = stat.getValue().divide(new ValueInt((long)fetcher.statsHistory.size()));
                     stub.setZoneValue(new PathName(agentName), stat.getKey(), val);
@@ -80,6 +71,19 @@ public class Fetcher {
         } catch (Exception e) {
             System.err.println("Fetcher exception:");
             e.printStackTrace();
+        }
+    }
+
+    private static void addMaps(AttributesMap combined, AttributesMap other) {
+        for (Map.Entry<Attribute, Value> stat : other) {
+            Value accumulated = combined.getOrNull(stat.getKey());
+            Value toAccumulate = stat.getValue();
+            if (accumulated == null)
+                accumulated = toAccumulate;
+            else
+                accumulated = accumulated.addValue(toAccumulate);
+
+            combined.addOrChange(stat.getKey(), accumulated);
         }
     }
 }
