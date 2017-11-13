@@ -1,4 +1,4 @@
-package rmi;
+package changelater;
 
 
 import java.rmi.registry.LocateRegistry;
@@ -11,6 +11,7 @@ import org.hyperic.sigar.SigarException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import static java.lang.System.exit;
 import static java.lang.Thread.sleep;
 
 
@@ -41,14 +42,15 @@ public class Fetcher {
     public static void main(String[] args) throws RemoteException {
         if (args.length < 1) {
             System.err.println("Usage: ./fetcher zone_name");
+            exit(1);
         }
-        if (System.getSecurityManager() == null) {
+        /*if (System.getSecurityManager() == null) {
             System.setSecurityManager(new SecurityManager());
-        }
+        }*/
         String agentName = args[0];
         try {
             Registry registry = LocateRegistry.getRegistry("localhost");
-            Agent stub = (Agent) registry.lookup(agentName);
+            AgentIface stub = (AgentIface) registry.lookup(agentName);
 
             while (true) {
                 Fetcher fetcher = new Fetcher();
@@ -60,6 +62,7 @@ public class Fetcher {
                 combined = combined.div(fetcher.statsHistory.size());
 
                 stub.updateMachineStats(combined);
+                System.out.println(combined);
                 sleep(collectionInterval);
             }
         } catch (Exception e) {

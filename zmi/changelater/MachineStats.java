@@ -1,11 +1,4 @@
-package rmi;
-
-import org.hyperic.sigar.CpuPerc;
-import org.hyperic.sigar.Mem;
-import org.hyperic.sigar.SigarException;
-import org.hyperic.sigar.Swap;
-
-
+package changelater;
 
 
 public class MachineStats {
@@ -48,6 +41,26 @@ public class MachineStats {
         res.freeSwap  /= divider;
         res.totalSwap /= divider;
         return res;
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("CPU: ");
+        sb.append(cpuLoad);
+        sb.append("\nFree disc: ");
+        sb.append(freeDisc);
+        sb.append("\nTotal disc ");
+        sb.append(totalDisc);
+        sb.append("\nFree ram: ");
+        sb.append(freeRam);
+        sb.append("\nTotal ram: ");
+        sb.append(totalRam);
+        sb.append("\nFree swap: ");
+        sb.append(freeSwap);
+        sb.append("\nTotal swap: ");
+        sb.append(totalSwap);
+
+        return sb.toString();
     }
 
 }
