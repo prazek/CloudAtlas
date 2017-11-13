@@ -24,6 +24,8 @@
 
 package model;
 
+import java.io.Serializable;
+
 /**
  * Represents an attribute (without value, name only).
  * <p>
@@ -32,7 +34,7 @@ package model;
  * <p>
  * This class is immutable.
  */
-public class Attribute {
+public class Attribute implements Serializable {
 	private final String name;
 	
 	/**
