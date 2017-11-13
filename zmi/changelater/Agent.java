@@ -15,7 +15,7 @@ import java.util.HashSet;
 import static java.lang.System.exit;
 
 public class Agent implements AgentIface {
-    ZMI zmi;
+    ZMI zmi = new ZMI();
     PathName pathName;
 
     Agent(PathName pathName) {

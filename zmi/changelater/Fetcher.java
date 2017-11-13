@@ -21,7 +21,7 @@ public class Fetcher {
     private static Sigar sigar = new Sigar();
 
     // TODO make it configurable via .ini file.
-    private static int collectionInterval = 100; //ms
+    private static int collectionInterval = 300; //ms
     private static int averagingInterval = 1000; // ms
 
     private Deque<AttributesMap> statsHistory;
@@ -62,7 +62,13 @@ public class Fetcher {
                     addMaps(combined, states);
 
                 for (Map.Entry<Attribute, Value> stat : combined) {
-                    Value val = stat.getValue().divide(new ValueInt((long)fetcher.statsHistory.size()));
+                    Value divider = null;
+                    if (stat.getValue().getType() == TypePrimitive.INTEGER)
+                        divider = new ValueInt((long)fetcher.statsHistory.size());
+                    else if (stat.getValue().getType() == TypePrimitive.DOUBLE)
+                        divider = new ValueDouble((double)fetcher.statsHistory.size());
+
+                    Value val = stat.getValue().divide(divider);
                     stub.setZoneValue(new PathName(agentName), stat.getKey(), val);
                 }
 
