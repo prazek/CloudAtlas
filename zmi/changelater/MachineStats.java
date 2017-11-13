@@ -67,11 +67,5 @@ public class MachineStats implements Serializable {
         return sb.toString();
     }
 
-    private void writeObject(ObjectOutputStream out) throws IOException {
-        out.writeObject(toString());
-    }
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.readObject();
-    }
 
 }
