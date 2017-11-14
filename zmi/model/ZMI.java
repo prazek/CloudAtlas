@@ -38,7 +38,7 @@ import java.util.Map.Entry;
 public class ZMI implements Cloneable, Serializable {
 	private final AttributesMap attributes = new AttributesMap();
 	
-	private final List<ZMI> sons = new ArrayList<ZMI>();
+	private final List<ZMI> sons = new ArrayList<>();
 	private ZMI father;
 	
 	/**
