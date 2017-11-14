@@ -5,8 +5,15 @@ import model.Value;
 import model.ValueBoolean;
 import model.ValueList;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ResultList extends Result {
     private ValueList values;
+
+    public ResultList(ValueList values) {
+        this.values = values;
+    }
 
     @Override
     protected Result binaryOperationTyped(BinaryOperation operation, ResultSingle right) {
@@ -15,7 +22,19 @@ public class ResultList extends Result {
 
     @Override
     public Result unaryOperation(UnaryOperation operation) {
-        return null;
+        return new ValueList(operation.perform(value));
+    }
+
+    interface Op {
+        Value perform(Value x);
+    }
+
+    protected ResultList apply(Op op) {
+        List<Value> vs = new ArrayList<>();
+        for (int i = 0; i < values.size(); ++i) {
+
+        }
+        //return new ValueList(vs);
     }
 
     @Override
@@ -30,7 +49,7 @@ public class ResultList extends Result {
 
     @Override
     public ValueList getList() {
-        return null;
+        return values;
     }
 
     @Override
@@ -40,7 +59,7 @@ public class ResultList extends Result {
 
     @Override
     public Result filterNulls() {
-        return null;
+        return new ResultSingle(filterNullsList(getList()));
     }
 
     @Override

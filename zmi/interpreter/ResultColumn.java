@@ -37,7 +37,7 @@ public class ResultColumn extends Result {
 
     @Override
     public Result filterNulls() {
-        return null;
+        return new ResultSingle(filterNullsList(getColumn()));
     }
 
     @Override
