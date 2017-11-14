@@ -22,7 +22,8 @@ public class ResultList extends Result {
 
     @Override
     public Result unaryOperation(UnaryOperation operation) {
-        return new ValueList(operation.perform(value));
+        //return new ValueList(operation.perform());
+        return null;
     }
 
     interface Op {
@@ -32,9 +33,9 @@ public class ResultList extends Result {
     protected ResultList apply(Op op) {
         List<Value> vs = new ArrayList<>();
         for (int i = 0; i < values.size(); ++i) {
-
+            vs.set(i, op.perform(values.get(i)));
         }
-        //return new ValueList(vs);
+        return null; // TODO
     }
 
     @Override
