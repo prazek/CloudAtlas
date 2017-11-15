@@ -1,12 +1,7 @@
 package interpreter;
 
+import model.ValueList;
 import model.ValueNull;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import model.ValueNull;
-
 
 public class TableEnvironment implements Environment {
     private final Table table;
@@ -16,7 +11,12 @@ public class TableEnvironment implements Environment {
     }
 
     public ResultColumn getIdent(String ident) {
-        return new ResultColumn(table.getColumn(ident));
+        try {
+            return new ResultColumn(table.getColumn(ident));
+        } catch (NoSuchAttributeException ex) {
+            return new ResultColumn(null);
+            //return new ResultColumn(new ValueList(null));
+        }
     }
 
 

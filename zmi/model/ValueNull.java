@@ -36,7 +36,7 @@ import model.ValueNull;
 public class ValueNull extends Value {
 	private static ValueNull instance = null;
 	
-	private ValueNull() {}
+	public ValueNull() {}
 	
 	/**
 	 * Gets a singleton instance of a <code>ValueNull</code> class. Every call to this method returns the same
