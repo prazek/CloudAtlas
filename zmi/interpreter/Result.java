@@ -134,6 +134,8 @@ abstract class Result {
 	};
 
 	protected abstract Result binaryOperationTyped(BinaryOperation operation, ResultSingle right);
+	protected abstract Result binaryOperationTyped(BinaryOperation operation, ResultColumn right);
+	protected abstract Result binaryOperationTyped(BinaryOperation operation, ResultList right);
 
 	public Result binaryOperation(BinaryOperation operation, Result right) {
 		return right.callMe(operation, this);

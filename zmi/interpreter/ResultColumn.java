@@ -2,6 +2,9 @@ package interpreter;
 
 import model.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class ResultColumn extends Result {
     ValueList values;
@@ -12,22 +15,74 @@ public class ResultColumn extends Result {
 
     @Override
     protected Result binaryOperationTyped(BinaryOperation operation, ResultSingle right) {
-        return null;
+        if (values == null) {
+            return this;
+        }
+        List<Value> result = new ArrayList<>();
+        Value r = right.getValue();
+        for (int i = 0; i < values.size(); ++i) {
+            Value l = values.get(i);
+            result.add(operation.perform(l, r));
+        }
+        if (result.isEmpty()) {
+            return this;
+        }
+        return new ResultColumn(new ValueList(result, result.get(0).getType()));
+        //return null;
+    }
+
+    @Override
+    protected Result binaryOperationTyped(BinaryOperation operation, ResultColumn right) {
+        if (values == null) {
+            return this;
+        }
+        if (right.values == null || right.values.size() == 0) {
+            return right;
+        }
+        List<Value> result = new ArrayList<>();
+        for (int i = 0; i < values.size(); ++i) {
+            Value l = values.get(i);
+            // TODO right.values is null
+            Value r = right.values.get(i);
+            result.add(operation.perform(l, r));
+        }
+        if (result.isEmpty()) {
+            return this;
+        }
+        return new ResultColumn(new ValueList(result, result.get(0).getType()));
+    }
+
+    @Override
+    protected Result binaryOperationTyped(BinaryOperation operation, ResultList right) {
+        throw new UnsupportedOperationException("Can't perform operation on column and list");
     }
 
     @Override
     public Result unaryOperation(UnaryOperation operation) {
-        return null;
+        if (values == null) {
+            return this;
+        }
+        List<Value> result = new ArrayList<>();
+        for (Value v: values) {
+            result.add(operation.perform(v));
+        }
+        if (result.isEmpty()) {
+            return this;
+        }
+        return new ResultColumn(new ValueList(result, result.get(0).getType()));
     }
 
     @Override
     protected Result callMe(BinaryOperation operation, Result left) {
-        return null;
+        return left.binaryOperationTyped(operation, this);
     }
 
     @Override
-    public Value getValue()   {
-        throw new UnsupportedOperationException("Not a ResultSingle.");
+    public Value getValue() {
+        if (values == null)
+            return new ValueNull();
+        return values;
+        //throw new UnsupportedOperationException("Not a ResultSingle.");
     }
 
     @Override

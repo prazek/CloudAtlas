@@ -18,8 +18,19 @@ public class ResultList extends Result {
 
     @Override
     protected Result binaryOperationTyped(BinaryOperation operation, ResultSingle right) {
-        return null;
+        throw new UnsupportedOperationException("Can't perform operation on list and single - DUNNO");
     }
+
+    @Override
+    protected Result binaryOperationTyped(BinaryOperation operation, ResultColumn right) {
+        throw new UnsupportedOperationException("Can't perform operation on list and column");
+    }
+
+    @Override
+    protected Result binaryOperationTyped(BinaryOperation operation, ResultList right) {
+        throw new UnsupportedOperationException("Can't perform operation on list and list - DUNNO");
+    }
+
 
     @Override
     public Result unaryOperation(UnaryOperation operation) {

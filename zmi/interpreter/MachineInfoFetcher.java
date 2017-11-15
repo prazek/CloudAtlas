@@ -5,8 +5,7 @@ import model.Attribute;
 import model.AttributesMap;
 import model.ValueString;
 
-import java.io.IOException;
-import java.io.StringWriter;
+import java.net.InetAddress;
 import java.util.Scanner;
 
 public class MachineInfoFetcher {
@@ -20,7 +19,8 @@ public class MachineInfoFetcher {
             String output = s.hasNext() ? s.next() : "";
 
             map.add(new Attribute("kernel_ver"), new ValueString(output));
-            // map.add(new Attribute("dns_names")
+            // TODO list?
+            map.add(new Attribute("dns_names"), new ValueString(InetAddress.getLocalHost().getHostName()));
         } catch(Exception ex) {
         }
 
