@@ -177,7 +177,7 @@ public class Interpreter {
 		public Table visit(WhereC where, Table table) {
 			Table result = new Table(table);
 			for(TableRow row : table) {
-				RowEnvironment env = new RowEnvironment(row, table.getColumns());
+				Environment env = new RowEnvironment(row, table.getColumns());
 				Value value = where.condexpr_.accept(new CondExprInterpreter(), env).getValue();
 				if(getBoolean(value))
 					result.appendRow(row);
@@ -208,9 +208,9 @@ public class Interpreter {
 			Comparator<TableRow> comparator = new Comparator<TableRow>() {
 				@Override
 				public int compare(TableRow row1, TableRow row2) {
-					RowEnvironment env1 = new RowEnvironment(row1, table.getColumns());
+					Environment env1 = new RowEnvironment(row1, table.getColumns());
 					Result expr1 = orderItem.condexpr_.accept(new CondExprInterpreter(), env1);
-					RowEnvironment env2 = new RowEnvironment(row2, table.getColumns());
+					Environment env2 = new RowEnvironment(row2, table.getColumns());
 					Result expr2 = orderItem.condexpr_.accept(new CondExprInterpreter(), env2);
 					ValuesPair pair = new ValuesPair(expr1, expr2);
 					int result = orderItem.nulls_.accept(new NullsInterpreter(), pair);
@@ -272,28 +272,21 @@ public class Interpreter {
 	}
 
 	public class SelItemInterpreter implements SelItem.Visitor<QueryResult, Table> {
-		private RowEnvironment prepareEnvironment(Table table) {
-			List<String> cols = table.getColumns();
-			Value values[] = new Value[cols.size()];
-			for (int i = 0; i < cols.size(); ++i) {
-				values[i] = table.getColumn(cols.get(i));
-			}
-			return new RowEnvironment(new TableRow(values), cols);
-		}
+
 
 		public QueryResult visit(SelItemC selItem, Table table) {
-			Result result = selItem.condexpr_.accept(new CondExprInterpreter(), prepareEnvironment(table));
+			Result result = selItem.condexpr_.accept(new CondExprInterpreter(), new TableEnvironment(table));
 			return new QueryResult(result.getValue());
 		}
 
 		public QueryResult visit(AliasedSelItemC selItem, Table table) {
-			Result result = selItem.condexpr_.accept(new CondExprInterpreter(), prepareEnvironment(table));
+			Result result = selItem.condexpr_.accept(new CondExprInterpreter(), new TableEnvironment(table));
 			return new QueryResult(new Attribute(selItem.qident_), result.getValue());
 		}
 	}
 
-	public class BoolExprInterpreter implements BoolExpr.Visitor<Result, RowEnvironment> {
-		public Result visit(BoolExprCmpC expr, RowEnvironment env) {
+	public class BoolExprInterpreter implements BoolExpr.Visitor<Result, Environment> {
+		public Result visit(BoolExprCmpC expr, Environment env) {
 			try {
 				Result left = expr.basicexpr_1.accept(new BasicExprInterpreter(), env);
 				Result right = expr.basicexpr_2.accept(new BasicExprInterpreter(), env);
@@ -303,7 +296,7 @@ public class Interpreter {
 			}
 		}
 
-		public Result visit(BoolExprRegExpC expr, RowEnvironment env) {
+		public Result visit(BoolExprRegExpC expr, Environment env) {
 			try {
 				Result left = expr.basicexpr_.accept(new BasicExprInterpreter(), env);
 				return (new ResultSingle(new ValueString(expr.string_))).regExpr(left);
@@ -312,13 +305,13 @@ public class Interpreter {
 			}
 		}
 
-		public Result visit(BoolExprBasicExprC expr, RowEnvironment env) {
+		public Result visit(BoolExprBasicExprC expr, Environment env) {
 			return expr.basicexpr_.accept(new BasicExprInterpreter(), env);
 		}
 	}
 
-	public class CondExprInterpreter implements CondExpr.Visitor<Result, RowEnvironment> {
-		public Result visit(CondExprOrC expr, RowEnvironment env) {
+	public class CondExprInterpreter implements CondExpr.Visitor<Result, Environment> {
+		public Result visit(CondExprOrC expr, Environment env) {
 			try {
 				Result left = expr.condexpr_1.accept(new CondExprInterpreter(), env);
 				Result right = expr.condexpr_2.accept(new CondExprInterpreter(), env);
@@ -328,7 +321,7 @@ public class Interpreter {
 			}
 		}
 
-		public Result visit(CondExprAndC expr, RowEnvironment env) {
+		public Result visit(CondExprAndC expr, Environment env) {
 			try {
 				Result left = expr.condexpr_1.accept(new CondExprInterpreter(), env);
 				Result right = expr.condexpr_2.accept(new CondExprInterpreter(), env);
@@ -338,7 +331,7 @@ public class Interpreter {
 			}
 		}
 
-		public Result visit(CondExprNotC expr, RowEnvironment env) {
+		public Result visit(CondExprNotC expr, Environment env) {
 			try {
 				return expr.condexpr_.accept(new CondExprInterpreter(), env).negate();
 			} catch(Exception exception) {
@@ -346,13 +339,13 @@ public class Interpreter {
 			}
 		}
 
-		public Result visit(CondExprBoolExprC expr, RowEnvironment env) {
+		public Result visit(CondExprBoolExprC expr, Environment env) {
 			return expr.boolexpr_.accept(new BoolExprInterpreter(), env);
 		}
 	}
 
-	public class BasicExprInterpreter implements BasicExpr.Visitor<Result, RowEnvironment> {
-		public Result visit(BasicExprAddC expr, RowEnvironment env) {
+	public class BasicExprInterpreter implements BasicExpr.Visitor<Result, Environment> {
+		public Result visit(BasicExprAddC expr, Environment env) {
 			try {
 				Result left = expr.basicexpr_1.accept(new BasicExprInterpreter(), env);
 				Result right = expr.basicexpr_2.accept(new BasicExprInterpreter(), env);
@@ -362,7 +355,7 @@ public class Interpreter {
 			}
 		}
 
-		public Result visit(BasicExprSubC expr, RowEnvironment env) {
+		public Result visit(BasicExprSubC expr, Environment env) {
 			try {
 				Result left = expr.basicexpr_1.accept(new BasicExprInterpreter(), env);
 				Result right = expr.basicexpr_2.accept(new BasicExprInterpreter(), env);
@@ -372,7 +365,7 @@ public class Interpreter {
 			}
 		}
 
-		public Result visit(BasicExprMulC expr, RowEnvironment env) {
+		public Result visit(BasicExprMulC expr, Environment env) {
 			try {
 				Result left = expr.basicexpr_1.accept(new BasicExprInterpreter(), env);
 				Result right = expr.basicexpr_2.accept(new BasicExprInterpreter(), env);
@@ -382,7 +375,7 @@ public class Interpreter {
 			}
 		}
 
-		public Result visit(BasicExprDivC expr, RowEnvironment env) {
+		public Result visit(BasicExprDivC expr, Environment env) {
 			try {
 				Result left = expr.basicexpr_1.accept(new BasicExprInterpreter(), env);
 				Result right = expr.basicexpr_2.accept(new BasicExprInterpreter(), env);
@@ -392,7 +385,7 @@ public class Interpreter {
 			}
 		}
 
-		public Result visit(BasicExprModC expr, RowEnvironment env) {
+		public Result visit(BasicExprModC expr, Environment env) {
 			try {
 				Result left = expr.basicexpr_1.accept(new BasicExprInterpreter(), env);
 				Result right = expr.basicexpr_2.accept(new BasicExprInterpreter(), env);
@@ -402,7 +395,7 @@ public class Interpreter {
 			}
 		}
 
-		public Result visit(BasicExprNegC expr, RowEnvironment env) {
+		public Result visit(BasicExprNegC expr, Environment env) {
 			try {
 				return expr.basicexpr_.accept(new BasicExprInterpreter(), env).negate();
 			} catch(Exception exception) {
@@ -410,11 +403,11 @@ public class Interpreter {
 			}
 		}
 
-		public Result visit(EIdentC expr, RowEnvironment env) {
+		public Result visit(EIdentC expr, Environment env) {
 			return env.getIdent(expr.qident_);
 		}
 
-		public Result visit(EFunC expr, RowEnvironment env) {
+		public Result visit(EFunC expr, Environment env) {
 			try {
 				List<Result> arguments = new ArrayList<Result>(expr.listcondexpr_.size());
 				for(CondExpr arg : expr.listcondexpr_)
@@ -426,11 +419,11 @@ public class Interpreter {
 			}
 		}
 
-		public ResultSingle visit(EStrC expr, RowEnvironment env) {
+		public ResultSingle visit(EStrC expr, Environment env) {
 			return new ResultSingle(new ValueString(expr.string_));
 		}
 
-		public ResultSingle visit(EBoolC expr, RowEnvironment env) {
+		public ResultSingle visit(EBoolC expr, Environment env) {
 			ValueBoolean value;
 			if(expr.qbool_.compareTo("true") == 0)
 				value = new ValueBoolean(true);
@@ -441,7 +434,7 @@ public class Interpreter {
 			return new ResultSingle(value);
 		}
 
-		public ResultSingle visit(EIntC expr, RowEnvironment env) {
+		public ResultSingle visit(EIntC expr, Environment env) {
 			try {
 				return new ResultSingle(new ValueInt(Long.parseLong(expr.qinteger_)));
 			} catch(NumberFormatException exception) {
@@ -449,7 +442,7 @@ public class Interpreter {
 			}
 		}
 
-		public ResultSingle visit(EDblC expr, RowEnvironment env) {
+		public ResultSingle visit(EDblC expr, Environment env) {
 			try {
 				return new ResultSingle(new ValueDouble(Double.parseDouble(expr.qdouble_)));
 			} catch(NumberFormatException exception) {
@@ -457,11 +450,11 @@ public class Interpreter {
 			}
 		}
 
-		public Result visit(ECondExprC expr, RowEnvironment env) {
+		public Result visit(ECondExprC expr, Environment env) {
 			return expr.condexpr_.accept(new CondExprInterpreter(), env);
 		}
 
-		public ResultSingle visit(EStmtC expr, RowEnvironment env) {
+		public ResultSingle visit(EStmtC expr, Environment env) {
 			try {
 				List<QueryResult> l = expr.statement_.accept(new StatementInterpreter(), zmi);
 				if(l.size() != 1)

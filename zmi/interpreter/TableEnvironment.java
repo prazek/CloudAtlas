@@ -8,7 +8,7 @@ import java.util.Map;
 import model.ValueNull;
 
 
-public class TableEnvironment {
+public class TableEnvironment implements Environment {
     private final Table table;
 
     public TableEnvironment(Table table) {

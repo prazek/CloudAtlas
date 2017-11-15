@@ -30,7 +30,7 @@ import java.util.Map;
 
 import model.ValueNull;
 
-class RowEnvironment {
+class RowEnvironment implements Environment {
 	private final TableRow row;
 	private final Map<String, Integer> columns = new HashMap<String, Integer>();
 
@@ -41,6 +41,7 @@ class RowEnvironment {
 			this.columns.put(c, i++);
 	}
 
+	@Override
 	public Result getIdent(String ident) {
 		try {
 			return new ResultSingle(row.getIth(columns.get(ident)));
