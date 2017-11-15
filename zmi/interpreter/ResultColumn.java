@@ -28,7 +28,6 @@ public class ResultColumn extends Result {
             return this;
         }
         return new ResultColumn(new ValueList(result, result.get(0).getType()));
-        //return null;
     }
 
     @Override
@@ -126,7 +125,7 @@ public class ResultColumn extends Result {
 
     @Override
     public Result convertTo(Type to) {
-        return null;
+        return new ResultColumn(apply(values, v -> v.convertTo(to)));
     }
 
     @Override

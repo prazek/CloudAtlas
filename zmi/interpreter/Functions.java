@@ -226,6 +226,8 @@ class Functions {
 	private static final TransformOperation UNFOLD = new TransformOperation() {
 		@Override
 		public ValueList perform(ValueList values) {
+			if (values.isEmpty())
+				return values;
 			if(!((TypeCollection)values.getType()).getElementType().isCollection()) {
 				throw new IllegalArgumentException("All elements must have a collection compatible type.");
 			}
