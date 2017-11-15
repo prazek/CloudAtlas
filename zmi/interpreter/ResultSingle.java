@@ -31,7 +31,7 @@ import model.ValueList;
 
 import java.util.ArrayList;
 import java.util.List;
-=
+
 class ResultSingle extends Result {
 	private final Value value;
 
@@ -45,25 +45,12 @@ class ResultSingle extends Result {
 	}
 	@Override
 	protected ResultColumn binaryOperationTyped(BinaryOperation operation, ResultColumn right) {
-		if (right.values == null || right.values.isEmpty()) {
-			return right;
-		}
-		List<Value> result = new ArrayList<>();
-		Value l = getValue();
-		for (int i = 0; i < right.values.size(); ++i) {
-			Value r = right.values.get(i);
-			result.add(operation.perform(r, l));
-		}
-		if (result.isEmpty()) {
-			return right;
-		}
-		return new ResultColumn(new ValueList(result, result.get(0).getType()));
-		//return new ResultSingle(operation.perform(value, right.value));
+		return new ResultColumn(apply(right.getColumn(), v -> operation.perform(value, v)));
 	}
 
 	@Override
-	protected ResultSingle binaryOperationTyped(BinaryOperation operation, ResultList l) {
-		throw new UnsupportedOperationException("Can't perform operation on list and single - DUNNO");
+	protected ResultList binaryOperationTyped(BinaryOperation operation, ResultList right) {
+		return new ResultList(apply(right.getList(), v -> operation.perform(value, v)));
 	}
 
 	@Override
@@ -89,6 +76,11 @@ class ResultSingle extends Result {
 	@Override
 	public ValueList getColumn() {
 		throw new UnsupportedOperationException("Not a ResultColumn.");
+	}
+
+	@Override
+	public ValueList getListOrColumn() {
+		throw new UnsupportedOperationException("Not a ResultColumn or ResultList.");
 	}
 
 	@Override

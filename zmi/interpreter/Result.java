@@ -151,12 +151,14 @@ abstract class Result {
 
 	public abstract ValueList getColumn();
 
+	public abstract ValueList getListOrColumn();
+
 	public ResultSingle aggregationOperation(AggregationOperation operation) {
-		return new ResultSingle(operation.perform(getColumn()));
+		return new ResultSingle(operation.perform(getListOrColumn()));
 	}
 
 	public Result transformOperation(TransformOperation operation) {
-		return new ResultList(operation.perform(getList()));
+		return new ResultList(operation.perform(getListOrColumn()));
 	}
 
 	public Result isEqual(Result right) {
@@ -262,4 +264,19 @@ abstract class Result {
 	public abstract ResultSingle isNull();
 
 	public abstract Type getType();
+
+	protected static ValueList apply(ValueList list, ResultList.Op op) {
+		if (list == null) {
+			return list;
+		}
+		List<Value> result = new ArrayList<>();
+		for (int i = 0; i < list.size(); ++i) {
+			Value v = list.get(i);
+			result.add(op.perform(v));
+		}
+		if (result.isEmpty()) {
+			return list;
+		}
+		return new ValueList(result, result.get(0).getType());
+	}
 }

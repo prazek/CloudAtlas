@@ -179,7 +179,7 @@ public class Interpreter {
 			for(TableRow row : table) {
 				Environment env = new RowEnvironment(row, table.getColumns());
 				Value value = where.condexpr_.accept(new CondExprInterpreter(), env).getValue();
-				if(getBoolean(value))
+				if(!value.isNull() && getBoolean(value))
 					result.appendRow(row);
 			}
 			return result;

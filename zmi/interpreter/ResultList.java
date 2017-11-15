@@ -18,7 +18,7 @@ public class ResultList extends Result {
 
     @Override
     protected Result binaryOperationTyped(BinaryOperation operation, ResultSingle right) {
-        throw new UnsupportedOperationException("Can't perform operation on list and single - DUNNO");
+        return new ResultList(apply(values, v -> operation.perform(v, right.getValue())));
     }
 
     @Override
@@ -28,31 +28,23 @@ public class ResultList extends Result {
 
     @Override
     protected Result binaryOperationTyped(BinaryOperation operation, ResultList right) {
-        throw new UnsupportedOperationException("Can't perform operation on list and list - DUNNO");
+        throw new UnsupportedOperationException("Can't perform operation on list and list");
     }
 
 
     @Override
     public Result unaryOperation(UnaryOperation operation) {
-        //return new ValueList(operation.perform());
-        return null;
+        return new ResultList(apply(values, v -> operation.perform(v)));
     }
 
     interface Op {
         Value perform(Value x);
     }
 
-    protected ResultList apply(Op op) {
-        List<Value> vs = new ArrayList<>();
-        for (int i = 0; i < values.size(); ++i) {
-            vs.set(i, op.perform(values.get(i)));
-        }
-        return null; // TODO
-    }
 
     @Override
     protected Result callMe(BinaryOperation operation, Result left) {
-        return null;
+        return left.binaryOperationTyped(operation, this);
     }
 
     @Override
@@ -69,6 +61,12 @@ public class ResultList extends Result {
     public ValueList getColumn()    {
         throw new UnsupportedOperationException("Not a ResultColumn.");
     }
+
+    @Override
+    public ValueList getListOrColumn() {
+        return getList();
+    }
+
 
     @Override
     public Result filterNulls() {
