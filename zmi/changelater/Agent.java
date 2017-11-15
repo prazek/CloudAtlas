@@ -228,6 +228,8 @@ public class Agent implements AgentIface {
 
     public void installQuery(String query) throws RemoteException {
 
+
+
     }
     public void uninstallQuery(String query) throws RemoteException {
 
