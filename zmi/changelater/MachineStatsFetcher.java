@@ -4,8 +4,6 @@ import model.*;
 import org.hyperic.sigar.*;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 
 
 public class MachineStatsFetcher {
@@ -17,8 +15,9 @@ public class MachineStatsFetcher {
         map.add(new Attribute("free_disc"), new ValueInt(new File("/").getFreeSpace()));
         map.add(new Attribute("total_disc"), new ValueInt(new File("/").getTotalSpace()));
 
-        map.add(new Attribute("free_ram"), new ValueInt(sigar.getMem().getFree()));
-        map.add(new Attribute("total_ram"), new ValueInt(sigar.getMem().getTotal()));
+        map.add(new Attribute("free_ram"), new ValueInt(Runtime.getRuntime().freeMemory())); //  sigar.getMem().getFree()));
+        // todo fix total memory
+        map.add(new Attribute("total_ram"), new ValueInt(Runtime.getRuntime().totalMemory()));  //sigar.getMem().getTotal()));
         map.add(new Attribute("free_swap"), new ValueInt(sigar.getSwap().getFree()));
         map.add(new Attribute("total_swap"), new ValueInt(sigar.getSwap().getTotal()));
         map.add(new Attribute("num_processes"), new ValueInt((long)sigar.getProcList().length));
