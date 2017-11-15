@@ -51,23 +51,17 @@ public class ResultColumn extends Result {
 
     @Override
     public Result first(int size) {
-        // TODO odfiltrowac null
-        if (size > values.size())
-            return new ResultSingle(values);
-        return new ResultSingle((ValueList)values.subList(0, size - 1));
+        return new ResultSingle(firstList(values, size));
     }
 
     @Override
     public Result last(int size) {
-        // TODO odfiltrowac null
-        if (size > values.size())
-            return new ResultSingle(values);
-        return new ResultSingle((ValueList)values.subList(size, values.size() - 1));
+        return new ResultSingle(lastList(values, size));
     }
 
     @Override
     public Result random(int size) {
-        return null;
+        return new ResultSingle(randomList(values, size));
     }
 
     @Override
