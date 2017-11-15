@@ -25,6 +25,7 @@
 package interpreter;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.ParseException;
@@ -53,6 +54,8 @@ public class Main {
 	private static ZMI root;
 	
 	public static void main(String[] args) throws Exception {
+		if(args.length > 0)
+			System.setIn(new FileInputStream(args[0]));
 		root = createTestHierarchy();
 		Scanner scanner = new Scanner(System.in);
 		scanner.useDelimiter("\\n");
