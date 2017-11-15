@@ -38,8 +38,8 @@ import java.util.Map.Entry;
 public class ZMI implements Cloneable, Serializable {
 	private final AttributesMap attributes = new AttributesMap();
 	
-	private final List<ZMI> sons = new ArrayList<>();
-	private ZMI father;
+	private transient final List<ZMI> sons = new ArrayList<>();
+	private transient ZMI father;
 	
 	/**
 	 * Creates a new ZMI with no father (the root zone) and empty sons list.
