@@ -91,6 +91,11 @@ public class ResultColumn extends Result {
     }
 
     @Override
+    public ValueList getListOrColumn() {
+        return getColumn();
+    }
+
+    @Override
     public ValueList getColumn() {
         if (values == null)
             return new ValueList(null, TypePrimitive.NULL);
