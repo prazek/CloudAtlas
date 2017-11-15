@@ -16,6 +16,6 @@ java -cp "$CLASSPATH" \
   -Djava.rmi.server.codebase="$CODEBASE" \
   -Djava.rmi.server.hostname="$HOSTNAME" \
   -Djava.security.policy=Fetcher.policy \
-    changelater.Fetcher "/home"
+    changelater.Fetcher "/uw/violet07"
 
 
