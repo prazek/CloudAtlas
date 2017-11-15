@@ -1,20 +1,15 @@
 package changelater;
 
-import interpreter.Main;
 import model.*;
 
 import java.net.InetAddress;
 import java.rmi.RemoteException;
-import java.rmi.UnknownHostException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
 import java.text.ParseException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import static java.lang.System.exit;
 
@@ -224,13 +219,33 @@ public class Agent implements AgentIface {
         return zmi;
     }
 
-    public void installQuery(String query) throws RemoteException {
+    private void runQueryInZone(ZMI z, String query) {
 
 
 
     }
-    public void uninstallQuery(String query) throws RemoteException {
 
+    private void installQueryInZone(ZMI z, String queryName, String query) {
+        Value q = new ValueString(query); // TODO query certificate
+        z.getAttributes().add(queryName, q);
+        runQueryInZone(z, query);
+    }
+
+    private void uninstallQueryInZone(ZMI z, String queryName) {
+        // TODO(sbarzowski) remove query attributes
+        z.getAttributes().remove(queryName);
+    }
+
+    public void installQuery(String name, String query) throws RemoteException {
+        for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
+            installQueryInZone(zone.getValue(), name, query);
+        }
+    }
+
+    public void uninstallQuery(String name) throws RemoteException {
+        for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
+            uninstallQueryInZone(zone.getValue(), name);
+        }
     }
 
     public void setZoneValue(PathName zoneName, Attribute valueName, Value value) throws RemoteException {
