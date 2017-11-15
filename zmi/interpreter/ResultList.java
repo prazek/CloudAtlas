@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ResultList extends Result {
+    // TODO(sbarzowski) - maybe a common parent with ResultColumn?
     private ValueList values;
 
     public ResultList(ValueList values) {
@@ -63,21 +64,20 @@ public class ResultList extends Result {
         return new ResultSingle(filterNullsList(getList()));
     }
 
+
     @Override
-    public ResultSingle first(int size) {
-        if (size > values.size())
-            return new ResultSingle(values);
-        return new ResultSingle((ValueList)values.subList(0, size - 1));
+    public Result first(int size) {
+        return new ResultSingle(firstList(values, size));
     }
 
     @Override
     public Result last(int size) {
-        return null;
+        return new ResultSingle(lastList(values, size));
     }
 
     @Override
     public Result random(int size) {
-        return null;
+        return new ResultSingle(randomList(values, size));
     }
 
     @Override
