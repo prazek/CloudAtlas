@@ -218,11 +218,9 @@ public class Agent implements AgentIface {
     }
 
     public ZMI zone(PathName zoneName) throws RemoteException {
-        //System.err.println(zones);
-        //System.err.println("Requested zone: " + zoneName);
-        //ZMI zmi = zones().get(PathName.ROOT);
-        ZMI zmi = zones().get(pathName);
-        //System.err.println("ZONE:" +  zmi);
+
+        ZMI zmi = zones().get(zoneName);
+        System.err.println("ZONE:" + zoneName);
         return zmi;
     }
 

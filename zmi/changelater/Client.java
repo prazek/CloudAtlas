@@ -39,6 +39,7 @@ public class Client {
             server.createContext("/example.html", new ServeFileHandler("changelater/example.html", "text/html"));
             server.setExecutor(null); // creates a default executor
             server.start();
+            System.out.println("Client running!");
         } catch (Exception e) {
             System.err.println("ComputeEngine exception:");
             e.printStackTrace();
@@ -55,7 +56,13 @@ public class Client {
         @Override
         public void handle(HttpExchange t) throws IOException {
             String response = "<h1>Main page</h1>" +
-                    String.format("<p>%s</p>", t.getRequestURI().getRawPath());
+                    String.format("<p>%s</p>", t.getRequestURI().getRawPath())
+                    + "<form>\n" +
+                    "  Node name: <input type=\"text\" name=\"name\"><br>\n" +
+                    "  Query: <input type=\"text\" name=\"name\"><br>\n" +
+                    "  <input type=\"submit\" value=\"Submit\">\n" +
+                    "</form>"
+                    ;
             t.getResponseHeaders().add("Content-Type", "text/html");
             t.sendResponseHeaders(200, response.length());
             OutputStream os = t.getResponseBody();
@@ -76,14 +83,15 @@ public class Client {
             try {
                 System.out.println("attributes");
                 Gson gson = new Gson();
-                ZMI zmi = agent.zone(new PathName("/"));
-                String response = gson.toJson(zmi);
+                ZMI zmi = agent.zone(new PathName("/uw/violet07"));
+                ZMI other = agent.zone(new PathName("/pjwstk"));
+                String response = gson.toJson(zmi) + "\n" + gson.toJson(other);
                 t.getResponseHeaders().add("Content-Type", "application/json");
                 t.sendResponseHeaders(200, response.length());
                 OutputStream os = t.getResponseBody();
                 os.write(response.getBytes());
                 os.close();
-                
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
