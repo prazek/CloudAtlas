@@ -10,12 +10,10 @@ import model.ZMI;
 
 import java.io.*;
 import java.net.InetSocketAddress;
-import java.net.URLConnection;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.stream.Collectors;
 
-import static java.lang.Thread.sleep;
 
 public class Client {
     public static void main(String[] args) {
@@ -76,6 +74,7 @@ public class Client {
         @Override
         public void handle(HttpExchange t) throws IOException {
             try {
+                System.out.println("attributes");
                 Gson gson = new Gson();
                 ZMI zmi = agent.zone(new PathName("/"));
                 String response = zmi.toString();
@@ -84,6 +83,12 @@ public class Client {
                 OutputStream os = t.getResponseBody();
                 os.write(response.getBytes());
                 os.close();
+
+                System.out.println("json = ");
+                System.out.println(gson.toJson("abc"));
+                //System.out.println(gson.toJson("));
+
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
