@@ -226,6 +226,7 @@ public class Agent implements AgentIface {
     }
 
     private void installQueryInZone(ZMI z, String queryName, String query) {
+        System.err.println("Installing query " );
         Value q = new ValueString(query); // TODO query certificate
         z.getAttributes().add(queryName, q);
         runQueryInZone(z, query);

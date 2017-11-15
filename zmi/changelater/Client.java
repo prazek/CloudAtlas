@@ -107,6 +107,12 @@ public class Client {
                 .lines().collect(Collectors.joining("\n"));
     }
 
+    private static String stringFromFile(String path) throws IOException {
+        InputStream html = Client.class.getClassLoader().getResourceAsStream(path);
+        return inputStreamToString(html);
+
+    }
+
     private static class ServeFileHandler implements HttpHandler {
         String path;
         String mimeType;
@@ -120,11 +126,7 @@ public class Client {
             String responseHtml = "xxx";
 
             try {
-                InputStream html = this.getClass().getClassLoader().getResourceAsStream(path);
-
-
-                responseHtml = inputStreamToString(html);
-
+                responseHtml = stringFromFile(path);
             } catch (Exception e) {
                 System.err.println(e);
             }
@@ -204,7 +206,7 @@ public class Client {
             String response = "ok";
             Map<String, String> data = parseFormUrlencoded(inputStreamToString(t.getRequestBody()));
             System.err.println(data);
-            agent.installQuery("query", data.get("query"));
+            agent.installQuery(data.get("queryName"), data.get("query"));
             System.out.println("Response: " + response);
             t.getResponseHeaders().add("Content-Type", "text/html");
             t.sendResponseHeaders(200, response.length());
@@ -214,7 +216,8 @@ public class Client {
         }
 
         private void handleGET(HttpExchange t) throws IOException {
-            String response = "<form method=\"post\"><input name=\"query\" type=\"text\"></form>";
+
+            String response = stringFromFile("changelater/installQuery.html");
             System.out.println("Response: " + response);
             t.getResponseHeaders().add("Content-Type", "text/html");
             t.sendResponseHeaders(200, response.length());
