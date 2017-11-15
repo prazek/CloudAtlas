@@ -7,7 +7,6 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import model.PathName;
 import model.ZMI;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -197,7 +196,7 @@ public class Client {
                 e.printStackTrace();
                 return;
             }
-            throw new NotImplementedException();
+            throw new UnsupportedOperationException();
 
         }
 
