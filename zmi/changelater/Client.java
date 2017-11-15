@@ -77,18 +77,13 @@ public class Client {
                 System.out.println("attributes");
                 Gson gson = new Gson();
                 ZMI zmi = agent.zone(new PathName("/"));
-                String response = zmi.toString();
+                String response = gson.toJson(zmi);
                 t.getResponseHeaders().add("Content-Type", "application/json");
                 t.sendResponseHeaders(200, response.length());
                 OutputStream os = t.getResponseBody();
                 os.write(response.getBytes());
                 os.close();
-
-                System.out.println("json = ");
-                System.out.println(gson.toJson("abc"));
-                //System.out.println(gson.toJson("));
-
-
+                
             } catch (Exception e) {
                 e.printStackTrace();
             }
