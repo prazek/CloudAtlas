@@ -7,11 +7,15 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import model.PathName;
 import model.ZMI;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.net.URLDecoder;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -29,7 +33,7 @@ public class Client {
             server.createContext("/", new MainPage());
             server.createContext("/zmi/", new ZMIPage());
             server.createContext("/setFallbackContact/", new ZMIPage());
-            server.createContext("/installQuery/", new ZMIPage());
+            server.createContext("/installQuery/", new InstallQueryPage(agent));
             server.createContext("/uninstallQuery/", new ZMIPage());
             server.createContext("/attributes/", new AttributesPage(agent));
             server.createContext("/plot/", new PlotPage());
@@ -151,6 +155,67 @@ public class Client {
                 System.err.println(e);
             }
             String response = responseHtml;
+            System.out.println("Response: " + response);
+            t.getResponseHeaders().add("Content-Type", "text/html");
+            t.sendResponseHeaders(200, response.length());
+            OutputStream os = t.getResponseBody();
+            os.write(response.getBytes());
+            os.close();
+        }
+    }
+
+    private static Map<String, String> parseFormUrlencoded(String data) throws UnsupportedEncodingException {
+        String[] pairs = data.split("\\&");
+        Map<String, String> result = new HashMap<>();
+        for (int i = 0; i < pairs.length; i++) {
+            String[] fields = pairs[i].split("=");
+            String name = URLDecoder.decode(fields[0], "UTF-8");
+            String value = URLDecoder.decode(fields[1], "UTF-8");
+            result.put(name, value);
+        }
+        return result;
+    }
+
+    private static class InstallQueryPage implements HttpHandler {
+        private final AgentIface agent;
+
+        InstallQueryPage(AgentIface agent) {
+            this.agent = agent;
+        }
+
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            try {
+                if (t.getRequestMethod().equals("GET")) {
+                    handleGET(t);
+                    return;
+                } else if (t.getRequestMethod().equals("POST")) {
+                    handlePOST(t);
+                    return;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return;
+            }
+            throw new NotImplementedException();
+
+        }
+
+        private void handlePOST(HttpExchange t) throws IOException {
+            String response = "ok";
+            Map<String, String> data = parseFormUrlencoded(inputStreamToString(t.getRequestBody()));
+            System.err.println(data);
+            agent.installQuery("query", data.get("query"));
+            System.out.println("Response: " + response);
+            t.getResponseHeaders().add("Content-Type", "text/html");
+            t.sendResponseHeaders(200, response.length());
+            OutputStream os = t.getResponseBody();
+            os.write(response.getBytes());
+            os.close();
+        }
+
+        private void handleGET(HttpExchange t) throws IOException {
+            String response = "<form method=\"post\"><input name=\"query\" type=\"text\"></form>";
             System.out.println("Response: " + response);
             t.getResponseHeaders().add("Content-Type", "text/html");
             t.sendResponseHeaders(200, response.length());

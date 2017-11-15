@@ -12,7 +12,7 @@ import java.util.HashMap;
 public interface AgentIface extends Remote {
     HashMap<PathName, ZMI> zones() throws RemoteException;
     ZMI zone(PathName zoneName) throws RemoteException;
-    void installQuery(String query) throws RemoteException;
+    void installQuery(String name, String query) throws RemoteException;
     void uninstallQuery(String query) throws RemoteException;
     void setZoneValue(PathName zoneName, Attribute attribute, Value value) throws RemoteException;
 }
