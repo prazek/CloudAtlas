@@ -38,7 +38,8 @@ public class ValueDuration extends ValueSimple<Long> {
 	public ValueDuration(Long value) {
 		super(value);
 	}
-	
+
+	private ValueDuration() { super(null); }
 	@Override
 	public Type getType() {
 		return TypePrimitive.DURATION;
@@ -145,26 +146,37 @@ public class ValueDuration extends ValueSimple<Long> {
 	
 	@Override
 	public ValueDuration multiply(Value value) {
-		// TODO
-		throw new UnsupportedOperationException("Not yet implemented");
+		if(isNull() || value.isNull())
+			return new ValueDuration();
+		return new ValueDuration(getValue() * ((ValueInt)value).getValue());
 	}
 	
 	@Override
 	public Value divide(Value value) {
-		// TODO
-		throw new UnsupportedOperationException("Not yet implemented");
+		if(value.isNull())
+			return new ValueDouble(null);
+		if(((ValueInt)value).getValue() == 0l)
+			throw new ArithmeticException("Division by zero.");
+		if(isNull())
+			return new ValueDouble(null);
+		return new ValueDouble((double)getValue() / ((ValueInt)value).getValue());
 	}
 	
 	@Override
 	public ValueDuration modulo(Value value) {
-		// TODO
-		throw new UnsupportedOperationException("Not yet implemented");
+		//sameTypesOrThrow(value, Operation.MODULO);
+		if(value.isNull())
+			return new ValueDuration();
+		if(((ValueInt)value).getValue() == 0l)
+			throw new ArithmeticException("Division by zero.");
+		if(isNull())
+			return new ValueDuration();
+		return new ValueDuration(getValue() % ((ValueInt)value).getValue());
 	}
 	
 	@Override
 	public ValueDuration negate() {
-		// TODO
-		throw new UnsupportedOperationException("Not yet implemented");
+		return new ValueDuration(isNull()? null : -getValue());
 	}
 	
 	@Override
