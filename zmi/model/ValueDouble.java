@@ -102,6 +102,8 @@ public class ValueDouble extends ValueSimple<Double> {
 				return this;
 			case INT:
 				return new ValueInt(getValue() == null? null : getValue().longValue());
+			case DURATION:
+				return new ValueDuration(getValue() == null? null : getValue().longValue());
 			case STRING:
 				return getValue() == null? ValueString.NULL_STRING : new ValueString(getValue().toString());
 			default:

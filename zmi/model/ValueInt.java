@@ -120,7 +120,7 @@ public class ValueInt extends ValueSimple<Long> {
 			case DOUBLE:
 				return new ValueDouble(getValue() == null? null : getValue().doubleValue());
 			case DURATION:
-				return new ValueDuration(getValue());
+				return new ValueDuration(getValue() == null? null : getValue().longValue());
 			case INT:
 				return this;
 			case STRING:

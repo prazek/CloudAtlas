@@ -81,11 +81,11 @@ public class ValueTime extends ValueSimple<Long> {
 	
 	@Override
 	public ValueTime addValue(Value value) {
-		if(!value.getType().isCompatible(TypePrimitive.DURATION))
-			throw new IncompatibleTypesException(getType(), value.getType(), Operation.ADD);
 		if(isNull() || value.isNull())
 			return new ValueTime((Long)null);
-		return new ValueTime(getValue() + ((ValueDuration)value).getValue());
+		else if(value.getType().isCompatible(TypePrimitive.DURATION))
+			return new ValueTime(getValue() + ((ValueDuration)value).getValue());
+		return addValue(value.convertTo(TypePrimitive.DURATION));
 	}
 	
 	@Override
