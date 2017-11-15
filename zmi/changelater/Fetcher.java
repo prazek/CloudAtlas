@@ -1,10 +1,10 @@
 package changelater;
 
-
 import java.rmi.registry.LocateRegistry;
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
 
+import interpreter.MachineInfoFetcher;
 import model.*;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
@@ -25,9 +25,10 @@ public class Fetcher {
     private static int averagingInterval = 1000; // ms
 
     private Deque<AttributesMap> statsHistory;
+    private PathName agentPathName;
 
-
-    public Fetcher() {
+    public Fetcher(String agentName) {
+        agentPathName = new PathName(agentName);
         statsHistory = new ArrayDeque<>();
     }
 
@@ -39,6 +40,15 @@ public class Fetcher {
             statsHistory.pop();
 
         statsHistory.add(currentState);
+    }
+
+    public AttributesMap calculateAverage() {
+        AttributesMap combined = new AttributesMap();
+        for (AttributesMap states: statsHistory)
+            addMaps(combined, states);
+
+        divideValues(combined, statsHistory.size());
+        return combined;
     }
 
     public static void main(String[] args) throws RemoteException {
@@ -53,25 +63,16 @@ public class Fetcher {
         try {
             Registry registry = LocateRegistry.getRegistry("localhost");
             AgentIface stub = (AgentIface) registry.lookup(agentName);
+            AttributesMap machineInfo = MachineInfoFetcher.getMachineInfo();
+
+            Fetcher fetcher = new Fetcher(agentName);
+            fetcher.sendAttributes(stub, machineInfo);
 
             while (true) {
-                Fetcher fetcher = new Fetcher();
                 fetcher.updateHistory();
-                AttributesMap combined = new AttributesMap();
-                for (AttributesMap states: fetcher.statsHistory)
-                    addMaps(combined, states);
+                AttributesMap averageStats = fetcher.calculateAverage();
 
-                for (Map.Entry<Attribute, Value> stat : combined) {
-                    Value divider = null;
-                    if (stat.getValue().getType() == TypePrimitive.INTEGER)
-                        divider = new ValueInt((long)fetcher.statsHistory.size());
-                    else if (stat.getValue().getType() == TypePrimitive.DOUBLE)
-                        divider = new ValueDouble((double)fetcher.statsHistory.size());
-
-                    Value val = stat.getValue().divide(divider);
-                    stub.setZoneValue(new PathName(agentName), stat.getKey(), val);
-                }
-
+                fetcher.sendAttributes(stub, averageStats);
                 sleep(collectionInterval);
             }
         } catch (Exception e) {
@@ -92,4 +93,23 @@ public class Fetcher {
             combined.addOrChange(stat.getKey(), accumulated);
         }
     }
+
+    private static void divideValues(AttributesMap map, long divider) {
+        for (Map.Entry<Attribute, Value> stat : map) {
+            Value dividerVal = null;
+            if (stat.getValue().getType() == TypePrimitive.INTEGER)
+                dividerVal = new ValueInt(divider);
+            else if (stat.getValue().getType() == TypePrimitive.DOUBLE)
+                dividerVal = new ValueDouble((double)divider);
+
+            Value val = stat.getValue().divide(dividerVal);
+            stat.setValue(val);
+        }
+    }
+
+    private void sendAttributes(AgentIface stub, AttributesMap attributes) throws RemoteException {
+        for (Map.Entry<Attribute, Value> attribute : attributes)
+            stub.setZoneValue(agentPathName, attribute.getKey(), attribute.getValue());
+    }
+
 }
