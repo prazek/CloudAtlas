@@ -299,7 +299,8 @@ public class Interpreter {
 		public Result visit(BoolExprRegExpC expr, Environment env) {
 			try {
 				Result left = expr.basicexpr_.accept(new BasicExprInterpreter(), env);
-				return (new ResultSingle(new ValueString(expr.string_))).regExpr(left);
+				Result right = new ResultSingle(new ValueString(expr.string_));
+				return left.regExpr(right);
 			} catch(Exception exception) {
 				throw new InsideQueryException(PrettyPrinter.print(expr), exception);
 			}
