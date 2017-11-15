@@ -1,10 +1,14 @@
 package interpreter;
 
-import model.Type;
-import model.Value;
-import model.ValueList;
+import model.*;
 
 public class ResultColumn extends Result {
+    ValueList values;
+
+    ResultColumn(ValueList val) {
+        values = val;
+    }
+
     @Override
     protected Result binaryOperationTyped(BinaryOperation operation, ResultSingle right) {
         return null;
@@ -32,7 +36,7 @@ public class ResultColumn extends Result {
 
     @Override
     public ValueList getColumn() {
-        return null;
+        return values;
     }
 
     @Override
@@ -42,12 +46,16 @@ public class ResultColumn extends Result {
 
     @Override
     public Result first(int size) {
-        return null;
+        if (size > values.size())
+            return new ResultSingle(values);
+        return new ResultSingle((ValueList)values.subList(0, size - 1));
     }
 
     @Override
     public Result last(int size) {
-        return null;
+        if (size > values.size())
+            return new ResultSingle(values);
+        return new ResultSingle((ValueList)values.subList(size, values.size() - 1));
     }
 
     @Override
@@ -62,11 +70,11 @@ public class ResultColumn extends Result {
 
     @Override
     public ResultSingle isNull() {
-        return null;
+        return new ResultSingle(new ValueBoolean(values.isNull()));
     }
 
     @Override
     public Type getType() {
-        return null;
+        return ((TypeCollection) values.getType()).getElementType();
     }
 }

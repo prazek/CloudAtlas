@@ -64,8 +64,10 @@ public class ResultList extends Result {
     }
 
     @Override
-    public ResultList first(int size) {
-        return null;
+    public ResultSingle first(int size) {
+        if (size > values.size())
+            return new ResultSingle(values);
+        return new ResultSingle((ValueList)values.subList(0, size - 1));
     }
 
     @Override

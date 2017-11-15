@@ -30,11 +30,11 @@ import java.util.Map;
 
 import model.ValueNull;
 
-class Environment {
+class RowEnvironment {
 	private final TableRow row;
 	private final Map<String, Integer> columns = new HashMap<String, Integer>();
 
-	public Environment(TableRow row, List<String> columns) {
+	public RowEnvironment(TableRow row, List<String> columns) {
 		this.row = row;
 		int i = 0;
 		for(String c : columns)
