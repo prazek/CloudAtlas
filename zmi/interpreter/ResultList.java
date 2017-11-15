@@ -1,9 +1,6 @@
 package interpreter;
 
-import model.Type;
-import model.Value;
-import model.ValueBoolean;
-import model.ValueList;
+import model.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +46,9 @@ public class ResultList extends Result {
 
     @Override
     public Value getValue()  {
-        throw new UnsupportedOperationException("Not a ResultSingle.");
+        if (values == null)
+            return new ValueNull();
+        return values;
     }
 
     @Override
@@ -91,7 +90,7 @@ public class ResultList extends Result {
 
     @Override
     public Result convertTo(Type to) {
-        return null;
+        return new ResultColumn(apply(values, v -> v.convertTo(to)));
     }
 
     @Override
