@@ -56,17 +56,14 @@ public class Agent implements AgentIface {
     }
 
     public synchronized ZMI zone(PathName zoneName) throws RemoteException {
-
         ZMI zmi = zones().get(zoneName);
-        System.err.println("ZONE:" + zoneName);
         return zmi;
     }
 
-    private synchronized List<QueryResult> runQueryInZone(ZMI zmi, String query) {
+    private synchronized List<QueryResult> runQueryInZone(ZMI zmi, String query) throws Exception {
         Interpreter interpreter = new Interpreter(zmi);
         List<QueryResult> results = interpreter.run(query);
         return results;
-
     }
 
     private void applyQueryRunChanges(ZMI zmi, List<QueryResult> results) {
@@ -77,16 +74,15 @@ public class Agent implements AgentIface {
     }
 
 
-    private synchronized void installQueryInZone(ZMI zmi, String queryName, String query) {
+    private synchronized void installQueryInZone(ZMI zmi, String queryName, String query) throws Exception {
         System.err.println("Installing query " );
         Value q = new ValueString(query); // TODO query certificate
 
         if (zmi.getAttributes().getOrNull(queryName) != null) {
             throw new RuntimeException("Duplicated query of name [" + queryName + "]");
         }
-        zmi.getAttributes().add(queryName, q);
 
-        List<QueryResult> results =  runQueryInZone(zmi, query);
+        List<QueryResult> results = runQueryInZone(zmi, query);
 
         // Put attributes if first run of this query
         if (!queryAttributes.containsKey(queryName)) {
@@ -103,7 +99,7 @@ public class Agent implements AgentIface {
             queryAttributes.put(new Attribute(queryName), createdAttributes);
         }
         applyQueryRunChanges(zmi, results);
-
+        zmi.getAttributes().add(queryName, q);
     }
 
     private synchronized void uninstallQueryInZone(ZMI z, String queryName) {
@@ -114,7 +110,7 @@ public class Agent implements AgentIface {
         queryAttributes.remove(queryName);
     }
 
-    public synchronized void installQuery(String name, String query) throws RemoteException {
+    public synchronized void installQuery(String name, String query) throws RemoteException, Exception {
         if (!name.startsWith("&"))
             throw new RuntimeException("name must starts with &");
         for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
@@ -186,11 +182,17 @@ public class Agent implements AgentIface {
                             continue;
                         Attribute queryName = attribute.getKey();
                         ValueString query = (ValueString)attribute.getValue();
-                        agent.runQueryInZone(zmi, query.getValue());
+                        try {
+                            agent.runQueryInZone(zmi, query.getValue());
+                        }
+                        catch (Exception ex) {
+                            System.err.println("Exception in updater:");
+                            System.err.println(ex);
+                        }
                     }
                 }
                 try {
-                    sleep(5 * 1000); // 5s sleep
+                    sleep(10 * 1000); // 10s sleep
                 } catch (InterruptedException ex) {
                     return;
                 }
