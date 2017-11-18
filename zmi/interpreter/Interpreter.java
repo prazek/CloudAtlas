@@ -105,15 +105,15 @@ public class Interpreter {
 		this.zmi = zmi;
 	}
 
-	public List<QueryResult> run(String query) {
+	public List<QueryResult> run(String query) throws Exception {
 		Yylex lex = new Yylex(new ByteArrayInputStream(query.getBytes()));
 		try {
 			List<QueryResult> result = interpretProgram((new parser(lex)).pProgram());
 			return result;
-		} catch(Exception exception) {
-			System.out.println(exception);
+		} catch(Exception ex) {
+			System.out.println(ex);
+			throw ex;
 		}
-		return null;
 	}
 
 	private static Boolean getBoolean(Value value) {

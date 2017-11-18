@@ -206,7 +206,17 @@ public class Client {
             String response = "ok";
             Map<String, String> data = parseFormUrlencoded(inputStreamToString(t.getRequestBody()));
             System.err.println(data);
-            agent.installQuery(data.get("queryName"), data.get("query"));
+            try {
+                agent.installQuery(data.get("queryName"), data.get("query"));
+            } catch (Exception ex) {
+                System.err.println("Error:\n" + ex);
+                t.getResponseHeaders().add("Content-Type", "text/html");
+                t.sendResponseHeaders(400, ex.toString().length());
+                OutputStream os = t.getResponseBody();
+                os.write(ex.toString().getBytes());
+                os.close();
+                return;
+            }
             System.out.println("Response: " + response);
             t.getResponseHeaders().add("Content-Type", "text/html");
             t.sendResponseHeaders(200, response.length());
