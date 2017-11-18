@@ -24,13 +24,10 @@
 
 package interpreter;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.util.List;
 import java.util.Scanner;
 
-import interpreter.query.Yylex;
-import interpreter.query.parser;
 import model.PathName;
 import model.ValueString;
 import model.ZMI;
@@ -56,10 +53,9 @@ public class Main {
 		if(!zmi.getSons().isEmpty()) {
 			for(ZMI son : zmi.getSons())
 				executeQueries(son, query);
-			Interpreter interpreter = new Interpreter(zmi);
-			Yylex lex = new Yylex(new ByteArrayInputStream(query.getBytes()));
 			try {
-				List<QueryResult> result = interpreter.interpretProgram((new parser(lex)).pProgram());
+				Interpreter interpreter = new Interpreter(zmi);
+				List<QueryResult> result = interpreter.run(query);
 				PathName zone = getPathName(zmi);
 				for(QueryResult r : result) {
 					System.out.println(zone + ": " + r);
