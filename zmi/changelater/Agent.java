@@ -20,9 +20,10 @@ public class Agent implements AgentIface {
     Agent(PathName pathName) throws Exception {
         this.pathName = pathName;
         this.setRoot(ZMIConfig.getZMIConfiguration());
+
     }
 
-    private void addZMI(ZMI zmi, PathName parentName) {
+    private synchronized void addZMI(ZMI zmi, PathName parentName) {
         // TODO what if name changes?
         // TODO what if some invalid value is saved as name?
 
@@ -50,21 +51,21 @@ public class Agent implements AgentIface {
         return this.zones;
     }
 
-    public ZMI zone(PathName zoneName) throws RemoteException {
+    public synchronized ZMI zone(PathName zoneName) throws RemoteException {
 
         ZMI zmi = zones().get(zoneName);
         System.err.println("ZONE:" + zoneName);
         return zmi;
     }
 
-    private void runQueryInZone(ZMI zmi, String query) {
+    private synchronized void runQueryInZone(ZMI zmi, String query) {
         Interpreter interpreter = new Interpreter(zmi);
         List<QueryResult> results = interpreter.run(query);
         for (QueryResult r : results)
             zmi.getAttributes().addOrChange(r.getName(), r.getValue());
     }
 
-    private void installQueryInZone(ZMI z, String queryName, String query) {
+    private synchronized void installQueryInZone(ZMI z, String queryName, String query) {
         System.err.println("Installing query " );
         Value q = new ValueString(query); // TODO query certificate
         z.getAttributes().add(queryName, q);
@@ -74,24 +75,28 @@ public class Agent implements AgentIface {
         runQueryInZone(z, query);
     }
 
-    private void uninstallQueryInZone(ZMI z, String queryName) {
+    private synchronized void uninstallQueryInZone(ZMI z, String queryName) {
         // TODO(sbarzowski) remove query attributes
         z.getAttributes().remove(queryName);
     }
 
-    public void installQuery(String name, String query) throws RemoteException {
+    public synchronized void installQuery(String name, String query) throws RemoteException {
+        if (!name.startsWith("&"))
+            throw new RuntimeException("name must starts with &");
         for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
             installQueryInZone(zone.getValue(), name, query);
         }
     }
 
-    public void uninstallQuery(String name) throws RemoteException {
+    public synchronized void uninstallQuery(String name) throws RemoteException {
+        if (!name.startsWith("&"))
+            throw new RuntimeException("name must starts with &");
         for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
             uninstallQueryInZone(zone.getValue(), name);
         }
     }
 
-    public void setZoneValue(PathName zoneName, Attribute valueName, Value value) throws RemoteException {
+    public synchronized void setZoneValue(PathName zoneName, Attribute valueName, Value value) throws RemoteException {
         System.out.println(zoneName + " " + valueName + " " + value.toString());
 
         if (zoneName.equals(pathName)) {
@@ -115,15 +120,46 @@ public class Agent implements AgentIface {
         }
         try {
             String zoneName = args[0];
-            Agent object = new Agent(new PathName(zoneName));
+            Agent agent = new Agent(new PathName(zoneName));
+
             AgentIface stub =
-                    (AgentIface) UnicastRemoteObject.exportObject(object, 0);
+                    (AgentIface) UnicastRemoteObject.exportObject(agent, 0);
             Registry registry = LocateRegistry.getRegistry();
             registry.rebind(zoneName, stub);
             System.out.println("Agent bound");
+            RunQueries queryRunner = new RunQueries(agent);
+            Thread t = new Thread(queryRunner);
+            //t.run();
         } catch (Exception e) {
             System.err.println("Agent exception:");
             e.printStackTrace();
+        }
+    }
+
+    static public class RunQueries implements Runnable {
+
+        private Agent agent;
+        RunQueries(Agent agent) { this.agent = agent; }
+
+        public void run() {
+            System.out.println("Updater running...");
+            while (true) {
+
+                for (Map.Entry<PathName, ZMI> zone: agent.zones.entrySet()) {
+                    ZMI zmi = zone.getValue();
+                    for (Map.Entry<Attribute, Value >attribute : zmi.getAttributes()) {
+                        if (!Attribute.isQuery(attribute.getKey()))
+                            continue;
+                        ValueString query = (ValueString)attribute.getValue();
+                        agent.runQueryInZone(zmi, query.getValue());
+                    }
+                }
+                try {
+                    wait(5 * 100);
+                } catch (InterruptedException ex) {
+                    return;
+                }
+            }
         }
     }
 }
