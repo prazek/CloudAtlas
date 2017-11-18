@@ -9,6 +9,29 @@
     <script type="text/javascript">
 
     $(function() {
+        function attributeValueToString(attrValue) {
+            return JSON.stringify(attrValue);
+        }
+
+        function buildAttributesTable(attrs) {
+            var table = $("<table />");
+            console.log(attrs);
+            console.log(attrs.attributes.map);
+            for (var key in attrs.attributes.map) {
+                console.log(key);
+                value = attrs.attributes.map[key];
+                var row = $("<tr />")
+                    .append(
+                        $("<td />").text(key)
+                    ).append(
+                        $("<td />").text(attributeValueToString(value))
+                    )
+                console.log(row);
+                table.append(row);
+            }
+            return table;
+        }
+
         console.log("XXX");
 
         var data = []
@@ -37,7 +60,10 @@
         }
 
         function newData(data) {
-            $("#attributes").html("<pre>" + JSON.stringify(data, null, 2) + "</pre>");
+            //$("#attributes").html("<pre>" + JSON.stringify(data, null, 2) + "</pre>");
+            var table = buildAttributesTable(data);
+            console.log(table);
+            $("#attributes").html(table);
             updateNewDataPoint(Date.now(), data.attributes.map.cpu_load.value);
         }
 
@@ -68,7 +94,7 @@
 				max: 1
 			},
 			xaxis: {
-				show: true,
+				show: false,
 				min: 0,
 				max: 10000
 			}
@@ -120,11 +146,6 @@
     <div class="demo-container">
         <div id="placeholder" class="demo-placeholder"></div>
     </div>
-
-    <p>You can update a chart periodically to get a real-time effect by using a timer to insert the new data in the plot and redraw it.</p>
-
-    <p>Time between updates: <input id="updateInterval" type="text" value="" style="text-align: right; width:5em"> milliseconds</p>
-
 </div>
 
 </body>
