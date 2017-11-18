@@ -47,6 +47,12 @@
 			return res;
 		}
 
+		function getCurrentData() {
+            $.post( "ajax/test.html", function( data ) {
+                $( ".result" ).html( data );
+            });
+        }
+
 		// Set up the control widget
 
 		var updateInterval = 30;

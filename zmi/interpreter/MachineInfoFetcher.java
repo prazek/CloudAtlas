@@ -19,7 +19,7 @@ public class MachineInfoFetcher {
             String output = s.hasNext() ? s.next() : "";
 
             map.add(new Attribute("kernel_ver"), new ValueString(output));
-            // TODO list?
+            // TODO list of dns_names?
             map.add(new Attribute("dns_names"), new ValueString(InetAddress.getLocalHost().getHostName()));
         } catch(Exception ex) {
         }

@@ -24,6 +24,8 @@
 
 package model;
 
+import interpreter.QueryResult;
+
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -59,7 +61,7 @@ public class ZMI implements Cloneable, Serializable {
 	public ZMI(ZMI father) {
 		this.father = father;
 	}
-	
+
 	/**
 	 * Gets a father of this ZMI in a tree.
 	 * 

@@ -24,6 +24,7 @@
 
 package interpreter;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -83,6 +84,8 @@ import interpreter.query.Absyn.Statement;
 import interpreter.query.Absyn.StatementC;
 import interpreter.query.Absyn.Where;
 import interpreter.query.Absyn.WhereC;
+import interpreter.query.Yylex;
+import interpreter.query.parser;
 import model.*;
 
 public class Interpreter {
@@ -100,6 +103,17 @@ public class Interpreter {
 
 	public Interpreter(ZMI zmi) {
 		this.zmi = zmi;
+	}
+
+	public List<QueryResult> run(String query) {
+		Yylex lex = new Yylex(new ByteArrayInputStream(query.getBytes()));
+		try {
+			List<QueryResult> result = interpretProgram((new parser(lex)).pProgram());
+			return result;
+		} catch(Exception exception) {
+			System.out.println(exception);
+		}
+		return null;
 	}
 
 	private static Boolean getBoolean(Value value) {

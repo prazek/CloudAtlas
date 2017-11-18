@@ -1,14 +1,14 @@
 package changelater;
 
+import interpreter.Interpreter;
+import interpreter.QueryResult;
 import model.*;
 
-import java.net.InetAddress;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
-import java.text.ParseException;
 import java.util.*;
 
 import static java.lang.System.exit;
@@ -57,16 +57,20 @@ public class Agent implements AgentIface {
         return zmi;
     }
 
-    private void runQueryInZone(ZMI z, String query) {
-
-
-
+    private void runQueryInZone(ZMI zmi, String query) {
+        Interpreter interpreter = new Interpreter(zmi);
+        List<QueryResult> results = interpreter.run(query);
+        for (QueryResult r : results)
+            zmi.getAttributes().addOrChange(r.getName(), r.getValue());
     }
 
     private void installQueryInZone(ZMI z, String queryName, String query) {
         System.err.println("Installing query " );
         Value q = new ValueString(query); // TODO query certificate
         z.getAttributes().add(queryName, q);
+
+        // TODO czy nie powinnismy odpalac w kazdym zonie? I pytanie czy to api tylko
+        // robi to w ZMI
         runQueryInZone(z, query);
     }
 
