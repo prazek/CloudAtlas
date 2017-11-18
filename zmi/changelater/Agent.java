@@ -12,15 +12,23 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 
 import static java.lang.System.exit;
+import static java.lang.Thread.sleep;
 
 public class Agent implements AgentIface {
     private HashMap<PathName, ZMI> zones = new HashMap<>();
     private PathName pathName;
+    // This map stores which attributes are created by running one query.
+    private HashMap<Attribute, List<Attribute>> queryAttributes = new HashMap<>();
 
     Agent(PathName pathName) throws Exception {
         this.pathName = pathName;
         this.setRoot(ZMIConfig.getZMIConfiguration());
 
+    }
+
+    private void setRoot(ZMI zmi) {
+        zones.clear();
+        addZMI(zmi, null);
     }
 
     private synchronized void addZMI(ZMI zmi, PathName parentName) {
@@ -42,10 +50,6 @@ public class Agent implements AgentIface {
         }
     }
 
-    private void setRoot(ZMI zmi) {
-        zones.clear();
-        addZMI(zmi, null);
-    }
 
     public HashMap<PathName, ZMI> zones() throws RemoteException {
         return this.zones;
@@ -58,26 +62,45 @@ public class Agent implements AgentIface {
         return zmi;
     }
 
-    private synchronized void runQueryInZone(ZMI zmi, String query) {
+    private synchronized List<QueryResult> runQueryInZone(ZMI zmi, String query) {
         Interpreter interpreter = new Interpreter(zmi);
         List<QueryResult> results = interpreter.run(query);
+
         for (QueryResult r : results)
             zmi.getAttributes().addOrChange(r.getName(), r.getValue());
+
+        return results;
+
     }
 
     private synchronized void installQueryInZone(ZMI z, String queryName, String query) {
         System.err.println("Installing query " );
         Value q = new ValueString(query); // TODO query certificate
+
+        if (z.getAttributes().getOrNull(queryName) != null) {
+            throw new RuntimeException("Duplicated query of name [" + queryName + "]");
+        }
         z.getAttributes().add(queryName, q);
 
-        // TODO czy nie powinnismy odpalac w kazdym zonie? I pytanie czy to api tylko
-        // robi to w ZMI
-        runQueryInZone(z, query);
+        List<QueryResult> results =  runQueryInZone(z, query);
+
+        // If first run
+        if (!queryAttributes.containsKey(queryName)) {
+            ArrayList<Attribute> createdAttributes = new ArrayList<>();
+            for (QueryResult r : results) {
+                createdAttributes.add(r.getName());
+            }
+            queryAttributes.put(new Attribute(queryName), createdAttributes);
+        }
+
     }
 
     private synchronized void uninstallQueryInZone(ZMI z, String queryName) {
-        // TODO(sbarzowski) remove query attributes
         z.getAttributes().remove(queryName);
+        for (Attribute attr :  queryAttributes.get(queryName)) {
+            z.getAttributes().remove(attr);
+        }
+        queryAttributes.remove(queryName);
     }
 
     public synchronized void installQuery(String name, String query) throws RemoteException {
@@ -129,7 +152,7 @@ public class Agent implements AgentIface {
             System.out.println("Agent bound");
             RunQueries queryRunner = new RunQueries(agent);
             Thread t = new Thread(queryRunner);
-            //t.run();
+            t.run();
         } catch (Exception e) {
             System.err.println("Agent exception:");
             e.printStackTrace();
@@ -137,25 +160,26 @@ public class Agent implements AgentIface {
     }
 
     static public class RunQueries implements Runnable {
-
         private Agent agent;
+
         RunQueries(Agent agent) { this.agent = agent; }
 
         public void run() {
             System.out.println("Updater running...");
             while (true) {
-
+                System.out.println("Updating");
                 for (Map.Entry<PathName, ZMI> zone: agent.zones.entrySet()) {
                     ZMI zmi = zone.getValue();
                     for (Map.Entry<Attribute, Value >attribute : zmi.getAttributes()) {
                         if (!Attribute.isQuery(attribute.getKey()))
                             continue;
+                        Attribute queryName = attribute.getKey();
                         ValueString query = (ValueString)attribute.getValue();
                         agent.runQueryInZone(zmi, query.getValue());
                     }
                 }
                 try {
-                    wait(5 * 100);
+                    sleep(5 * 1000); // 5s sleep
                 } catch (InterruptedException ex) {
                     return;
                 }
