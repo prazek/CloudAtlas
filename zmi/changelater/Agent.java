@@ -70,8 +70,10 @@ public class Agent implements AgentIface {
     }
 
     private void applyQueryRunChanges(ZMI zmi, List<QueryResult> results) {
-        for (QueryResult r : results)
+        for (QueryResult r : results) {
             zmi.getAttributes().addOrChange(r.getName(), r.getValue());
+            System.out.println("Applying result for [" + r.getName() + "] with value [" + r.getValue() + "]");
+        }
     }
 
 
