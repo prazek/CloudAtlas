@@ -8,95 +8,99 @@
     <script language="javascript" type="text/javascript" src="/jquery.flot.js"></script>
     <script type="text/javascript">
 
-	$(function() {
+    $(function() {
+        console.log("XXX");
 
-		// We use an inline data source in the example, usually data would
-		// be fetched from a server
+        var data = []
 
-		var data = [],
-			totalPoints = 300;
+        function updateNewDataPoint(x, y) {
+            data.push([x, y]);
+        }
 
-		function getRandomData() {
+        function normalize(beginning) {
+            var newData = [];
+            for (var i = 0, len = data.length; i < len; ++i) {
+                if (data[i][0] >= beginning) {
+                    newData.push(data[i]);
+                }
+            }
+            newData.sort();
+            data = newData;
+        }
 
-			if (data.length > 0)
-				data = data.slice(1);
+        function prepareGraphData(data, beginning) {
+            var newData = [];
+            for (var i = 0, len = data.length; i < len; ++i) {
+                newData.push([data[i][0] - beginning, data[i][1]]);
+            }
+            return newData;
+        }
 
-			// Do a random walk
+        function newData(data) {
+            $("#attributes").html("<pre>" + JSON.stringify(data, null, 2) + "</pre>");
+            updateNewDataPoint(Date.now(), data.attributes.map.cpu_load.value);
+        }
 
-			while (data.length < totalPoints) {
-
-				var prev = data.length > 0 ? data[data.length - 1] : 50,
-					y = prev + Math.random() * 10 - 5;
-
-				if (y < 0) {
-					y = 0;
-				} else if (y > 100) {
-					y = 100;
-				}
-
-				data.push(y);
-			}
-
-			// Zip the generated y values with the x values
-
-			var res = [];
-			for (var i = 0; i < data.length; ++i) {
-				res.push([i, data[i]])
-			}
-
-			return res;
-		}
-
-		function getCurrentData() {
-            $.post( "ajax/test.html", function( data ) {
-                $( ".result" ).html( data );
+        // TODO(sbarzowski) better name
+        function update2() {
+            $.post("/attributes/", function(data) {
+                //alert("success");
+                newData(data);
+            }).done(function() {
+                //alert("success2");
+            }).fail(function(xhr, status, error) {
+                //alert("error");
+                console.log(xhr);
+                console.log(status);
+                console.log(error);
             });
         }
 
-		// Set up the control widget
+        //update();
+        var myInterval = setInterval(update2, 250);
 
-		var updateInterval = 30;
-		$("#updateInterval").val(updateInterval).change(function () {
-			var v = $(this).val();
-			if (v && !isNaN(+v)) {
-				updateInterval = +v;
-				if (updateInterval < 1) {
-					updateInterval = 1;
-				} else if (updateInterval > 2000) {
-					updateInterval = 2000;
-				}
-				$(this).val("" + updateInterval);
-			}
-		});
-
-		var plot = $.plot("#placeholder", [ getRandomData() ], {
+		var plot = $.plot("#placeholder", [ data ], {
 			series: {
 				shadowSize: 0	// Drawing is faster without shadows
 			},
 			yaxis: {
 				min: 0,
-				max: 100
+				max: 1
 			},
 			xaxis: {
-				show: false
+				show: true,
+				min: 0,
+				max: 10000
 			}
 		});
 
 		function update() {
+		    // TODO(sbarzowski) - constants for stuff
+			var t = Date.now() - 14000;
+			normalize(t, data);
 
-			plot.setData([getRandomData()]);
+            console.log(data);
+
+            if (data.length == 0) {
+                return;
+            }
+
+            var t1 = Date.now() - 11000;
+
+            var graphData = prepareGraphData(data, t1);
+
+            console.log(graphData);
+            plot.setData([graphData]);
 
 			// Since the axes don't change, we don't need to call plot.setupGrid()
 
 			plot.draw();
-			setTimeout(update, updateInterval);
+
 		}
 
+		var myInterval = setInterval(update, 30);
+
 		update();
-
-		// Add the Flot version string to the footer
-
-		$("#footer").prepend("Flot " + $.plot.version + " &ndash; ");
 	});
 
 	</script>
@@ -105,6 +109,10 @@
 
 <div id="header">
     <h2>Real-time updates</h2>
+</div>
+
+<div id="attributes">
+
 </div>
 
 <div id="content">
@@ -117,10 +125,6 @@
 
     <p>Time between updates: <input id="updateInterval" type="text" value="" style="text-align: right; width:5em"> milliseconds</p>
 
-</div>
-
-<div id="footer">
-    Copyright &copy; 2007 - 2014 IOLA and Ole Laursen
 </div>
 
 </body>
