@@ -65,33 +65,42 @@ public class Agent implements AgentIface {
     private synchronized List<QueryResult> runQueryInZone(ZMI zmi, String query) {
         Interpreter interpreter = new Interpreter(zmi);
         List<QueryResult> results = interpreter.run(query);
-
-        for (QueryResult r : results)
-            zmi.getAttributes().addOrChange(r.getName(), r.getValue());
-
         return results;
 
     }
 
-    private synchronized void installQueryInZone(ZMI z, String queryName, String query) {
+    private void applyQueryRunChanges(ZMI zmi, List<QueryResult> results) {
+        for (QueryResult r : results)
+            zmi.getAttributes().addOrChange(r.getName(), r.getValue());
+    }
+
+
+    private synchronized void installQueryInZone(ZMI zmi, String queryName, String query) {
         System.err.println("Installing query " );
         Value q = new ValueString(query); // TODO query certificate
 
-        if (z.getAttributes().getOrNull(queryName) != null) {
+        if (zmi.getAttributes().getOrNull(queryName) != null) {
             throw new RuntimeException("Duplicated query of name [" + queryName + "]");
         }
-        z.getAttributes().add(queryName, q);
+        zmi.getAttributes().add(queryName, q);
 
-        List<QueryResult> results =  runQueryInZone(z, query);
+        List<QueryResult> results =  runQueryInZone(zmi, query);
 
-        // If first run
+        // Put attributes if first run of this query
         if (!queryAttributes.containsKey(queryName)) {
             ArrayList<Attribute> createdAttributes = new ArrayList<>();
             for (QueryResult r : results) {
-                createdAttributes.add(r.getName());
+                Attribute producedValueName = r.getName();
+                createdAttributes.add(producedValueName);
+                if (zmi.getAttributes().getOrNull(producedValueName) != null) {
+                    throw new RuntimeException(
+                            "Query [" + query + "] is producing value [" + producedValueName +
+                                    "] that was added by other query or saved as attribute");
+                }
             }
             queryAttributes.put(new Attribute(queryName), createdAttributes);
         }
+        applyQueryRunChanges(zmi, results);
 
     }
 
