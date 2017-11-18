@@ -36,7 +36,7 @@ import model.ValueContact;
  * <p>
  * This class is immutable.
  */
-public class ValueContact extends Value implements Serializable {
+public class ValueContact extends Value {
 	private final PathName name;
 	private final InetAddress address;
 	
