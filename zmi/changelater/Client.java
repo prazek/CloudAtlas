@@ -87,8 +87,8 @@ public class Client {
                 System.out.println("attributes");
                 Gson gson = new Gson();
                 ZMI zmi = agent.zone(new PathName("/uw/violet07"));
-                ZMI other = agent.zone(new PathName("/pjwstk"));
-                String response = gson.toJson(zmi) + "\n" + gson.toJson(other);
+                //ZMI other = agent.zone(new PathName("/pjwstk"));
+                String response = gson.toJson(zmi);
                 t.getResponseHeaders().add("Content-Type", "application/json");
                 t.sendResponseHeaders(200, response.length());
                 OutputStream os = t.getResponseBody();
