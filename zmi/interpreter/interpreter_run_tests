@@ -1,7 +1,16 @@
 #!/bin/sh
 
 NUM_TESTS=19
+echo "Running advanced interpreter tests"
+for i in `seq $NUM_TESTS`; do
+	echo "Running test $i..."
+	./advanced_interpreter < advanced_interpreter_tests/$i.in > tmp.out
+	diff tmp.out interpreter_tests/$i.out
+	echo
+	rm tmp.out
+done
 
+echo "Running normal tests"
 for i in `seq $NUM_TESTS`; do
 	echo "Running test $i..."
 	./interpreter_run < interpreter_tests/$i.in > tmp.out
@@ -9,3 +18,5 @@ for i in `seq $NUM_TESTS`; do
 	echo
 	rm tmp.out
 done
+
+
