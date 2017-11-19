@@ -76,6 +76,9 @@ public class Agent implements AgentIface {
 
     private synchronized void installQueryInZone(ZMI zmi, String queryName, String query) throws Exception {
         System.err.println("Installing query " );
+        /*if (zmi.getSons().isEmpty()) {
+            throw new RuntimeException("Installing query on leaf node");
+        }*/
         Value q = new ValueString(query); // TODO query certificate
 
         if (zmi.getAttributes().getOrNull(queryName) != null) {
@@ -136,8 +139,6 @@ public class Agent implements AgentIface {
             System.err.println("not sure if error?");
         }
     }
-
-
 
     static public void main(String args[]) {
         if (args.length == 0) {
