@@ -2,5 +2,3 @@
 /uw: num_cores: 6
 /pjwstk: cpu_load: 2.95
 /pjwstk: num_cores: 20
-/: cpu_load: NULL
-/: num_cores: 26

@@ -25,7 +25,6 @@ public class AdvancedInterpreter {
             Matcher matcher = pattern.matcher(fullQuery);
             if (matcher.matches()) {
                 String query = matcher.group(2);
-                System.out.println(query);
                 executeQueries(root, query);
             }
             else {
