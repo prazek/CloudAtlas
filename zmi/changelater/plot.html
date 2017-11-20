@@ -3,34 +3,13 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Flot Examples: Real-time updates</title>
-    <link href="/examples.css" rel="stylesheet" type="text/css">
+    <link href="/zmi.css" rel="stylesheet" type="text/css">
     <script language="javascript" type="text/javascript" src="/jquery.js"></script>
     <script language="javascript" type="text/javascript" src="/jquery.flot.js"></script>
+    <script language="javascript" type="text/javascript" src="/lib.js"></script>
     <script type="text/javascript">
 
     $(function() {
-        function attributeValueToString(attrValue) {
-            return JSON.stringify(attrValue);
-        }
-
-        function buildAttributesTable(attrs) {
-            var table = $("<table />");
-            console.log(attrs);
-            console.log(attrs.attributes.map);
-            for (var key in attrs.attributes.map) {
-                console.log(key);
-                value = attrs.attributes.map[key];
-                var row = $("<tr />")
-                    .append(
-                        $("<td />").text(key)
-                    ).append(
-                        $("<td />").text(attributeValueToString(value))
-                    )
-                console.log(row);
-                table.append(row);
-            }
-            return table;
-        }
 
         console.log("XXX");
 
