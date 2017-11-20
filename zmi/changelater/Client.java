@@ -30,15 +30,17 @@ public class Client {
 
             HttpServer server = HttpServer.create(new InetSocketAddress(8042), 0);
             server.createContext("/", new MainPage());
-            server.createContext("/zmi/", new ZMIPage());
+            server.createContext("/zmi/", new ServeFileHandler("changelater/zmi.html", "text/html"));
             server.createContext("/setFallbackContact/", new ZMIPage());
             server.createContext("/installQuery/", new InstallQueryPage(agent));
             server.createContext("/uninstallQuery/", new ZMIPage());
             server.createContext("/attributes/", new AttributesPage(agent));
             server.createContext("/plot/", new PlotPage());
+            server.createContext("/lib.js", new ServeFileHandler("changelater/lib.js", "application/javascript"));
+
             server.createContext("/jquery.js", new ServeFileHandler("changelater/jquery.js", "application/javascript"));
             server.createContext("/jquery.flot.js", new ServeFileHandler("changelater/jquery.flot.js", "application/javascript"));
-            server.createContext("/examples.css", new ServeFileHandler("changelater/examples.css", "text/css"));
+            server.createContext("/zmi.css", new ServeFileHandler("changelater/zmi.css", "text/css"));
             server.createContext("/example.html", new ServeFileHandler("changelater/example.html", "text/html"));
             server.setExecutor(null); // creates a default executor
             server.start();
@@ -84,7 +86,6 @@ public class Client {
         @Override
         public void handle(HttpExchange t) throws IOException {
             try {
-                System.out.println("attributes");
                 Gson gson = new Gson();
                 ZMI zmi = agent.zone(new PathName("/uw/violet07"));
                 //ZMI other = agent.zone(new PathName("/pjwstk"));
@@ -123,16 +124,17 @@ public class Client {
 
         @Override
         public void handle(HttpExchange t) throws IOException {
-            String responseHtml = "xxx";
-
+            String responseHtml;
             try {
                 responseHtml = stringFromFile(path);
             } catch (Exception e) {
                 System.err.println(e);
+                t.sendResponseHeaders(500, 0);
+                OutputStream os = t.getResponseBody();
+                os.close();
+                return;
             }
-            System.out.println(responseHtml);
             byte[] response = responseHtml.getBytes();
-            System.out.println("Serve: " + response);
             System.out.println(mimeType);
             t.getResponseHeaders().add("Content-Type", mimeType);
             t.sendResponseHeaders(200, response.length);
