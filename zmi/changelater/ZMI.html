@@ -25,8 +25,7 @@
                     var table = buildAllZones(data);
                     console.log(table);
                     $("#zones").html(table);
-                $("#attributes").html(table);
-                }).done(function() {
+                    $("#attributes").html(table);
                 }).fail(function(xhr, status, error) {
                     console.log(xhr);
                     console.log(status);
@@ -43,13 +42,47 @@
                 var name = $("#queryName").val();
                 var code = $("#queryCode").val();
                 $.post("/installQuery/", {"queryName": name, "query": code}, function(data) {
-                }).done(function() {
                 }).fail(function(xhr, status, error) {
                     console.log(xhr);
                     console.log(status);
                     console.log(error);
                 });
             });
+
+            function updateInstalledQueries() {
+                $.post("/installedQueries/", function(data) {
+                    var queries = $("<table />");
+                    for (var q in data.map) {
+                        var row = $("<tr />");
+                        row.append($("<td />").text(q));
+                        row.append($("<td />").text(attributeValueToString(data.map[q])));
+                        var removeButton = $("<button class=\"remove-query-button\" type=\"button\">Remove</button>")
+                            .data("queryName", q)
+                            .click(function(e) {
+                                console.log(e);
+                                console.log(e.currentTarget);
+                                var queryName = $(e.currentTarget).data("queryName");
+                                console.log(queryName);
+                                $.post("/uninstallQuery/", {"queryName": queryName}, function(data) {
+                                }).fail(function(xhr, status, error) {
+                                    console.log(xhr);
+                                    console.log(status);
+                                    console.log(error);
+                                });
+                            });
+                        console.log(removeButton);
+                        row.append($("<td />").html(removeButton));
+                        queries.append(row);
+                    }
+                    $("#installed-query-list").html(queries);
+                }).fail(function(xhr, status, error) {
+                    console.log(xhr);
+                    console.log(status);
+                    console.log(error);
+                });
+            }
+
+            updateInstalledQueries();
         });
 
 
