@@ -29,6 +29,7 @@ public class Client {
             AgentIface agent = (AgentIface) registry.lookup(agentName);
 
             HttpServer server = HttpServer.create(new InetSocketAddress(8042), 0);
+            // Pages
             server.createContext("/", new MainPage());
             server.createContext("/zmi/", new ServeFileHandler("changelater/zmi.html", "text/html"));
             server.createContext("/setFallbackContact/", new ZMIPage());
@@ -36,12 +37,12 @@ public class Client {
             server.createContext("/uninstallQuery/", new ZMIPage());
             server.createContext("/attributes/", new AttributesPage(agent));
             server.createContext("/plot/", new PlotPage());
-            server.createContext("/lib.js", new ServeFileHandler("changelater/lib.js", "application/javascript"));
 
+            // Resouces
+            server.createContext("/lib.js", new ServeFileHandler("changelater/lib.js", "application/javascript"));
             server.createContext("/jquery.js", new ServeFileHandler("changelater/jquery.js", "application/javascript"));
             server.createContext("/jquery.flot.js", new ServeFileHandler("changelater/jquery.flot.js", "application/javascript"));
             server.createContext("/zmi.css", new ServeFileHandler("changelater/zmi.css", "text/css"));
-            server.createContext("/example.html", new ServeFileHandler("changelater/example.html", "text/html"));
             server.setExecutor(null); // creates a default executor
             server.start();
             System.out.println("Client running!");
@@ -87,7 +88,7 @@ public class Client {
         public void handle(HttpExchange t) throws IOException {
             try {
                 Gson gson = new Gson();
-                ZMI zmi = agent.zone(new PathName("/uw/violet07"));
+                HashMap<PathName, ZMI> zmi = agent.zones();
                 //ZMI other = agent.zone(new PathName("/pjwstk"));
                 String response = gson.toJson(zmi);
                 t.getResponseHeaders().add("Content-Type", "application/json");

@@ -3,7 +3,7 @@ function attributeValueToString(attrValue) {
 }
 
 function buildAttributesTable(attrs) {
-    var table = $("<table />");
+    var table = $("<table class=\"zmi-attributes\" />");
     console.log(attrs);
     console.log(attrs.attributes.map);
     for (var key in attrs.attributes.map) {

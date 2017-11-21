@@ -64,7 +64,7 @@ public class Agent implements AgentIface {
 
     public synchronized void installQuery(String name, String query) throws RemoteException, Exception {
         if (!name.startsWith("&"))
-            throw new RuntimeException("name must starts with &");
+            throw new RuntimeException("name must start with &");
         for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
             // Dont install query in leaf node.
             if (!zone.getValue().getSons().isEmpty())
@@ -74,7 +74,7 @@ public class Agent implements AgentIface {
 
     public synchronized void uninstallQuery(String name) throws RemoteException {
         if (!name.startsWith("&"))
-            throw new RuntimeException("name must starts with &");
+            throw new RuntimeException("name must start with &");
         for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
             if (!zone.getValue().getSons().isEmpty())
                 uninstallQueryInZone(zone.getValue(), name);
