@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Flot Examples: Real-time updates</title>
+    <title>ZMI graph</title>
     <link href="/zmi.css" rel="stylesheet" type="text/css">
     <script language="javascript" type="text/javascript" src="/jquery.js"></script>
     <script language="javascript" type="text/javascript" src="/jquery.flot.js"></script>
@@ -10,8 +10,6 @@
     <script type="text/javascript">
 
     $(function() {
-
-        console.log("XXX");
 
         var data = []
 
@@ -50,7 +48,7 @@
         function update2() {
             $.post("/attributes/", function(data) {
                 //alert("success");
-                newData(data);
+                newData(data["/uw/violet07"]);
             }).done(function() {
                 //alert("success2");
             }).fail(function(xhr, status, error) {

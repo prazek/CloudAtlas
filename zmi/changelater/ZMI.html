@@ -4,6 +4,56 @@
     <meta charset="UTF-8">
     <title>ZMI</title>
     <link href="/zmi.css" rel="stylesheet" type="text/css">
+    <script language="javascript" type="text/javascript" src="/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="/lib.js"></script>
+    <script type="text/javascript">
+        $(function() {
+            function buildAllZones(data) {
+                console.log("ZONES");
+                console.log(data);
+                var zones = $("<div />");
+                for (var zoneName in data) {
+                    console.log(zoneName);
+                    zones.append($("<h2 />").text(zoneName));
+                    zones.append(buildAttributesTable(data[zoneName]));
+                }
+                return zones;
+            }
+
+            function update() {
+                $.post("/attributes/", function(data) {
+                    var table = buildAllZones(data);
+                    console.log(table);
+                    $("#zones").html(table);
+                $("#attributes").html(table);
+                }).done(function() {
+                }).fail(function(xhr, status, error) {
+                    console.log(xhr);
+                    console.log(status);
+                    console.log(error);
+                });
+            }
+
+            //var myInterval = setInterval(update, 500);
+
+            update();
+
+            $("#install-query-form").submit(function(e) {
+                e.preventDefault();
+                var name = $("#queryName").val();
+                var code = $("#queryCode").val();
+                $.post("/installQuery/", {"queryName": name, "query": code}, function(data) {
+                }).done(function() {
+                }).fail(function(xhr, status, error) {
+                    console.log(xhr);
+                    console.log(status);
+                    console.log(error);
+                });
+            });
+        });
+
+
+    </script>
 </head>
 <body>
 
@@ -11,15 +61,20 @@
 
 <div id="zmi-pane">
     <h2>Zones</h2>
+    <div id="zones">
+
+    </div>
 </div>
 
 <div id="control-pane">
+    <h2>Installed queries</h2>
+    <div id="installed-query-list"></div>
     <h2>Install query</h2>
-    <form method="post">
+    <form method="post" id="install-query-form">
         <label for="queryName">Query Name</label>
         <input id="queryName" name="queryName" type="text">
-        <label for="query">Query</label>
-        <input id="query" name="query" type="text">
+        <label for="queryCode">Query</label>
+        <input id="queryCode" name="query" type="text">
         <input type="submit">
     </form>
 </div>
