@@ -81,7 +81,6 @@ public class Agent implements AgentIface {
         }
     }
 
-
     public synchronized AttributesMap getQueries() throws RemoteException {
         for (Map.Entry<PathName, ZMI> zone : this.zones.entrySet()) {
             if (!zone.getValue().getSons().isEmpty())
@@ -93,12 +92,9 @@ public class Agent implements AgentIface {
     public synchronized void setZoneValue(PathName zoneName, Attribute valueName, Value value) throws RemoteException {
         System.out.println(zoneName + " " + valueName + " " + value.toString());
 
-        if (zoneName.equals(pathName)) {
-            zone(pathName).getAttributes().addOrChange(valueName, value);
-
-        } else {
-            System.err.println("not sure if error?");
-        }
+        if (!zone(zoneName).getSons().isEmpty())
+            throw new RuntimeException("Can't set up attribute for non leaf node");
+        zone(zoneName).getAttributes().addOrChange(valueName, value);
     }
 
     public synchronized void setFallbackContacts(Set<ValueContact> fallbackContacts) {
