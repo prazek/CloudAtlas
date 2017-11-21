@@ -20,6 +20,8 @@ public class Agent implements AgentIface {
     // This map stores which attributes are created by running one query.
     private HashMap<Attribute, List<Attribute>> queryAttributes = new HashMap<>();
 
+    private Set<ValueContact> fallbackContacts = new HashSet<>();
+
     Agent(PathName pathName) throws Exception {
         this.pathName = pathName;
         this.setRoot(ZMIConfig.getZMIConfiguration());
@@ -60,6 +62,80 @@ public class Agent implements AgentIface {
         return zmi;
     }
 
+    public synchronized void installQuery(String name, String query) throws RemoteException, Exception {
+        if (!name.startsWith("&"))
+            throw new RuntimeException("name must starts with &");
+        for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
+            // Dont install query in leaf node.
+            if (!zone.getValue().getSons().isEmpty())
+                installQueryInZone(zone.getValue(), name, query);
+        }
+    }
+
+    public synchronized void uninstallQuery(String name) throws RemoteException {
+        if (!name.startsWith("&"))
+            throw new RuntimeException("name must starts with &");
+        for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
+            if (!zone.getValue().getSons().isEmpty())
+                uninstallQueryInZone(zone.getValue(), name);
+        }
+    }
+
+
+    public synchronized AttributesMap getQueries() throws RemoteException {
+        for (Map.Entry<PathName, ZMI> zone : this.zones.entrySet()) {
+            if (!zone.getValue().getSons().isEmpty())
+                return getQueriesForZone(zone.getValue());
+        }
+        return new AttributesMap();
+    }
+
+    public synchronized void setZoneValue(PathName zoneName, Attribute valueName, Value value) throws RemoteException {
+        System.out.println(zoneName + " " + valueName + " " + value.toString());
+
+        if (zoneName.equals(pathName)) {
+            zone(pathName).getAttributes().addOrChange(valueName, value);
+
+        } else {
+            System.err.println("not sure if error?");
+        }
+    }
+
+    public synchronized void setFallbackContacts(Set<ValueContact> fallbackContacts) {
+        this.fallbackContacts = fallbackContacts;
+    }
+
+    public synchronized Set<ValueContact> getFallbackContacts() {
+        return fallbackContacts;
+    }
+
+    static public void main(String args[]) {
+        if (args.length == 0) {
+            System.err.println("Usage: ./agent zone_name");
+            exit(1);
+        }
+
+        if (System.getSecurityManager() == null) {
+            System.setSecurityManager(new SecurityManager());
+        }
+        try {
+            String zoneName = args[0];
+            Agent agent = new Agent(new PathName(zoneName));
+
+            AgentIface stub =
+                    (AgentIface) UnicastRemoteObject.exportObject(agent, 0);
+            Registry registry = LocateRegistry.getRegistry();
+            registry.rebind(zoneName, stub);
+            System.out.println("Agent bound");
+            RunQueries queryRunner = new RunQueries(agent);
+            Thread t = new Thread(queryRunner);
+            t.run();
+        } catch (Exception e) {
+            System.err.println("Agent exception:");
+            e.printStackTrace();
+        }
+    }
+
     private synchronized List<QueryResult> runQueryInZone(ZMI zmi, String query) throws Exception {
         Interpreter interpreter = new Interpreter(zmi);
         List<QueryResult> results = interpreter.run(query);
@@ -73,6 +149,16 @@ public class Agent implements AgentIface {
         }
     }
 
+
+
+    private AttributesMap getQueriesForZone(ZMI zone) throws RemoteException {
+        AttributesMap result = new AttributesMap();
+        for (Map.Entry<Attribute, Value> entry :  zone.getAttributes()) {
+            if (Attribute.isQuery(entry.getKey()))
+                result.add(entry);
+        }
+        return result;
+    }
 
     private synchronized void installQueryInZone(ZMI zmi, String queryName, String query) throws Exception {
         System.err.println("Installing query " );
@@ -111,80 +197,6 @@ public class Agent implements AgentIface {
             z.getAttributes().remove(attr);
         }
         queryAttributes.remove(queryName);
-    }
-
-    public synchronized void installQuery(String name, String query) throws RemoteException, Exception {
-        if (!name.startsWith("&"))
-            throw new RuntimeException("name must starts with &");
-        for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
-            // Dont install query in leaf node.
-            if (!zone.getValue().getSons().isEmpty())
-                installQueryInZone(zone.getValue(), name, query);
-        }
-    }
-
-    public synchronized void uninstallQuery(String name) throws RemoteException {
-        if (!name.startsWith("&"))
-            throw new RuntimeException("name must starts with &");
-        for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
-            if (!zone.getValue().getSons().isEmpty())
-                uninstallQueryInZone(zone.getValue(), name);
-        }
-    }
-
-    private  AttributesMap getQueriesForZone(ZMI zone) throws RemoteException {
-        AttributesMap result = new AttributesMap();
-        for (Map.Entry<Attribute, Value> entry :  zone.getAttributes()) {
-            if (Attribute.isQuery(entry.getKey()))
-                result.add(entry);
-        }
-        return result;
-    }
-
-    public synchronized AttributesMap getQueries() throws RemoteException {
-        for (Map.Entry<PathName, ZMI> zone : this.zones.entrySet()) {
-            if (!zone.getValue().getSons().isEmpty())
-                return getQueriesForZone(zone.getValue());
-        }
-        return new AttributesMap();
-    }
-
-    public synchronized void setZoneValue(PathName zoneName, Attribute valueName, Value value) throws RemoteException {
-        System.out.println(zoneName + " " + valueName + " " + value.toString());
-
-        if (zoneName.equals(pathName)) {
-            zone(pathName).getAttributes().addOrChange(valueName, value);
-
-        } else {
-            System.err.println("not sure if error?");
-        }
-    }
-
-    static public void main(String args[]) {
-        if (args.length == 0) {
-            System.err.println("Usage: ./agent zone_name");
-            exit(1);
-        }
-
-        if (System.getSecurityManager() == null) {
-            System.setSecurityManager(new SecurityManager());
-        }
-        try {
-            String zoneName = args[0];
-            Agent agent = new Agent(new PathName(zoneName));
-
-            AgentIface stub =
-                    (AgentIface) UnicastRemoteObject.exportObject(agent, 0);
-            Registry registry = LocateRegistry.getRegistry();
-            registry.rebind(zoneName, stub);
-            System.out.println("Agent bound");
-            RunQueries queryRunner = new RunQueries(agent);
-            Thread t = new Thread(queryRunner);
-            t.run();
-        } catch (Exception e) {
-            System.err.println("Agent exception:");
-            e.printStackTrace();
-        }
     }
 
     static public class RunQueries implements Runnable {

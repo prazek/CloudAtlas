@@ -166,7 +166,7 @@ public class TestHierarchy {
     }
 
 
-    private static ValueContact createContact(String path, byte ip1, byte ip2, byte ip3, byte ip4)
+    public static ValueContact createContact(String path, byte ip1, byte ip2, byte ip3, byte ip4)
             throws UnknownHostException {
         return new ValueContact(new PathName(path), InetAddress.getByAddress(new byte[] {
                 ip1, ip2, ip3, ip4
