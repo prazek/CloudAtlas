@@ -79,6 +79,7 @@ public class Agent implements AgentIface {
             if (!zone.getValue().getSons().isEmpty())
                 uninstallQueryInZone(zone.getValue(), name);
         }
+        queryAttributes.remove(name);
     }
 
     public synchronized AttributesMap getQueries() throws RemoteException {
@@ -153,6 +154,7 @@ public class Agent implements AgentIface {
             if (Attribute.isQuery(entry.getKey()))
                 result.add(entry);
         }
+        System.err.println(result);
         return result;
     }
 
@@ -189,10 +191,9 @@ public class Agent implements AgentIface {
 
     private synchronized void uninstallQueryInZone(ZMI z, String queryName) {
         z.getAttributes().remove(queryName);
-        for (Attribute attr :  queryAttributes.get(queryName)) {
+        for (Attribute attr :  queryAttributes.get(new Attribute(queryName))) {
             z.getAttributes().remove(attr);
         }
-        queryAttributes.remove(queryName);
     }
 
     static public class RunQueries implements Runnable {
