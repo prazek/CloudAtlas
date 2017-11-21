@@ -117,7 +117,9 @@ public class Agent implements AgentIface {
         if (!name.startsWith("&"))
             throw new RuntimeException("name must starts with &");
         for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
-            installQueryInZone(zone.getValue(), name, query);
+            // Dont install query in leaf node.
+            if (!zone.getValue().getSons().isEmpty())
+                installQueryInZone(zone.getValue(), name, query);
         }
     }
 
@@ -125,8 +127,26 @@ public class Agent implements AgentIface {
         if (!name.startsWith("&"))
             throw new RuntimeException("name must starts with &");
         for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
-            uninstallQueryInZone(zone.getValue(), name);
+            if (!zone.getValue().getSons().isEmpty())
+                uninstallQueryInZone(zone.getValue(), name);
         }
+    }
+
+    private  AttributesMap getQueriesForZone(ZMI zone) throws RemoteException {
+        AttributesMap result = new AttributesMap();
+        for (Map.Entry<Attribute, Value> entry :  zone.getAttributes()) {
+            if (Attribute.isQuery(entry.getKey()))
+                result.add(entry);
+        }
+        return result;
+    }
+
+    public synchronized AttributesMap getQueries() throws RemoteException {
+        for (Map.Entry<PathName, ZMI> zone : this.zones.entrySet()) {
+            if (!zone.getValue().getSons().isEmpty())
+                return getQueriesForZone(zone.getValue());
+        }
+        return new AttributesMap();
     }
 
     public synchronized void setZoneValue(PathName zoneName, Attribute valueName, Value value) throws RemoteException {
