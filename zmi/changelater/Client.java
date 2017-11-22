@@ -255,7 +255,7 @@ public class Client {
         @Override
         public void handle(HttpExchange t) throws IOException {
             try {
-                Gson gson = new Gson();
+                Gson gson = CustomJsonSerializer.getSerializer();
                 AttributesMap queries = agent.getQueries();
                 //ZMI other = agent.zone(new PathName("/pjwstk"));
                 String response = gson.toJson(queries);
