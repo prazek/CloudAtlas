@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import model.CustomJsonSerializer;
 import model.PathName;
 import model.ZMI;
 
@@ -87,7 +88,7 @@ public class Client {
         @Override
         public void handle(HttpExchange t) throws IOException {
             try {
-                Gson gson = new Gson();
+                Gson gson = new CustomJsonSerializer().getSerializer();
                 HashMap<PathName, ZMI> zmi = agent.zones();
                 //ZMI other = agent.zone(new PathName("/pjwstk"));
                 String response = gson.toJson(zmi);
