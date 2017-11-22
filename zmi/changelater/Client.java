@@ -46,6 +46,7 @@ public class Client {
             server.createContext("/jquery.js", new ServeFileHandler("changelater/jquery.js", "application/javascript"));
             server.createContext("/jquery.flot.js", new ServeFileHandler("changelater/jquery.flot.js", "application/javascript"));
             server.createContext("/zmi.css", new ServeFileHandler("changelater/zmi.css", "text/css"));
+
             server.setExecutor(null); // creates a default executor
             server.start();
             System.out.println("Client running!");
@@ -92,7 +93,6 @@ public class Client {
             try {
                 Gson gson = new CustomJsonSerializer().getSerializer();
                 HashMap<PathName, ZMI> zmi = agent.zones();
-                //ZMI other = agent.zone(new PathName("/pjwstk"));
                 String response = gson.toJson(zmi);
                 t.getResponseHeaders().add("Content-Type", "application/json");
                 t.sendResponseHeaders(200, response.length());
