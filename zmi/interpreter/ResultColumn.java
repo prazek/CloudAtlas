@@ -78,10 +78,10 @@ public class ResultColumn extends Result {
 
     @Override
     public Value getValue() {
-        if (values == null)
+        /*if (values == null)
             return new ValueNull();
-        return values;
-        //throw new UnsupportedOperationException("Not a ResultSingle.");
+        return values;*/
+        throw new UnsupportedOperationException("Not a ResultSingle.");
     }
 
     @Override
