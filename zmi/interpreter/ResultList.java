@@ -38,7 +38,6 @@ public class ResultList extends Result {
         Value perform(Value x);
     }
 
-
     @Override
     protected Result callMe(BinaryOperation operation, Result left) {
         return left.binaryOperationTyped(operation, this);
@@ -46,9 +45,7 @@ public class ResultList extends Result {
 
     @Override
     public Value getValue()  {
-        if (values == null)
-            return new ValueNull();
-        return values;
+        throw new UnsupportedOperationException("Not a ResultSingle.");
     }
 
     @Override
