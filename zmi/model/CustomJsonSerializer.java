@@ -186,7 +186,7 @@ public class CustomJsonSerializer {
     }
 
     static public Gson getSerializer() {
-        GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting();
+        GsonBuilder gsonBuilder = new GsonBuilder().setPrettyPrinting().serializeNulls();
         gsonBuilder.registerTypeAdapter(ValueInt.class, new ValueIntAdapter());
         gsonBuilder.registerTypeAdapter(ValueString.class, new ValueStringAdapter());
         gsonBuilder.registerTypeAdapter(ValueDouble.class, new ValueDoubleAdapter());

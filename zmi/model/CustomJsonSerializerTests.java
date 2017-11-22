@@ -48,7 +48,8 @@ public class CustomJsonSerializerTests {
                 "        \"value\": 0\n" +
                 "      },\n" +
                 "      \"name\": {\n" +
-                "        \"type\": \"ValueString\"\n" +
+                "        \"type\": \"ValueString\",\n" +
+                "        \"value\": null\n" +
                 "      },\n" +
                 "      \"contacts\": {\n" +
                 "        \"type\": \"ValueSet\",\n" +
