@@ -33,6 +33,10 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import model.TypeCollection;
 import model.Value;
 import model.ValueList;
