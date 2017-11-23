@@ -41,7 +41,9 @@
             var table = buildAttributesTable(data);
             console.log(table);
             $("#attributes").html(table);
-            updateNewDataPoint(Date.now(), data.attributes.map.cpu_load.value);
+            console.log(data.attributes.values)
+            console.log(data.attributes.values.cpu_load.value)
+            updateNewDataPoint(Date.now(), data.attributes.values.cpu_load.value);
         }
 
         // TODO(sbarzowski) better name
