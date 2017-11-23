@@ -31,7 +31,7 @@ import java.io.Serializable;
 /**
  * A single value stored as an attribute.
  */
-public abstract class Value implements Serializable {
+public abstract class Value implements Serializable, Comparable<Value>  {
 	/**
 	 * An operation that may be performed on values.
 	 */
@@ -240,4 +240,11 @@ public abstract class Value implements Serializable {
 	 * @return a default value of this type
 	 */
 	public abstract Value getDefaultValue();
+
+	public int compareTo(Value o) {
+		// I am a bad person
+		ValueString a = (ValueString) convertTo(TypePrimitive.STRING);
+		ValueString b = (ValueString) o.convertTo(TypePrimitive.STRING);
+		return a.getValue().compareTo(b.getValue());
+	}
 }

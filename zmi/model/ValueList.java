@@ -24,14 +24,7 @@
 
 package model;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Set;
+import java.util.*;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -114,7 +107,7 @@ public class ValueList extends ValueSimple<List<Value>> implements List<Value> {
 				if(this.type.getElementType().isCompatible(((TypeCollection)type).getElementType())) {
 					if(this.isNull())
 						return new ValueSet(null, this.type.getElementType());
-					Set<Value> l = new HashSet<Value>();
+					SortedSet<Value> l = new TreeSet<Value>();
 					l.addAll(this);
 					return new ValueSet(l, this.type.getElementType());
 				}

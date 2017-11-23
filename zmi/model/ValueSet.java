@@ -24,13 +24,7 @@
 
 package model;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import model.TypeCollection;
 import model.Value;
@@ -44,7 +38,7 @@ import model.ValueSet;
  * 
  * @see java.util.Set
  */
-public class ValueSet extends ValueSimple<Set<Value>> implements Set<Value> {
+public class ValueSet extends ValueSimple<SortedSet<Value>> implements Set<Value> {
 	private TypeCollection type;
 	
 	/**
@@ -53,7 +47,7 @@ public class ValueSet extends ValueSimple<Set<Value>> implements Set<Value> {
 	 * @param value a set which content will be copied to this value
 	 * @param elementType type of elements stored in this set
 	 */
-	public ValueSet(Set<Value> value, Type elementType) {
+	public ValueSet(SortedSet<Value> value, Type elementType) {
 		this(elementType);
 		if(value != null)
 			setValue(value);
@@ -65,7 +59,7 @@ public class ValueSet extends ValueSimple<Set<Value>> implements Set<Value> {
 	 * @param elementType type of elements stored in this set
 	 */
 	public ValueSet(Type elementType) {
-		super(new HashSet<Value>());
+		super(new TreeSet<Value>());
 		type = new TypeCollection(Type.PrimaryType.SET, elementType);
 	}
 	
@@ -84,8 +78,8 @@ public class ValueSet extends ValueSimple<Set<Value>> implements Set<Value> {
 	 * exception.
 	 */
 	@Override
-	public Set<Value> getValue() {
-		return getSet() == null? null : Collections.unmodifiableSet(getSet());
+	public SortedSet<Value> getValue() {
+		return getSet() == null? null : Collections.unmodifiableSortedSet(getSet());
 	}
 	
 	@Override
@@ -93,7 +87,7 @@ public class ValueSet extends ValueSimple<Set<Value>> implements Set<Value> {
 		sameTypesOrThrow(value, Operation.ADD);
 		if(isNull() || value.isNull())
 			return new ValueSet(null, ((TypeCollection)getType()).getElementType());
-		Set<Value> result = new HashSet<Value>(getValue());
+		SortedSet<Value> result = new TreeSet<Value>(getValue());
 		result.addAll(((ValueSet)value).getValue());
 		return new ValueSet(result, ((TypeCollection)getType()).getElementType());
 	}
@@ -104,17 +98,17 @@ public class ValueSet extends ValueSimple<Set<Value>> implements Set<Value> {
 	}
 	
 	@Override
-	public void setValue(Set<Value> set) {
+	public void setValue(SortedSet<Value> set) {
 		if(set == null)
 			super.setValue(null);
 		else {
-			super.setValue(new HashSet<Value>());
+			super.setValue(new TreeSet<Value>());
 			for(Value e : set)
 				add(e);
 		}
 	}
 	
-	private Set<Value> getSet() {
+	private SortedSet<Value> getSet() {
 		return super.getValue();
 	}
 	
