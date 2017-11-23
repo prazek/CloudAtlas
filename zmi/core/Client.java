@@ -1,4 +1,4 @@
-package changelater;
+package core;
 
 
 import com.google.gson.Gson;
@@ -33,7 +33,7 @@ public class Client {
             HttpServer server = HttpServer.create(new InetSocketAddress(8042), 0);
             // Pages
             server.createContext("/", new MainPage());
-            server.createContext("/zmi/", new ServeFileHandler("changelater/zmi.html", "text/html"));
+            server.createContext("/zmi/", new ServeFileHandler("core/zmi.html", "text/html"));
             server.createContext("/setFallbackContact/", new ZMIPage());
             server.createContext("/installedQueries/", new InstalledQueriesPage(agent));
             server.createContext("/installQuery/", new InstallQueryPage(agent));
@@ -42,10 +42,10 @@ public class Client {
             server.createContext("/plot/", new PlotPage());
 
             // Resouces
-            server.createContext("/lib.js", new ServeFileHandler("changelater/lib.js", "application/javascript"));
-            server.createContext("/jquery.js", new ServeFileHandler("changelater/jquery.js", "application/javascript"));
-            server.createContext("/jquery.flot.js", new ServeFileHandler("changelater/jquery.flot.js", "application/javascript"));
-            server.createContext("/zmi.css", new ServeFileHandler("changelater/zmi.css", "text/css"));
+            server.createContext("/lib.js", new ServeFileHandler("core/lib.js", "application/javascript"));
+            server.createContext("/jquery.js", new ServeFileHandler("core/jquery.js", "application/javascript"));
+            server.createContext("/jquery.flot.js", new ServeFileHandler("core/jquery.flot.js", "application/javascript"));
+            server.createContext("/zmi.css", new ServeFileHandler("core/zmi.css", "text/css"));
 
             server.setExecutor(null); // creates a default executor
             server.start();
@@ -153,7 +153,7 @@ public class Client {
         public void handle(HttpExchange t) throws IOException {
             String responseHtml = "xxx";
             try {
-                InputStream html = this.getClass().getClassLoader().getResourceAsStream("changelater/plot.html");
+                InputStream html = this.getClass().getClassLoader().getResourceAsStream("core/plot.html");
 
 
                 responseHtml = inputStreamToString(html);
@@ -236,7 +236,7 @@ public class Client {
 
         private void handleGET(HttpExchange t) throws IOException {
 
-            String response = stringFromFile("changelater/installQuery.html");
+            String response = stringFromFile("core/installQuery.html");
             System.out.println("Response: " + response);
             t.getResponseHeaders().add("Content-Type", "text/html");
             t.sendResponseHeaders(200, response.length());
@@ -321,7 +321,7 @@ public class Client {
 
         private void handleGET(HttpExchange t) throws IOException {
 
-            String response = stringFromFile("changelater/installQuery.html");
+            String response = stringFromFile("core/installQuery.html");
             System.out.println("Response: " + response);
             t.getResponseHeaders().add("Content-Type", "text/html");
             t.sendResponseHeaders(200, response.length());

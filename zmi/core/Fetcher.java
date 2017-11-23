@@ -1,4 +1,4 @@
-package changelater;
+package core;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.RemoteException;
