@@ -1,8 +1,6 @@
 package changelater;
 
-import model.PathName;
-import model.Value;
-import model.ValueInt;
+import model.*;
 
 
 import static org.junit.Assert.*;
@@ -19,6 +17,11 @@ public class AgentTests {
         agent.installQuery("&abc", "SELECT 40 + 2 AS res1");
         res1 = agent.zone(new PathName("/uw")).getAttributes().getOrNull("res1");
         assertEquals(res1, new ValueInt(42L));
+
+        AttributesMap queries = agent.getQueries();
+        AttributesMap expected = new AttributesMap();
+        expected.add("&abc", new ValueString("SELECT 40 + 2 AS res1"));
+        assertEquals(expected.toString(), queries.toString());
 
         try {
             agent.installQuery("&new", "SELECT cpu_load AS x;");
