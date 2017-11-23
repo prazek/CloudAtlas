@@ -1,21 +1,35 @@
+function attributeValueToJson(attrValue) {
+    if (attrValue.type == "ValueSet" || attrValue.type == "ValueList") {
+        return attrValue.value.map(attributeValueToJson);
+    }
+    if (attrValue.type == "ValueContact") {
+        return {"name": attrValue.name, address: attrValue.address}
+    }
+    return attrValue.value;
+}
+
 function attributeValueToString(attrValue) {
-    return JSON.stringify(attrValue);
+    return JSON.stringify(attributeValueToJson(attrValue));
+}
+
+function actionsForAttribute(attrValue) {
+    if (attrValue.type == "ValueInt" || attrValue.type == "ValueDouble" || attrValue == "ValueDuration") {
+        return $("<a href=\"/plot/\">Plot</a>");
+    }
 }
 
 function buildAttributesTable(attrs) {
     var table = $("<table class=\"zmi-attributes\" />");
-    console.log(attrs);
-    console.log(attrs.attributes.values);
     for (var key in attrs.attributes.values) {
-        console.log(key);
         value = attrs.attributes.values[key];
         var row = $("<tr />")
             .append(
                 $("<td />").text(key)
             ).append(
+                $("<td />").html(actionsForAttribute(value))
+            ).append(
                 $("<td />").text(attributeValueToString(value))
             )
-        console.log(row);
         table.append(row);
     }
     return table;

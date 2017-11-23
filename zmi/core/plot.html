@@ -39,20 +39,14 @@
         function newData(data) {
             //$("#attributes").html("<pre>" + JSON.stringify(data, null, 2) + "</pre>");
             var table = buildAttributesTable(data);
-            console.log(table);
             $("#attributes").html(table);
-            console.log(data.attributes.values)
-            console.log(data.attributes.values.cpu_load.value)
             updateNewDataPoint(Date.now(), data.attributes.values.cpu_load.value);
         }
 
         // TODO(sbarzowski) better name
         function update2() {
             $.post("/attributes/", function(data) {
-                //alert("success");
                 newData(data["/uw/violet07"]);
-            }).done(function() {
-                //alert("success2");
             }).fail(function(xhr, status, error) {
                 //alert("error");
                 console.log(xhr);
@@ -84,8 +78,6 @@
 			var t = Date.now() - 14000;
 			normalize(t, data);
 
-            console.log(data);
-
             if (data.length == 0) {
                 return;
             }
@@ -94,7 +86,6 @@
 
             var graphData = prepareGraphData(data, t1);
 
-            console.log(graphData);
             plot.setData([graphData]);
 
 			// Since the axes don't change, we don't need to call plot.setupGrid()
