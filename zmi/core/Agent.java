@@ -1,4 +1,4 @@
-package changelater;
+package core;
 
 import interpreter.Interpreter;
 import interpreter.QueryResult;

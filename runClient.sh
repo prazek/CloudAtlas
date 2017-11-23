@@ -14,12 +14,12 @@ echo java -cp "$CLASSPATH" \
        -Djava.rmi.server.codebase="$CODEBASE"      \
        -Djava.rmi.server.hostname="$HOSTNAME"      \
        -Djava.security.policy=Client.policy         \
-         changelater.Client /uw/violet07
+         core.Client /uw/violet07
 
 java -cp "$CLASSPATH" \
   -Djava.rmi.server.codebase="$CODEBASE" \
   -Djava.rmi.server.hostname="$HOSTNAME" \
   -Djava.security.policy=Client.policy \
-    changelater.Client /uw/violet07
+    core.Client /uw/violet07
 
 
