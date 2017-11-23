@@ -5,10 +5,10 @@ function attributeValueToString(attrValue) {
 function buildAttributesTable(attrs) {
     var table = $("<table class=\"zmi-attributes\" />");
     console.log(attrs);
-    console.log(attrs.attributes.map);
-    for (var key in attrs.attributes.map) {
+    console.log(attrs.attributes.values);
+    for (var key in attrs.attributes.values) {
         console.log(key);
-        value = attrs.attributes.map[key];
+        value = attrs.attributes.values[key];
         var row = $("<tr />")
             .append(
                 $("<td />").text(key)

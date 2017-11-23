@@ -52,10 +52,12 @@
             function updateInstalledQueries() {
                 $.post("/installedQueries/", function(data) {
                     var queries = $("<table />");
-                    for (var q in data.map) {
+                    console.log("Installed");
+                    console.log(data);
+                    for (var q in data.values) {
                         var row = $("<tr />");
                         row.append($("<td />").text(q));
-                        row.append($("<td />").text(attributeValueToString(data.map[q])));
+                        row.append($("<td />").text(attributeValueToString(data.values[q])));
                         var removeButton = $("<button class=\"remove-query-button\" type=\"button\">Remove</button>")
                             .data("queryName", q)
                             .click(function(e) {
