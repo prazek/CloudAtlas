@@ -4,6 +4,7 @@ import model.*;
 import org.hyperic.sigar.*;
 
 import java.io.File;
+import java.util.Scanner;
 
 
 public class MachineStatsFetcher {
@@ -23,10 +24,25 @@ public class MachineStatsFetcher {
         map.add(new Attribute("num_processes"), new ValueInt((long)sigar.getProcList().length));
         map.add(new Attribute("num_cores"), new ValueInt((long)Runtime.getRuntime().availableProcessors()));
 
-
-        // map.add(new Attribute("logged_users")
+        map.add(new Attribute("logged_users"), new ValueInt(runCommand("users | wc -w")));
 
         return map;
     }
 
+    private static long runCommand(String command) {
+        try {
+            String cmd[] = {"/bin/sh",
+                    "-c",
+                    command};
+            Process p = Runtime.getRuntime().exec(cmd);
+            p.waitFor();
+            Scanner s = new Scanner(p.getInputStream()).useDelimiter("\\A");
+            String output = s.hasNext() ? s.next().trim() : "";
+            return Long.parseLong(output);
+        }
+        catch(Exception ex){
+            System.err.println(ex);
+            return -1;
+        }
+    }
 }
