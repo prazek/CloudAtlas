@@ -6,7 +6,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.TreeSet;
 import java.util.List;
 
 public class TestHierarchy {
@@ -54,12 +54,12 @@ public class TestHierarchy {
         list = Arrays.asList(new Value[] {
                 khaki31Contact, whatever01Contact
         });
-        violet07.getAttributes().add("contacts", new ValueSet(new HashSet<Value>(list), TypePrimitive.CONTACT));
+        violet07.getAttributes().add("contacts", new ValueSet(new TreeSet<Value>(list), TypePrimitive.CONTACT));
         violet07.getAttributes().add("cardinality", new ValueInt(1l));
         list = Arrays.asList(new Value[] {
                 violet07Contact,
         });
-        violet07.getAttributes().add("members", new ValueSet(new HashSet<Value>(list), TypePrimitive.CONTACT));
+        violet07.getAttributes().add("members", new ValueSet(new TreeSet<Value>(list), TypePrimitive.CONTACT));
         violet07.getAttributes().add("creation", new ValueTime("2011/11/09 20:8:13.123"));
         violet07.getAttributes().add("cpu_usage", new ValueDouble(0.9));
         violet07.getAttributes().add("num_cores", new ValueInt(3l));
@@ -79,12 +79,12 @@ public class TestHierarchy {
         list = Arrays.asList(new Value[] {
                 violet07Contact, whatever02Contact,
         });
-        khaki31.getAttributes().add("contacts", new ValueSet(new HashSet<Value>(list), TypePrimitive.CONTACT));
+        khaki31.getAttributes().add("contacts", new ValueSet(new TreeSet<Value>(list), TypePrimitive.CONTACT));
         khaki31.getAttributes().add("cardinality", new ValueInt(1l));
         list = Arrays.asList(new Value[] {
                 khaki31Contact
         });
-        khaki31.getAttributes().add("members", new ValueSet(new HashSet<Value>(list), TypePrimitive.CONTACT));
+        khaki31.getAttributes().add("members", new ValueSet(new TreeSet<Value>(list), TypePrimitive.CONTACT));
         khaki31.getAttributes().add("creation", new ValueTime("2011/11/09 20:12:13.123"));
         khaki31.getAttributes().add("cpu_usage", new ValueDouble(null));
         khaki31.getAttributes().add("num_cores", new ValueInt(3l));
@@ -102,12 +102,12 @@ public class TestHierarchy {
         khaki13.getAttributes().add("owner", new ValueString("/uw/khaki13"));
         khaki13.getAttributes().add("timestamp", new ValueTime("2012/11/09 21:03:00.000"));
         list = Arrays.asList(new Value[] {});
-        khaki13.getAttributes().add("contacts", new ValueSet(new HashSet<Value>(list), TypePrimitive.CONTACT));
+        khaki13.getAttributes().add("contacts", new ValueSet(new TreeSet<Value>(list), TypePrimitive.CONTACT));
         khaki13.getAttributes().add("cardinality", new ValueInt(1l));
         list = Arrays.asList(new Value[] {
                 khaki13Contact,
         });
-        khaki13.getAttributes().add("members", new ValueSet(new HashSet<Value>(list), TypePrimitive.CONTACT));
+        khaki13.getAttributes().add("members", new ValueSet(new TreeSet<Value>(list), TypePrimitive.CONTACT));
         khaki13.getAttributes().add("creation", new ValueTime((Long)null));
         khaki13.getAttributes().add("cpu_usage", new ValueDouble(0.1));
         khaki13.getAttributes().add("num_cores", new ValueInt(null));
@@ -125,12 +125,12 @@ public class TestHierarchy {
         list = Arrays.asList(new Value[] {
                 violet07Contact, whatever02Contact,
         });
-        whatever01.getAttributes().add("contacts", new ValueSet(new HashSet<Value>(list), TypePrimitive.CONTACT));
+        whatever01.getAttributes().add("contacts", new ValueSet(new TreeSet<Value>(list), TypePrimitive.CONTACT));
         whatever01.getAttributes().add("cardinality", new ValueInt(1l));
         list = Arrays.asList(new Value[] {
                 whatever01Contact,
         });
-        whatever01.getAttributes().add("members", new ValueSet(new HashSet<Value>(list), TypePrimitive.CONTACT));
+        whatever01.getAttributes().add("members", new ValueSet(new TreeSet<Value>(list), TypePrimitive.CONTACT));
         whatever01.getAttributes().add("creation", new ValueTime("2012/10/18 07:03:00.000"));
         whatever01.getAttributes().add("cpu_usage", new ValueDouble(0.1));
         whatever01.getAttributes().add("num_cores", new ValueInt(7l));
@@ -148,12 +148,12 @@ public class TestHierarchy {
         list = Arrays.asList(new Value[] {
                 khaki31Contact, whatever01Contact,
         });
-        whatever02.getAttributes().add("contacts", new ValueSet(new HashSet<Value>(list), TypePrimitive.CONTACT));
+        whatever02.getAttributes().add("contacts", new ValueSet(new TreeSet<Value>(list), TypePrimitive.CONTACT));
         whatever02.getAttributes().add("cardinality", new ValueInt(1l));
         list = Arrays.asList(new Value[] {
                 whatever02Contact,
         });
-        whatever02.getAttributes().add("members", new ValueSet(new HashSet<Value>(list), TypePrimitive.CONTACT));
+        whatever02.getAttributes().add("members", new ValueSet(new TreeSet<Value>(list), TypePrimitive.CONTACT));
         whatever02.getAttributes().add("creation", new ValueTime("2012/10/18 07:04:00.000"));
         whatever02.getAttributes().add("cpu_usage", new ValueDouble(0.4));
         whatever02.getAttributes().add("num_cores", new ValueInt(13l));
