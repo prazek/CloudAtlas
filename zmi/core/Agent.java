@@ -68,7 +68,7 @@ public class Agent implements AgentIface {
         for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
             // Dont install query in leaf node.
             if (!zone.getValue().getSons().isEmpty())
-                installQueryInZone(zone.getValue(), name, query);
+                installQueryInZone(zone.getValue(), new Attribute(name), query);
         }
     }
 
@@ -158,7 +158,7 @@ public class Agent implements AgentIface {
         return result;
     }
 
-    private synchronized void installQueryInZone(ZMI zmi, String queryName, String query) throws Exception {
+    private synchronized void installQueryInZone(ZMI zmi, Attribute queryName, String query) throws Exception {
         System.err.println("Installing query " );
         /*if (zmi.getSons().isEmpty()) {
             throw new RuntimeException("Installing query on leaf node");
@@ -183,7 +183,7 @@ public class Agent implements AgentIface {
                                     "] that was added by other query or saved as attribute");
                 }
             }
-            queryAttributes.put(new Attribute(queryName), createdAttributes);
+            queryAttributes.put(queryName, createdAttributes);
         }
         applyQueryRunChanges(zmi, results);
         zmi.getAttributes().add(queryName, q);
