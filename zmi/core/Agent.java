@@ -121,7 +121,7 @@ public class Agent implements AgentIface {
 
             AgentIface stub =
                     (AgentIface) UnicastRemoteObject.exportObject(agent, 0);
-            Registry registry = LocateRegistry.getRegistry();
+            Registry registry = LocateRegistry.getRegistry(4242);
             registry.rebind(zoneName, stub);
             System.out.println("Agent bound");
             RunQueries queryRunner = new RunQueries(agent);

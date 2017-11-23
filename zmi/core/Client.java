@@ -27,7 +27,7 @@ public class Client {
         }
         String agentName = args[0];
         try {
-            Registry registry = LocateRegistry.getRegistry("localhost");
+            Registry registry = LocateRegistry.getRegistry(4242);
             AgentIface agent = (AgentIface) registry.lookup(agentName);
 
             HttpServer server = HttpServer.create(new InetSocketAddress(8042), 0);
