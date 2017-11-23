@@ -33,7 +33,7 @@
                 });
             }
 
-            //var myInterval = setInterval(update, 500);
+            var myInterval = setInterval(update, 1000);
 
             update();
 
@@ -106,10 +106,14 @@
     <div id="installed-query-list"></div>
     <h2>Install query</h2>
     <form method="post" id="install-query-form">
+        <div>
         <label for="queryName">Query Name</label>
         <input id="queryName" name="queryName" type="text">
+        </div>
+        <div>
         <label for="queryCode">Query</label>
         <input id="queryCode" name="query" type="text">
+        </div>
         <input type="submit">
     </form>
 </div>

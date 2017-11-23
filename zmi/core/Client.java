@@ -197,7 +197,9 @@ public class Client {
         public void handle(HttpExchange t) throws IOException {
             try {
                 if (t.getRequestMethod().equals("GET")) {
-                    handleGET(t);
+                    t.sendResponseHeaders(405, 0);
+                    OutputStream os = t.getResponseBody();
+                    os.close();
                     return;
                 } else if (t.getRequestMethod().equals("POST")) {
                     handlePOST(t);
@@ -226,17 +228,6 @@ public class Client {
                 os.close();
                 return;
             }
-            System.out.println("Response: " + response);
-            t.getResponseHeaders().add("Content-Type", "text/html");
-            t.sendResponseHeaders(200, response.length());
-            OutputStream os = t.getResponseBody();
-            os.write(response.getBytes());
-            os.close();
-        }
-
-        private void handleGET(HttpExchange t) throws IOException {
-
-            String response = stringFromFile("core/installQuery.html");
             System.out.println("Response: " + response);
             t.getResponseHeaders().add("Content-Type", "text/html");
             t.sendResponseHeaders(200, response.length());
@@ -282,7 +273,9 @@ public class Client {
         public void handle(HttpExchange t) throws IOException {
             try {
                 if (t.getRequestMethod().equals("GET")) {
-                    handleGET(t);
+                    t.sendResponseHeaders(405, 0);
+                    OutputStream os = t.getResponseBody();
+                    os.close();
                     return;
                 } else if (t.getRequestMethod().equals("POST")) {
                     handlePOST(t);
@@ -311,17 +304,6 @@ public class Client {
                 os.close();
                 return;
             }
-            System.out.println("Response: " + response);
-            t.getResponseHeaders().add("Content-Type", "text/html");
-            t.sendResponseHeaders(200, response.length());
-            OutputStream os = t.getResponseBody();
-            os.write(response.getBytes());
-            os.close();
-        }
-
-        private void handleGET(HttpExchange t) throws IOException {
-
-            String response = stringFromFile("core/installQuery.html");
             System.out.println("Response: " + response);
             t.getResponseHeaders().add("Content-Type", "text/html");
             t.sendResponseHeaders(200, response.length());
