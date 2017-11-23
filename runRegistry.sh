@@ -9,4 +9,4 @@ unset IFS
 CODEBASE="${SOURCES[@]/#/file://$PWD/}"
 
 echo $CODEBASE
-rmiregistry -J-Djava.rmi.server.codebase="$CODEBASE"
+rmiregistry -J-Djava.rmi.server.codebase="$CODEBASE" 9429

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 SOURCES=(out/production/CloudAtlas/ out/production/CloudAtlas/lib/*.jar)
 
