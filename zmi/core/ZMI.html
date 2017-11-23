@@ -43,6 +43,9 @@
                 var code = $("#queryCode").val();
                 $.post("/installQuery/", {"queryName": name, "query": code}, function(data) {
                 }).fail(function(xhr, status, error) {
+                    if (xhr.status == 400) {
+                        $("#maybeErrorInstallQuery").text(xhr.responseText);
+                    }
                     console.log(xhr);
                     console.log(status);
                     console.log(error);
@@ -116,6 +119,7 @@
         </div>
         <input type="submit">
     </form>
+    <pre id="maybeErrorInstallQuery"></pre>
 </div>
 
 </body>
