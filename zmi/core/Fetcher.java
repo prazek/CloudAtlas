@@ -61,7 +61,7 @@ public class Fetcher {
         }
         String agentName = args[0];
         try {
-            Registry registry = LocateRegistry.getRegistry("localhost");
+            Registry registry = LocateRegistry.getRegistry(4242);
             AgentIface stub = (AgentIface) registry.lookup(agentName);
             AttributesMap machineInfo = MachineInfoFetcher.getMachineInfo();
 
