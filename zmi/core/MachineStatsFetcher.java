@@ -18,10 +18,8 @@ public class MachineStatsFetcher {
 
         map.add(new Attribute("free_disc"), new ValueInt(new File("/").getFreeSpace()));
         map.add(new Attribute("total_disc"), new ValueInt(new File("/").getTotalSpace()));
-        System.err.println("before");
-        map.add(new Attribute("free_ram"), new ValueInt(Runtime.getRuntime().freeMemory())); //  sigar.getMem().getFree()));
-        // todo fix total memory
-        map.add(new Attribute("total_ram"), new ValueInt(Runtime.getRuntime().totalMemory()));  //sigar.getMem().getTotal()));
+        map.add(new Attribute("free_ram"), new ValueInt(getFreeMemory())); //  sigar.getMem().getFree()));
+        map.add(new Attribute("total_ram"), new ValueInt(getTotalMemory()));  //sigar.getMem().getTotal()));
         map.add(new Attribute("free_swap"), new ValueInt(sigar.getSwap().getFree()));
         map.add(new Attribute("total_swap"), new ValueInt(sigar.getSwap().getTotal()));
         map.add(new Attribute("num_processes"), new ValueInt((long)sigar.getProcList().length));
@@ -61,9 +59,8 @@ public class MachineStatsFetcher {
                     "-c",
                     command};
             Process p = Runtime.getRuntime().exec(cmd);
-            System.err.println("waiting");
-            p.waitFor();
-            System.err.println("finished");
+            if (p.waitFor() != 0)
+                System.err.println(command + " failed");
             return p.getInputStream();
         }
         catch(Exception ex) {
@@ -82,30 +79,39 @@ public class MachineStatsFetcher {
         return -1;
     }
 
-    private static Pattern topFreeMemoryPattern = Pattern.compile(".*\\s+(\\d+)(\\w)\\s+(resident).*");
+    //private static Pattern topFreeMemoryPattern = Pattern.compile(".*MemRegions:.*\\s+(\\d+)(\\w)\\s+(resident).*");
     private static long getFreeMemory() {
-        InputStream stream = runCommandRaw("top -l1 -stats=mem");
-        stream.toString();
+        InputStream stream = runCommandRaw("top -l1 -stats mem");
         Scanner scanner = new Scanner(stream).useDelimiter("\\A");
-        System.out.print(scanner.toString());
-        System.out.println("czy ma?");
 
         while (scanner.hasNextLine()) {
             String topKek = scanner.nextLine();
-            System.out.print(topKek);
             Matcher matcher = topFreeMemoryPattern.matcher(topKek);
             if (matcher.matches()) {
-                System.err.println("Matcherd");
                 int multiplier = parseUnit(matcher.group(2));
-                System.err.println(multiplier);
-
                 int result = Integer.parseInt(matcher.group(1));
-                System.err.println(result);
-
                 return result * multiplier;
             }
         }
         return -1;
     }
+
+    //private static Pattern topTotalMemoryPattern = Pattern.compile(".*MemRegions:.*\\s+(\\d+)(\\w)\\s+(total).*");
+    private static long getTotalMemory() {
+        InputStream stream = runCommandRaw("top -l1 -stats mem");
+        Scanner scanner = new Scanner(stream).useDelimiter("\\A");
+
+        while (scanner.hasNextLine()) {
+            String topKek = scanner.nextLine();
+            Matcher matcher = topTotalMemoryPattern.matcher(topKek);
+            if (matcher.matches()) {
+                int multiplier = parseUnit(matcher.group(2));
+                int result = Integer.parseInt(matcher.group(1));
+                return result * multiplier;
+            }
+        }
+        return -1;
+    }
+
 
 }
