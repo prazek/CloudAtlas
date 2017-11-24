@@ -5,6 +5,9 @@ function attributeValueToJson(attrValue) {
     if (attrValue.type == "ValueContact") {
         return {"name": attrValue.name, address: attrValue.address}
     }
+    if (attrValue.type == "ValueTime") {
+        return new Date(attrValue.value).toISOString();;
+    }
     return attrValue.value;
 }
 
