@@ -10,7 +10,8 @@
     <script type="text/javascript">
 
     $(function() {
-
+        var key = "cpu_load";
+        var zone = "/uw/violet07"
         var data = []
 
         function updateNewDataPoint(x, y) {
@@ -37,16 +38,17 @@
         }
 
         function newData(data) {
-            //$("#attributes").html("<pre>" + JSON.stringify(data, null, 2) + "</pre>");
-            var table = buildAttributesTable(data);
-            $("#attributes").html(table);
-            updateNewDataPoint(Date.now(), data.attributes.values.cpu_load.value);
+            var v = data.attributes.values[key].value;
+            updateNewDataPoint(Date.now(), v);
+            $("#zone").text(zone);
+            $("#key").text(key);
+            $("#value").text(v);
         }
 
         // TODO(sbarzowski) better name
         function update2() {
             $.post("/attributes/", function(data) {
-                newData(data["/uw/violet07"]);
+                newData(data[zone]);
             }).fail(function(xhr, status, error) {
                 //alert("error");
                 console.log(xhr);
@@ -58,20 +60,29 @@
         //update();
         var myInterval = setInterval(update2, 250);
 
-		var plot = $.plot("#placeholder", [ data ], {
-			series: {
-				shadowSize: 0	// Drawing is faster without shadows
-			},
-			yaxis: {
-				min: 0,
-				max: 1
-			},
-			xaxis: {
-				show: false,
-				min: 0,
-				max: 10000
-			}
-		});
+		var plot;
+
+		function preparePlot() {
+		    var yMin = parseFloat($("#yMin").val());
+		    var yMax = parseFloat($("#yMax").val());
+		    console.log(yMin);
+		    plot = $.plot("#placeholder", [ data ], {
+                series: {
+                    shadowSize: 0	// Drawing is faster without shadows
+                },
+                yaxis: {
+                    min: yMin,
+                    max: yMax
+                },
+                xaxis: {
+                    show: false,
+                    min: 0,
+                    max: 10000
+                }
+            });
+		}
+
+		preparePlot();
 
 		function update() {
 		    // TODO(sbarzowski) - constants for stuff
@@ -97,6 +108,11 @@
 		var myInterval = setInterval(update, 30);
 
 		update();
+
+		$("#yForm").submit(function(e) {
+		    e.preventDefault();
+		    preparePlot();
+		});
 	});
 
 	</script>
@@ -108,7 +124,20 @@
 </div>
 
 <div id="attributes">
-
+    <p>Zone: <span id="zone"></span></p>
+    <p><span id="key"></span></p>
+    <p><span id="value"></span></p>
+    <form id="yForm">
+        <div>
+            <label for="yMin">yMin:</label>
+            <input id="yMin" value="0">
+        </div>
+        <div>
+            <label for="yMax">yMax:</label>
+            <input id="yMax" value="1">
+        </div>
+        <input type="submit">
+    </form>
 </div>
 
 <div id="content">
