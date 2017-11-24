@@ -6,8 +6,6 @@ import org.hyperic.sigar.*;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Scanner;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 public class MachineStatsFetcher {
@@ -18,8 +16,8 @@ public class MachineStatsFetcher {
 
         map.add(new Attribute("free_disc"), new ValueInt(new File("/").getFreeSpace()));
         map.add(new Attribute("total_disc"), new ValueInt(new File("/").getTotalSpace()));
-        map.add(new Attribute("free_ram"), new ValueInt(getFreeMemory())); //  sigar.getMem().getFree()));
-        map.add(new Attribute("total_ram"), new ValueInt(getTotalMemory()));  //sigar.getMem().getTotal()));
+        map.add(new Attribute("free_ram"), new ValueInt(sigar.getMem().getFree()));
+        map.add(new Attribute("total_ram"), new ValueInt(sigar.getMem().getTotal()));
         map.add(new Attribute("free_swap"), new ValueInt(sigar.getSwap().getFree()));
         map.add(new Attribute("total_swap"), new ValueInt(sigar.getSwap().getTotal()));
         map.add(new Attribute("num_processes"), new ValueInt((long)sigar.getProcList().length));
@@ -67,50 +65,6 @@ public class MachineStatsFetcher {
             System.err.println(ex);
             return null;
         }
-    }
-
-    private static int parseUnit(String unit) {
-        if (unit.equals("M"))
-            return 1;
-        if (unit.equals("G"))
-            return 1024;
-        if (unit.equals("T"))
-            return 1024 * 1024;
-        return -1;
-    }
-
-    //private static Pattern topFreeMemoryPattern = Pattern.compile(".*MemRegions:.*\\s+(\\d+)(\\w)\\s+(resident).*");
-    private static long getFreeMemory() {
-        InputStream stream = runCommandRaw("top -l1 -stats mem");
-        Scanner scanner = new Scanner(stream).useDelimiter("\\A");
-
-        while (scanner.hasNextLine()) {
-            String topKek = scanner.nextLine();
-            Matcher matcher = topFreeMemoryPattern.matcher(topKek);
-            if (matcher.matches()) {
-                int multiplier = parseUnit(matcher.group(2));
-                int result = Integer.parseInt(matcher.group(1));
-                return result * multiplier;
-            }
-        }
-        return -1;
-    }
-
-    //private static Pattern topTotalMemoryPattern = Pattern.compile(".*MemRegions:.*\\s+(\\d+)(\\w)\\s+(total).*");
-    private static long getTotalMemory() {
-        InputStream stream = runCommandRaw("top -l1 -stats mem");
-        Scanner scanner = new Scanner(stream).useDelimiter("\\A");
-
-        while (scanner.hasNextLine()) {
-            String topKek = scanner.nextLine();
-            Matcher matcher = topTotalMemoryPattern.matcher(topKek);
-            if (matcher.matches()) {
-                int multiplier = parseUnit(matcher.group(2));
-                int result = Integer.parseInt(matcher.group(1));
-                return result * multiplier;
-            }
-        }
-        return -1;
     }
 
 

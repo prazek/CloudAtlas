@@ -1,5 +1,7 @@
 package core;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
@@ -12,6 +14,7 @@ import org.hyperic.sigar.SigarException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
+import java.util.Properties;
 
 import static java.lang.System.exit;
 import static java.lang.Thread.sleep;
@@ -20,20 +23,25 @@ import static java.lang.Thread.sleep;
 public class Fetcher {
     private static Sigar sigar = new Sigar();
 
-    // TODO make it configurable via .ini file.
-    private static int collectionInterval = 300; //ms
-    private static int averagingInterval = 1000; // ms
+    private int collectionInterval = 300; //ms
+    private int averagingInterval = 1000; // ms
 
     private Deque<AttributesMap> statsHistory;
     private PathName agentPathName;
 
-    public Fetcher(String agentName) {
+    public Fetcher(String agentName, Properties config) {
         agentPathName = new PathName(agentName);
         statsHistory = new ArrayDeque<>();
+
+        collectionInterval = Integer.parseInt(config.getProperty("collection_interval"));
+        averagingInterval = Integer.parseInt(config.getProperty("averaging_interval"));
+        
+
+
     }
 
     public void updateHistory() throws SigarException {
-        int size = Fetcher.averagingInterval / collectionInterval;
+        int size = averagingInterval / collectionInterval;
         AttributesMap currentState = MachineStatsFetcher.getMachineStats(sigar);
         assert (statsHistory.size() <= size);
         if (statsHistory.size() == size)
@@ -52,20 +60,25 @@ public class Fetcher {
     }
 
     public static void main(String[] args) throws RemoteException {
-        if (args.length < 1) {
-            System.err.println("Usage: ./fetcher zone_name");
+        if (args.length < 2) {
+            System.err.println("Usage: ./fetcher zone_name fetcher.ini");
             exit(1);
         }
         if (System.getSecurityManager() == null) {
             System.setSecurityManager(new SecurityManager());
         }
         String agentName = args[0];
+        String iniFileName = args[1];
         try {
             Registry registry = LocateRegistry.getRegistry(4242);
             AgentIface stub = (AgentIface) registry.lookup(agentName);
             AttributesMap machineInfo = MachineInfoFetcher.getMachineInfo();
 
-            Fetcher fetcher = new Fetcher(agentName);
+            InputStream iniFile = new FileInputStream(iniFileName);
+            Properties config = new Properties();
+            config.load(iniFile);
+
+            Fetcher fetcher = new Fetcher(agentName, config);
             fetcher.sendAttributes(stub, machineInfo);
 
             while (true) {
@@ -73,7 +86,7 @@ public class Fetcher {
                 AttributesMap averageStats = fetcher.calculateAverage();
 
                 fetcher.sendAttributes(stub, averageStats);
-                sleep(collectionInterval);
+                sleep(fetcher.collectionInterval);
             }
         } catch (Exception e) {
             System.err.println("Fetcher exception:");
