@@ -34,10 +34,6 @@ public class Agent implements AgentIface {
     }
 
     private synchronized void addZMI(ZMI zmi, PathName parentName) {
-        // TODO what if name changes?
-        // TODO what if some invalid value is saved as name?
-
-
         PathName path;
         if (parentName == null) {
             path = PathName.ROOT;
@@ -62,24 +58,24 @@ public class Agent implements AgentIface {
         return zmi;
     }
 
-    public synchronized void installQuery(String name, String query) throws RemoteException, Exception {
-        if (!name.startsWith("&"))
+    public synchronized void installQuery(String queryCertificate, String query) throws RemoteException, Exception {
+        if (!queryCertificate.startsWith("&"))
             throw new RuntimeException("name must start with &");
         for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
             // Dont install query in leaf node.
             if (!zone.getValue().getSons().isEmpty())
-                installQueryInZone(zone.getValue(), new Attribute(name), query);
+                installQueryInZone(zone.getValue(), new Attribute(queryCertificate), query);
         }
     }
 
-    public synchronized void uninstallQuery(String name) throws RemoteException {
-        if (!name.startsWith("&"))
+    public synchronized void uninstallQuery(String queryCertificate) throws RemoteException {
+        if (!queryCertificate.startsWith("&"))
             throw new RuntimeException("name must start with &");
         for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
             if (!zone.getValue().getSons().isEmpty())
-                uninstallQueryInZone(zone.getValue(), name);
+                uninstallQueryInZone(zone.getValue(), queryCertificate);
         }
-        queryAttributes.remove(name);
+        queryAttributes.remove(queryCertificate);
     }
 
     public synchronized AttributesMap getQueries() throws RemoteException {
@@ -145,9 +141,7 @@ public class Agent implements AgentIface {
             System.out.println("Applying result for [" + r.getName() + "] with value [" + r.getValue() + "]");
         }
     }
-
-
-
+    
     private AttributesMap getQueriesForZone(ZMI zone) throws RemoteException {
         AttributesMap result = new AttributesMap();
         for (Map.Entry<Attribute, Value> entry :  zone.getAttributes()) {
@@ -158,21 +152,21 @@ public class Agent implements AgentIface {
         return result;
     }
 
-    private synchronized void installQueryInZone(ZMI zmi, Attribute queryName, String query) throws Exception {
+    private synchronized void installQueryInZone(ZMI zmi, Attribute queryCertificate, String query) throws Exception {
         System.err.println("Installing query " );
-        /*if (zmi.getSons().isEmpty()) {
+        if (zmi.getSons().isEmpty()) {
             throw new RuntimeException("Installing query on leaf node");
-        }*/
-        Value q = new ValueString(query); // TODO query certificate
+        }
+        Value q = new ValueString(query);
 
-        if (zmi.getAttributes().getOrNull(queryName) != null) {
-            throw new RuntimeException("Duplicated query of name [" + queryName + "]");
+        if (zmi.getAttributes().getOrNull(queryCertificate) != null) {
+            throw new RuntimeException("Duplicated query of name [" + queryCertificate + "]");
         }
 
         List<QueryResult> results = runQueryInZone(zmi, query);
 
         // Put attributes if first run of this query
-        if (!queryAttributes.containsKey(queryName)) {
+        if (!queryAttributes.containsKey(queryCertificate)) {
             ArrayList<Attribute> createdAttributes = new ArrayList<>();
             for (QueryResult r : results) {
                 Attribute producedValueName = r.getName();
@@ -183,10 +177,10 @@ public class Agent implements AgentIface {
                                     "] that was added by other query or saved as attribute");
                 }
             }
-            queryAttributes.put(queryName, createdAttributes);
+            queryAttributes.put(queryCertificate, createdAttributes);
         }
         applyQueryRunChanges(zmi, results);
-        zmi.getAttributes().add(queryName, q);
+        zmi.getAttributes().add(queryCertificate, q);
     }
 
     private synchronized void uninstallQueryInZone(ZMI z, String queryName) {
