@@ -89,7 +89,7 @@ public class CustomJsonSerializer {
             JsonObject obj = new JsonObject();
             obj.addProperty("type", src.getClass().getSimpleName());
             obj.addProperty("name", src.getName().getName());
-            obj.addProperty("address", src.getAddress().toString());
+            obj.addProperty("address", src.getAddress().getHostName());
             return obj;
         }
     }
