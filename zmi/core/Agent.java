@@ -207,7 +207,8 @@ public class Agent implements AgentIface {
                         Attribute queryName = attribute.getKey();
                         ValueString query = (ValueString)attribute.getValue();
                         try {
-                            agent.runQueryInZone(zmi, query.getValue());
+                            List<QueryResult> results = agent.runQueryInZone(zmi, query.getValue());
+                            agent.applyQueryRunChanges(zmi, results);
                         }
                         catch (Exception ex) {
                             System.err.println("Exception in updater:");
