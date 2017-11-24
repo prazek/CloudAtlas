@@ -10,9 +10,17 @@
     <script type="text/javascript">
 
     $(function() {
-        var key = "cpu_load";
-        var zone = "/uw/violet07"
+        var prefix = '/plot/'; // FRAGILE
         var data = []
+        var path = window.location.pathname;
+        var pathParts = path.split('@')
+        var key = pathParts[0].slice(prefix.length);
+        var zone = pathParts[1];
+
+        var initialized = false;
+
+        console.log(key);
+        console.log(zone);
 
         function updateNewDataPoint(x, y) {
             data.push([x, y]);
@@ -82,7 +90,15 @@
             });
 		}
 
-		preparePlot();
+        function autoMax() {
+            var maxValue = Math.max.apply(Math, data.map(function(x) { return x[1]; }));
+            $("#yMax").val(maxValue * 1.5);
+        }
+
+        $("#autoMax").click(function(e) {
+            autoMax();
+            preparePlot();
+        });
 
 		function update() {
 		    // TODO(sbarzowski) - constants for stuff
@@ -91,6 +107,13 @@
 
             if (data.length == 0) {
                 return;
+            }
+
+            if (!initialized) {
+                console.log(data);
+                autoMax();
+                preparePlot();
+                initialized = true;
             }
 
             var t1 = Date.now() - 11000;
@@ -120,13 +143,11 @@
 <body>
 
 <div id="header">
-    <h2>Real-time updates</h2>
+    <h2>Plotting: <span id="key"></span>@<span id="zone"></span></h2>
 </div>
 
 <div id="attributes">
-    <p>Zone: <span id="zone"></span></p>
-    <p><span id="key"></span></p>
-    <p><span id="value"></span></p>
+    <p>Value: <span id="value"></span></p>
     <form id="yForm">
         <div>
             <label for="yMin">yMin:</label>
@@ -134,9 +155,10 @@
         </div>
         <div>
             <label for="yMax">yMax:</label>
-            <input id="yMax" value="1">
+            <input id="yMax">
         </div>
         <input type="submit">
+        <button id="autoMax">Auto Max</button>
     </form>
 </div>
 

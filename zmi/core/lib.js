@@ -12,13 +12,14 @@ function attributeValueToString(attrValue) {
     return JSON.stringify(attributeValueToJson(attrValue));
 }
 
-function actionsForAttribute(attrValue) {
+function actionsForAttribute(zone, attrName, attrValue) {
     if (attrValue.type == "ValueInt" || attrValue.type == "ValueDouble" || attrValue == "ValueDuration") {
-        return $("<a href=\"/plot/\">Plot</a>");
+        var plotUrl = "/plot/" + attrName + "@" + zone;
+        return $("<a href=\"" + plotUrl + "\">Plot</a>");
     }
 }
 
-function buildAttributesTable(attrs) {
+function buildAttributesTable(zone, attrs) {
     var table = $("<table class=\"zmi-attributes\" />");
     for (var key in attrs.attributes.values) {
         value = attrs.attributes.values[key];
@@ -26,7 +27,7 @@ function buildAttributesTable(attrs) {
             .append(
                 $("<td />").text(key)
             ).append(
-                $("<td />").html(actionsForAttribute(value))
+                $("<td />").html(actionsForAttribute(zone, key, value))
             ).append(
                 $("<td />").text(attributeValueToString(value))
             )
