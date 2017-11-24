@@ -19,9 +19,6 @@
 
         var initialized = false;
 
-        console.log(key);
-        console.log(zone);
-
         function updateNewDataPoint(x, y) {
             data.push([x, y]);
         }
@@ -53,8 +50,7 @@
             $("#value").text(v);
         }
 
-        // TODO(sbarzowski) better name
-        function update2() {
+        function updateAttributes() {
             $.post("/attributes/", function(data) {
                 newData(data[zone]);
             }).fail(function(xhr, status, error) {
@@ -65,15 +61,13 @@
             });
         }
 
-        //update();
-        var myInterval = setInterval(update2, 250);
+        var myInterval = setInterval(updateAttributes, 250);
 
 		var plot;
 
 		function preparePlot() {
 		    var yMin = parseFloat($("#yMin").val());
 		    var yMax = parseFloat($("#yMax").val());
-		    console.log(yMin);
 		    plot = $.plot("#placeholder", [ data ], {
                 series: {
                     shadowSize: 0	// Drawing is faster without shadows
@@ -110,7 +104,6 @@
             }
 
             if (!initialized) {
-                console.log(data);
                 autoMax();
                 preparePlot();
                 initialized = true;
