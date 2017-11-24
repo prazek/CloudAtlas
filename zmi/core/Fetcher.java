@@ -11,13 +11,13 @@ import model.*;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
+import java.util.function.BiFunction;
+import java.util.stream.IntStream;
 
 import static java.lang.System.exit;
 import static java.lang.Thread.sleep;
+import static java.util.Arrays.setAll;
 
 
 public class Fetcher {
@@ -25,9 +25,10 @@ public class Fetcher {
 
     private int collectionInterval = 300; //ms
     private int averagingInterval = 1000; // ms
-
+    private String avgMethod;
     private Deque<AttributesMap> statsHistory;
     private PathName agentPathName;
+
 
     public Fetcher(String agentName, Properties config) {
         agentPathName = new PathName(agentName);
@@ -35,8 +36,18 @@ public class Fetcher {
 
         collectionInterval = Integer.parseInt(config.getProperty("collection_interval"));
         averagingInterval = Integer.parseInt(config.getProperty("averaging_interval"));
-        
+        setAvgMethod(config.getProperty("avg_method"));
+    }
 
+    private void setAvgMethod(String averagingMethod) {
+        if (averagingMethod.equals("avg")) {
+            avgMethod = "avg";
+        }
+        else if (averagingMethod.equals("exp")) {
+            avgMethod = "exp";
+        }
+        else
+            throw new RuntimeException("Unsupported averaging method [" + averagingMethod + "]");
 
     }
 
@@ -50,9 +61,16 @@ public class Fetcher {
         statsHistory.add(currentState);
     }
 
+    public AttributesMap calculateExponentialAverage() {
+        AttributesMap combined = new AttributesMap();
+        for (AttributesMap states : statsHistory)
+            expMaps(combined, states);
+        return combined;
+    }
+
     public AttributesMap calculateAverage() {
         AttributesMap combined = new AttributesMap();
-        for (AttributesMap states: statsHistory)
+        for (AttributesMap states : statsHistory)
             addMaps(combined, states);
 
         divideValues(combined, statsHistory.size());
@@ -83,14 +101,36 @@ public class Fetcher {
 
             while (true) {
                 fetcher.updateHistory();
-                AttributesMap averageStats = fetcher.calculateAverage();
-
+                AttributesMap averageStats;
+                if (fetcher.avgMethod.equals("avg"))
+                    averageStats = fetcher.calculateAverage();
+                else if (fetcher.avgMethod.equals("exp"))
+                    averageStats = fetcher.calculateExponentialAverage();
+                else
+                    throw new RuntimeException("Unknown avg");
                 fetcher.sendAttributes(stub, averageStats);
                 sleep(fetcher.collectionInterval);
             }
         } catch (Exception e) {
             System.err.println("Fetcher exception:");
             e.printStackTrace();
+        }
+    }
+
+
+    private static void expMaps(AttributesMap combined, AttributesMap other) {
+        Value p = new ValueDouble(0.8);
+        Value mp = new ValueDouble(0.2);
+        for (Map.Entry<Attribute, Value> stat : other) {
+            Value accumulated = combined.getOrNull(stat.getKey());
+            Value toAccumulate = stat.getValue();
+            if (accumulated == null)
+                accumulated = toAccumulate;
+            else
+                accumulated = accumulated.convertTo(TypePrimitive.DOUBLE).multiply(mp).
+                        addValue(toAccumulate.convertTo(TypePrimitive.DOUBLE).multiply(p));
+
+            combined.addOrChange(stat.getKey(), accumulated);
         }
     }
 
