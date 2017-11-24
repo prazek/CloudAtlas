@@ -125,7 +125,7 @@ public class Client {
                 return;
             }
             byte[] response = responseHtml.getBytes();
-            System.out.println(mimeType);
+            //System.out.println(mimeType);
             t.getResponseHeaders().add("Content-Type", mimeType);
             t.sendResponseHeaders(200, response.length);
             OutputStream os = t.getResponseBody();
@@ -148,7 +148,7 @@ public class Client {
                 System.err.println(e);
             }
             String response = responseHtml;
-            System.out.println("Response: " + response);
+            //System.out.println("Response: " + response);
             t.getResponseHeaders().add("Content-Type", "text/html");
             t.sendResponseHeaders(200, response.length());
             OutputStream os = t.getResponseBody();
@@ -159,7 +159,7 @@ public class Client {
 
     private static Map<String, String> parseFormUrlencoded(String data) throws UnsupportedEncodingException {
         String[] pairs = data.split("\\&");
-        System.err.println(data);
+        //System.err.println(data);
         Map<String, String> result = new HashMap<>();
         for (int i = 0; i < pairs.length; i++) {
             String[] fields = pairs[i].split("=", 2);
