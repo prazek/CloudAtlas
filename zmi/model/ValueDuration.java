@@ -116,7 +116,6 @@ public class ValueDuration extends ValueSimple<Long> {
 	}
 	
 	private static long parseDuration(String value) {
-		// TODO
 		throw new UnsupportedOperationException("Not yet implemented");
 	}
 	
