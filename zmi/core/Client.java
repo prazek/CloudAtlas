@@ -2,21 +2,24 @@ package core;
 
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-import model.CustomJsonSerializer;
-import model.AttributesMap;
-import model.PathName;
-import model.ZMI;
+import model.*;
 
 import java.io.*;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 
@@ -34,7 +37,7 @@ public class Client {
             // Pages
             server.createContext("/", new MainPage());
             server.createContext("/zmi/", new ServeFileHandler("core/zmi.html", "text/html"));
-            server.createContext("/setFallbackContact/", new ZMIPage());
+            server.createContext("/fallbackContacts/", new ContactsPage(agent));
             server.createContext("/installedQueries/", new InstalledQueriesPage(agent));
             server.createContext("/installQuery/", new InstallQueryPage(agent));
             server.createContext("/uninstallQuery/", new UninstallQueryPage(agent));
@@ -42,6 +45,7 @@ public class Client {
             server.createContext("/plot/", new PlotPage());
 
             // Resouces
+            server.createContext("/zmi.js", new ServeFileHandler("core/zmi.js", "application/javascript"));
             server.createContext("/lib.js", new ServeFileHandler("core/lib.js", "application/javascript"));
             server.createContext("/jquery.js", new ServeFileHandler("core/jquery.js", "application/javascript"));
             server.createContext("/jquery.flot.js", new ServeFileHandler("core/jquery.flot.js", "application/javascript"));
@@ -60,24 +64,6 @@ public class Client {
         public void handle(HttpExchange t) throws IOException {
             t.getResponseHeaders().add("Location", "/zmi/");
             t.sendResponseHeaders(302, 0);
-        }
-    }
-    private static class ZMIPage implements HttpHandler {
-        @Override
-        public void handle(HttpExchange t) throws IOException {
-            String response = "<h1>Main page</h1>" +
-                    String.format("<p>%s</p>", t.getRequestURI().getRawPath())
-                    + "<form>\n" +
-                    "  Node name: <input type=\"text\" name=\"name\"><br>\n" +
-                    "  Query: <input type=\"text\" name=\"name\"><br>\n" +
-                    "  <input type=\"submit\" value=\"Submit\">\n" +
-                    "</form>"
-                    ;
-            t.getResponseHeaders().add("Content-Type", "text/html");
-            t.sendResponseHeaders(200, response.length());
-            OutputStream os = t.getResponseBody();
-            os.write(response.getBytes());
-            os.close();
         }
     }
 
@@ -295,6 +281,90 @@ public class Client {
             System.err.println(data);
             try {
                 agent.uninstallQuery(data.get("queryName"));
+            } catch (Exception ex) {
+                System.err.println("Error:\n" + ex);
+                t.getResponseHeaders().add("Content-Type", "text/html");
+                t.sendResponseHeaders(400, ex.toString().length());
+                OutputStream os = t.getResponseBody();
+                os.write(ex.toString().getBytes());
+                os.close();
+                return;
+            }
+            System.out.println("Response: " + response);
+            t.getResponseHeaders().add("Content-Type", "text/html");
+            t.sendResponseHeaders(200, response.length());
+            OutputStream os = t.getResponseBody();
+            os.write(response.getBytes());
+            os.close();
+        }
+    }
+
+    private static class ContactsPage implements HttpHandler {
+        private final AgentIface agent;
+
+        ContactsPage(AgentIface agent) {
+            this.agent = agent;
+        }
+
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            try {
+                if (t.getRequestMethod().equals("GET")) {
+                    handleGET(t);
+                    return;
+                } else if (t.getRequestMethod().equals("POST")) {
+                    handlePOST(t);
+                    return;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return;
+            }
+            throw new UnsupportedOperationException();
+
+        }
+
+        private void handleGET(HttpExchange t) throws IOException {
+            String response = "___";
+            try {
+                Set<ValueContact> s = agent.getFallbackContacts();
+                Gson gson = new CustomJsonSerializer().getSerializer();
+                response = gson.toJson(s);
+            } catch (Exception ex) {
+                System.err.println("Error:\n" + ex);
+                t.getResponseHeaders().add("Content-Type", "text/html");
+                t.sendResponseHeaders(400, ex.toString().length());
+                OutputStream os = t.getResponseBody();
+                os.write(ex.toString().getBytes());
+                os.close();
+                return;
+            }
+            System.out.println("Response: " + response);
+            t.getResponseHeaders().add("Content-Type", "text/html");
+            t.sendResponseHeaders(200, response.length());
+            OutputStream os = t.getResponseBody();
+            os.write(response.getBytes());
+            os.close();
+        }
+
+        private void handlePOST(HttpExchange t) throws IOException {
+            String response = "ok";
+            try {
+                String jString = inputStreamToString(t.getRequestBody());
+                System.err.println(jString);
+                JsonParser parser = new JsonParser();
+                JsonElement allContacts = parser.parse(jString);
+                JsonArray contacts = allContacts.getAsJsonArray();
+                Set<ValueContact> newSet = new TreeSet<ValueContact>();
+                for (JsonElement e: contacts) {
+                    String name = e.getAsJsonObject().get("name").getAsString();
+                    String address = e.getAsJsonObject().get("address").getAsString();
+                    // TODO(sbarzowski) not sure if getByName is a good idea
+                    InetAddress addr = InetAddress.getByName(address);
+                    ValueContact c = new ValueContact(new PathName(name), addr);
+                    newSet.add(c);
+                }
+                agent.setFallbackContacts(newSet);
             } catch (Exception ex) {
                 System.err.println("Error:\n" + ex);
                 t.getResponseHeaders().add("Content-Type", "text/html");

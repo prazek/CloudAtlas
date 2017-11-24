@@ -6,94 +6,7 @@
     <link href="/zmi.css" rel="stylesheet" type="text/css">
     <script language="javascript" type="text/javascript" src="/jquery.js"></script>
     <script language="javascript" type="text/javascript" src="/lib.js"></script>
-    <script type="text/javascript">
-        $(function() {
-            function buildAllZones(data) {
-                console.log("ZONES");
-                console.log(data);
-                var zones = $("<div />");
-                for (var zoneName in data) {
-                    console.log(zoneName);
-                    zones.append($("<h2 />").text(zoneName));
-                    zones.append(buildAttributesTable(zoneName, data[zoneName]));
-                }
-                return zones;
-            }
-
-            function update() {
-                $.post("/attributes/", function(data) {
-                    var table = buildAllZones(data);
-                    console.log(table);
-                    $("#zones").html(table);
-                    $("#attributes").html(table);
-                }).fail(function(xhr, status, error) {
-                    console.log(xhr);
-                    console.log(status);
-                    console.log(error);
-                });
-            }
-
-            var myInterval = setInterval(update, 1000);
-
-            update();
-
-            $("#install-query-form").submit(function(e) {
-                e.preventDefault();
-                var name = $("#queryName").val();
-                var code = $("#queryCode").val();
-                $.post("/installQuery/", {"queryName": name, "query": code}, function(data) {
-                    location.reload();
-                }).fail(function(xhr, status, error) {
-                    if (xhr.status == 400) {
-                        $("#maybeErrorInstallQuery").text(xhr.responseText);
-                    }
-                    console.log(xhr);
-                    console.log(status);
-                    console.log(error);
-                });
-            });
-
-            function updateInstalledQueries() {
-                $.post("/installedQueries/", function(data) {
-                    var queries = $("<table />");
-                    console.log("Installed");
-                    console.log(data);
-                    for (var q in data.values) {
-                        var row = $("<tr />");
-                        row.append($("<td />").text(q));
-                        row.append($("<td />").text(attributeValueToString(data.values[q])));
-                        var removeButton = $("<button class=\"remove-query-button\" type=\"button\">Remove</button>")
-                            .data("queryName", q)
-                            .click(function(e) {
-                                console.log(e);
-                                console.log(e.currentTarget);
-                                var queryName = $(e.currentTarget).data("queryName");
-                                console.log(queryName);
-                                $.post("/uninstallQuery/", {"queryName": queryName}, function(data) {
-                                    location.reload();
-                                }).fail(function(xhr, status, error) {
-                                    console.log(xhr);
-                                    console.log(status);
-                                    console.log(error);
-                                });
-                            });
-                        console.log(removeButton);
-                        row.append($("<td />").html(removeButton));
-                        queries.append(row);
-                    }
-                    $("#installed-query-list").html(queries);
-                }).fail(function(xhr, status, error) {
-                    console.log(xhr);
-                    console.log(status);
-                    console.log(error);
-                });
-            }
-
-            updateInstalledQueries();
-        });
-
-
-    </script>
+    <script language="javascript" type="text/javascript" src="/zmi.js"></script>
 </head>
 <body>
 
@@ -110,7 +23,7 @@
     <h2>Installed queries</h2>
     <div id="installed-query-list"></div>
     <h2>Install query</h2>
-    <form method="post" id="install-query-form">
+    <form id="install-query-form">
         <div>
         <label for="queryName">Query Name</label>
         <input id="queryName" name="queryName" type="text">
@@ -122,6 +35,13 @@
         <input type="submit">
     </form>
     <pre id="maybeErrorInstallQuery"></pre>
+    <h2>Fallback contacts</h2>
+    <form id="fallback-contacts">
+        <div id="fallback-contacts-inputs"></div>
+        <button id="new-fallback-contact">+</button>
+        <input type="submit">
+    </form>
+    <pre id="maybeErrorFallbackContacts"></pre>
 </div>
 
 </body>
