@@ -136,6 +136,7 @@ $(function() {
         e.preventDefault();
         loadFallbackContacts();
         $.post("/fallbackContacts/", JSON.stringify(contacts), function(data) {
+            $("#maybeErrorFallbackContacts").text("");
         }).fail(function(xhr, status, error) {
             if (xhr.status == 400) {
                 $("#maybeErrorFallbackContacts").text(xhr.responseText);
