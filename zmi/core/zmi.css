@@ -117,3 +117,8 @@ table.zmi-attributes {
     border: 1px solid black;
     padding: 5px;
 }
+
+pre.errMsg {
+    white-space: pre-wrap;
+    color: #a51515;
+}
