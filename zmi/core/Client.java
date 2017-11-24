@@ -125,7 +125,6 @@ public class Client {
                 return;
             }
             byte[] response = responseHtml.getBytes();
-            //System.out.println(mimeType);
             t.getResponseHeaders().add("Content-Type", mimeType);
             t.sendResponseHeaders(200, response.length);
             OutputStream os = t.getResponseBody();
@@ -148,7 +147,6 @@ public class Client {
                 System.err.println(e);
             }
             String response = responseHtml;
-            //System.out.println("Response: " + response);
             t.getResponseHeaders().add("Content-Type", "text/html");
             t.sendResponseHeaders(200, response.length());
             OutputStream os = t.getResponseBody();
@@ -159,7 +157,6 @@ public class Client {
 
     private static Map<String, String> parseFormUrlencoded(String data) throws UnsupportedEncodingException {
         String[] pairs = data.split("\\&");
-        //System.err.println(data);
         Map<String, String> result = new HashMap<>();
         for (int i = 0; i < pairs.length; i++) {
             String[] fields = pairs[i].split("=", 2);
@@ -202,7 +199,6 @@ public class Client {
         private void handlePOST(HttpExchange t) throws IOException {
             String response = "ok";
             Map<String, String> data = parseFormUrlencoded(inputStreamToString(t.getRequestBody()));
-            System.err.println(data);
             try {
                 agent.installQuery(data.get("queryName"), data.get("query"));
             } catch (Exception ex) {
@@ -214,7 +210,6 @@ public class Client {
                 os.close();
                 return;
             }
-            System.out.println("Response: " + response);
             t.getResponseHeaders().add("Content-Type", "text/html");
             t.sendResponseHeaders(200, response.length());
             OutputStream os = t.getResponseBody();
@@ -278,7 +273,6 @@ public class Client {
         private void handlePOST(HttpExchange t) throws IOException {
             String response = "ok";
             Map<String, String> data = parseFormUrlencoded(inputStreamToString(t.getRequestBody()));
-            System.err.println(data);
             try {
                 agent.uninstallQuery(data.get("queryName"));
             } catch (Exception ex) {
@@ -290,7 +284,6 @@ public class Client {
                 os.close();
                 return;
             }
-            System.out.println("Response: " + response);
             t.getResponseHeaders().add("Content-Type", "text/html");
             t.sendResponseHeaders(200, response.length());
             OutputStream os = t.getResponseBody();
@@ -339,7 +332,6 @@ public class Client {
                 os.close();
                 return;
             }
-            System.out.println("Response: " + response);
             t.getResponseHeaders().add("Content-Type", "text/html");
             t.sendResponseHeaders(200, response.length());
             OutputStream os = t.getResponseBody();
@@ -351,7 +343,6 @@ public class Client {
             String response = "ok";
             try {
                 String jString = inputStreamToString(t.getRequestBody());
-                System.err.println(jString);
                 JsonParser parser = new JsonParser();
                 JsonElement allContacts = parser.parse(jString);
                 JsonArray contacts = allContacts.getAsJsonArray();
@@ -374,7 +365,6 @@ public class Client {
                 os.close();
                 return;
             }
-            System.out.println("Response: " + response);
             t.getResponseHeaders().add("Content-Type", "text/html");
             t.sendResponseHeaders(200, response.length());
             OutputStream os = t.getResponseBody();
