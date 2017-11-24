@@ -15,7 +15,7 @@
                 for (var zoneName in data) {
                     console.log(zoneName);
                     zones.append($("<h2 />").text(zoneName));
-                    zones.append(buildAttributesTable(data[zoneName]));
+                    zones.append(buildAttributesTable(zoneName, data[zoneName]));
                 }
                 return zones;
             }
@@ -42,6 +42,7 @@
                 var name = $("#queryName").val();
                 var code = $("#queryCode").val();
                 $.post("/installQuery/", {"queryName": name, "query": code}, function(data) {
+                    location.reload();
                 }).fail(function(xhr, status, error) {
                     if (xhr.status == 400) {
                         $("#maybeErrorInstallQuery").text(xhr.responseText);
@@ -69,6 +70,7 @@
                                 var queryName = $(e.currentTarget).data("queryName");
                                 console.log(queryName);
                                 $.post("/uninstallQuery/", {"queryName": queryName}, function(data) {
+                                    location.reload();
                                 }).fail(function(xhr, status, error) {
                                     console.log(xhr);
                                     console.log(status);
