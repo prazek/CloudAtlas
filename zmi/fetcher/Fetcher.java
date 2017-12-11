@@ -1,4 +1,4 @@
-package core;
+package fetcher;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -6,14 +6,13 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
 
+import core.AgentIface;
 import interpreter.MachineInfoFetcher;
 import model.*;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 
 import java.util.*;
-import java.util.function.BiFunction;
-import java.util.stream.IntStream;
 
 import static java.lang.System.exit;
 import static java.lang.Thread.sleep;

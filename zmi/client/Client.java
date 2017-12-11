@@ -1,4 +1,4 @@
-package core;
+package client;
 
 
 import com.google.gson.Gson;
@@ -8,6 +8,7 @@ import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import core.AgentIface;
 import model.*;
 
 import java.io.*;
@@ -36,7 +37,7 @@ public class Client {
             HttpServer server = HttpServer.create(new InetSocketAddress(8042), 0);
             // Pages
             server.createContext("/", new MainPage());
-            server.createContext("/zmi/", new ServeFileHandler("core/zmi.html", "text/html"));
+            server.createContext("/zmi/", new ServeFileHandler("client/ZMI.html", "text/html"));
             server.createContext("/fallbackContacts/", new ContactsPage(agent));
             server.createContext("/installedQueries/", new InstalledQueriesPage(agent));
             server.createContext("/installQuery/", new InstallQueryPage(agent));
@@ -45,11 +46,11 @@ public class Client {
             server.createContext("/plot/", new PlotPage());
 
             // Resouces
-            server.createContext("/zmi.js", new ServeFileHandler("core/zmi.js", "application/javascript"));
-            server.createContext("/lib.js", new ServeFileHandler("core/lib.js", "application/javascript"));
-            server.createContext("/jquery.js", new ServeFileHandler("core/jquery.js", "application/javascript"));
-            server.createContext("/jquery.flot.js", new ServeFileHandler("core/jquery.flot.js", "application/javascript"));
-            server.createContext("/zmi.css", new ServeFileHandler("core/zmi.css", "text/css"));
+            server.createContext("/zmi.js", new ServeFileHandler("client/zmi.js", "application/javascript"));
+            server.createContext("/lib.js", new ServeFileHandler("client/lib.js", "application/javascript"));
+            server.createContext("/jquery.js", new ServeFileHandler("client/jquery.js", "application/javascript"));
+            server.createContext("/jquery.flot.js", new ServeFileHandler("client/jquery.flot.js", "application/javascript"));
+            server.createContext("/zmi.css", new ServeFileHandler("client/zmi.css", "text/css"));
 
             server.setExecutor(null); // creates a default executor
             server.start();
@@ -138,7 +139,7 @@ public class Client {
         public void handle(HttpExchange t) throws IOException {
             String responseHtml = "xxx";
             try {
-                InputStream html = this.getClass().getClassLoader().getResourceAsStream("core/plot.html");
+                InputStream html = this.getClass().getClassLoader().getResourceAsStream("client/plot.html");
 
 
                 responseHtml = inputStreamToString(html);
