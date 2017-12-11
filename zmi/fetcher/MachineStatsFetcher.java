@@ -1,4 +1,4 @@
-package core;
+package fetcher;
 
 import model.*;
 import org.hyperic.sigar.*;
