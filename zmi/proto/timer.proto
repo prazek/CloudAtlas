@@ -1,0 +1,10 @@
+syntax = "proto3";
+option java_package = "core";
+
+message Callback {
+    string xx = 1;
+}
+
+service Timer {
+    rpc Search (Callback) returns (Callback);
+}

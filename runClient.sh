@@ -1,14 +1,6 @@
 #!/bin/bash
 
-SOURCES=(out/production/CloudAtlas/ out/production/CloudAtlas/lib/*.jar)
-
-IFS=':'
-CLASSPATH="${SOURCES[*]// /}"
-unset IFS
-
-CODEBASE="${SOURCES[@]/#/file://$PWD/}"
-
-HOSTNAME=`hostname`
+source common.sh
 
 echo java -cp "$CLASSPATH" \
        -Djava.rmi.server.codebase="$CODEBASE"      \

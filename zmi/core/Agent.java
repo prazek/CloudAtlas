@@ -102,6 +102,12 @@ public class Agent implements AgentIface {
         return fallbackContacts;
     }
 
+    private static class AgentService extends AgentGrpc.AgentImplBase {
+        public AgentService() {
+
+        }
+    }
+
     static public void main(String args[]) {
         if (args.length == 0) {
             System.err.println("Usage: ./agent zone_name");
