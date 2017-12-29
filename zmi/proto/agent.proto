@@ -1,6 +1,14 @@
 syntax = "proto3";
 option java_package = "core";
 
+message Empty {
+
+}
+
+message Query {
+
+}
+
 message PathName {
   string p = 1;
 }
@@ -9,7 +17,41 @@ message ZMI {
   map<string, string> s = 1;
 }
 
-service Agent {
-  rpc GetZone(PathName) returns (PathName);
+message SetZoneValueData {
+  PathName path = 1;
+  string attribute = 2;
+  Value value = 3;
+}
 
+message Contact {
+
+}
+
+message Value {
+
+}
+
+message AttributesMap {
+  map<string, Value> m = 1;
+}
+
+message Zone {
+  PathName path = 1;
+  AttributesMap attrs = 2;
+  repeated PathName sons = 3;
+}
+
+message QueryName {
+  string s = 1;
+}
+
+service Agent {
+  rpc GetZones(Empty) returns (stream Zone);
+  rpc GetZone(PathName) returns (Zone);
+  rpc InstallQuery(Query) returns (Empty);
+  rpc uninstallQuery(QueryName) returns (Empty);
+  rpc SetZoneValue(SetZoneValueData) returns (Empty);
+  rpc SetFallbackContacts(Contact) returns (Empty);
+  rpc GetFallbackContacts(Contact) returns (stream Contact);
+  rpc getQueries(Empty) returns (AttributesMap);
 }

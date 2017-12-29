@@ -4,6 +4,7 @@ import interpreter.Interpreter;
 import interpreter.QueryResult;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.stub.StreamObserver;
 import model.*;
 
 import java.io.IOException;
@@ -105,20 +106,55 @@ public class Agent implements AgentIface {
         return fallbackContacts;
     }
 
-    private static class AgentService extends AgentGrpc.AgentImplBase {
+    private class AgentService extends AgentGrpc.AgentImplBase {
         public AgentService() {
 
         }
 
         @Override
+        public void getZones(AgentOuterClass.Empty request, StreamObserver<AgentOuterClass.Zone> responseObserver) {
+            super.getZones(request, responseObserver);
+        }
+
+        @Override
+        public void installQuery(AgentOuterClass.Query request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+            super.installQuery(request, responseObserver);
+        }
+
+        @Override
+        public void uninstallQuery(AgentOuterClass.QueryName request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+            super.uninstallQuery(request, responseObserver);
+        }
+
+        @Override
+        public void setZoneValue(AgentOuterClass.SetZoneValueData request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+            super.setZoneValue(request, responseObserver);
+        }
+
+        @Override
+        public void setFallbackContacts(AgentOuterClass.Contact request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+            super.setFallbackContacts(request, responseObserver);
+        }
+
+        @Override
+        public void getFallbackContacts(AgentOuterClass.Contact request, StreamObserver<AgentOuterClass.Contact> responseObserver) {
+            super.getFallbackContacts(request, responseObserver);
+        }
+
+        @Override
+        public void getQueries(AgentOuterClass.Empty request, StreamObserver<AgentOuterClass.AttributesMap> responseObserver) {
+            super.getQueries(request, responseObserver);
+        }
+
+        @Override
         public void getZone(core.AgentOuterClass.PathName request,
-                            io.grpc.stub.StreamObserver<core.AgentOuterClass.PathName> responseObserver) {
-            responseObserver.onNext(request);
+                            io.grpc.stub.StreamObserver<core.AgentOuterClass.Zone> responseObserver) {
+            responseObserver.onNext(core.AgentOuterClass.Zone.newBuilder().build());
             responseObserver.onCompleted();
         }
     }
 
-    static private void startServer() throws IOException {
+    private void startServer() throws IOException {
         int port = 4321;
         ServerBuilder serverBuilder = ServerBuilder.forPort(port);
         Server server = serverBuilder.addService(new AgentService())
@@ -139,10 +175,9 @@ public class Agent implements AgentIface {
             System.setSecurityManager(new SecurityManager());
         }
         try {
-            startServer();
             String zoneName = args[0];
             Agent agent = new Agent(new PathName(zoneName));
-
+            agent.startServer();
             AgentIface stub =
                     (AgentIface) UnicastRemoteObject.exportObject(agent, 0);
             Registry registry = LocateRegistry.getRegistry(4242);
