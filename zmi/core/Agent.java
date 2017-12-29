@@ -2,8 +2,11 @@ package core;
 
 import interpreter.Interpreter;
 import interpreter.QueryResult;
+import io.grpc.Server;
+import io.grpc.ServerBuilder;
 import model.*;
 
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -106,6 +109,22 @@ public class Agent implements AgentIface {
         public AgentService() {
 
         }
+
+        @Override
+        public void getZone(core.AgentOuterClass.PathName request,
+                            io.grpc.stub.StreamObserver<core.AgentOuterClass.PathName> responseObserver) {
+            responseObserver.onNext(request);
+            responseObserver.onCompleted();
+        }
+    }
+
+    static private void startServer() throws IOException {
+        int port = 4321;
+        ServerBuilder serverBuilder = ServerBuilder.forPort(port);
+        Server server = serverBuilder.addService(new AgentService())
+                .build();
+        server.start();
+        System.err.println("Server started, listening on " + port);
     }
 
     static public void main(String args[]) {
@@ -114,10 +133,13 @@ public class Agent implements AgentIface {
             exit(1);
         }
 
+
+
         if (System.getSecurityManager() == null) {
             System.setSecurityManager(new SecurityManager());
         }
         try {
+            startServer();
             String zoneName = args[0];
             Agent agent = new Agent(new PathName(zoneName));
 
