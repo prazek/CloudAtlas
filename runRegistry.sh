@@ -1,12 +1,4 @@
 #!/bin/bash
 
-SOURCES=(out/production/CloudAtlas/)
-
-IFS=':'
-CLASSPATH="${SOURCES[*]// /}"
-unset IFS
-
-CODEBASE="${SOURCES[@]/#/file://$PWD/}"
-
-echo $CODEBASE
+source common.sh
 rmiregistry -J-Djava.rmi.server.codebase="$CODEBASE" 4242

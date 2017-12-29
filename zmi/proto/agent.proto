@@ -1,0 +1,15 @@
+syntax = "proto3";
+option java_package = "core";
+
+message PathName {
+  string p = 1;
+}
+
+message ZMI {
+  map<string, string> s = 1;
+}
+
+service Agent {
+  rpc GetZone(PathName) returns (PathName);
+
+}

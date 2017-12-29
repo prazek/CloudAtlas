@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: java_cup:java_cup:0.1337">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/java_cup/java_cup/0.1337/java_cup-0.1337.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/java_cup/java_cup/0.1337/java_cup-0.1337-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/java_cup/java_cup/0.1337/java_cup-0.1337-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
