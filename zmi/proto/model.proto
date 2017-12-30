@@ -65,7 +65,7 @@ message PathName {
 }
 
 message ZMI {
-  map<string, string> s = 1;
+  AttributesMap map = 1;
 }
 
 
