@@ -19,6 +19,6 @@ public abstract class Executor {
         tasks.add(context);
     }
 
-    public abstract void execute(ExecuteContext context);
+    abstract void execute(ExecuteContext context);
 
 }
