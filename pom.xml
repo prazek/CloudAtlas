@@ -87,7 +87,7 @@
         <dependency>
             <groupId>java_cup</groupId>
             <artifactId>java_cup</artifactId>
-            <version>11b</version>
+            <version>0.11a</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/junit/junit -->
         <dependency>
@@ -110,5 +110,12 @@
 
 
     </dependencies>
-    
+
+    <repositories>
+        <repository>
+            <id>local-maven-repo</id>
+            <url>file:///${project.basedir}/local-maven-repo</url>
+        </repository>
+    </repositories>
+
 </project>
