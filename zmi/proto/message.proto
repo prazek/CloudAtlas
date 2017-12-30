@@ -1,0 +1,12 @@
+syntax = "proto3";
+option java_package = "core";
+
+import "timer.proto";
+import "database.proto";
+
+message Message {
+    oneof data {
+        Delay delay = 1;
+        UpdateDatabase updateDatabase = 2;
+    }
+}

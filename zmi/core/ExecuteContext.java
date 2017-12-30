@@ -2,5 +2,5 @@ package core;
 
 public class ExecuteContext {
     Executor sender;
-    Object data;
+    MessageOuterClass.Message data;
 }
