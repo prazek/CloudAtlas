@@ -24,6 +24,8 @@
 
 package model;
 
+import core.Model;
+
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
@@ -279,5 +281,13 @@ public class AttributesMap implements Iterable<Entry<Attribute, Value>>, Cloneab
 	@Override
 	public String toString() {
 		return map.toString();
+	}
+
+	public Model.AttributesMap serialize() {
+		Model.AttributesMap.Builder builder = Model.AttributesMap.newBuilder();
+		for (Entry<Attribute, Value> entry : map.entrySet()) {
+			builder.putMap(entry.getKey().getName(), entry.getValue().serializeValue());
+		}
+		return builder.build();
 	}
 }

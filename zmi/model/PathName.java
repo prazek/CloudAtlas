@@ -24,6 +24,8 @@
 
 package model;
 
+import core.Model;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -177,5 +179,9 @@ public class PathName implements Serializable {
 	@Override
 	public String toString() {
 		return name.equals("")? "/" : getName();
+	}
+
+	public Model.PathName serialize() {
+		return Model.PathName.newBuilder().setP(name).build();
 	}
 }

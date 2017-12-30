@@ -24,6 +24,7 @@
 
 package model;
 
+import core.Model;
 import interpreter.QueryResult;
 
 import java.io.PrintStream;
@@ -165,5 +166,9 @@ public class ZMI implements Cloneable, Serializable {
 	@Override
 	public String toString() {
 		return attributes.toString();
+	}
+
+	public Model.ZMI serialize() {
+		return Model.ZMI.newBuilder().setMap(attributes.serialize()).build();
 	}
 }
