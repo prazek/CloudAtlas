@@ -24,6 +24,7 @@
 
 package model;
 
+import core.Model;
 import model.Value;
 import model.ValueBoolean;
 
@@ -89,5 +90,9 @@ public class ValueBoolean extends ValueSimple<Boolean> {
 			default:
 				throw new UnsupportedConversionException(getType(), type);
 		}
+	}
+
+	public final Model.ValueBoolean serialize() {
+		return Model.ValueBoolean.newBuilder().setValue(getValue()).build();
 	}
 }

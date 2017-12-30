@@ -24,6 +24,7 @@
 
 package model;
 
+import core.Model;
 import model.Type.PrimaryType;
 import model.Value;
 import model.ValueInt;
@@ -129,5 +130,9 @@ public class ValueInt extends ValueSimple<Long> {
 			default:
 				throw new UnsupportedConversionException(getType(), type);
 		}
+	}
+
+	public final Model.ValueInt serialize() {
+		return Model.ValueInt.newBuilder().setValue(getValue()).build();
 	}
 }

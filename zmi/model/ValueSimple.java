@@ -24,6 +24,8 @@
 
 package model;
 
+import core.Model;
+
 /**
  * Convenient class for wrapping Java types into <code>Value</code> objects.
  * <p>
@@ -86,4 +88,6 @@ abstract class ValueSimple<T> extends Value {
 			return new ValueBoolean(false);
 		return new ValueBoolean(value.equals(((ValueSimple<T>)v).getValue()));
 	}
+
+
 }

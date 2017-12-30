@@ -25,6 +25,8 @@
 package model;
 
 
+import core.Model;
+
 import java.io.Serializable;
 
 /**
@@ -246,4 +248,24 @@ public abstract class Value implements Serializable, Comparable<Value>  {
 		ValueString b = (ValueString) o.convertTo(TypePrimitive.STRING);
 		return a.getValue().compareTo(b.getValue());
 	}
+
+	public final Model.Value serializeValue() {
+		Model.Value.Builder builder = Model.Value.newBuilder();
+		if (this instanceof ValueBoolean)
+			builder.setValueBoolean(((ValueBoolean)this).serialize());
+		else if (this instanceof ValueDouble)
+			builder.setValueDouble(((ValueDouble)this).serialize());
+		else if (this instanceof ValueInt)
+			builder.setValueInt(((ValueInt)this).serialize());
+		else if (this instanceof ValueList)
+			builder.setValueList(((ValueList)this).serialize());
+		else if (this instanceof ValueNull)
+			builder.setValueNull(((ValueNull)this).serialize());
+		else if (this instanceof ValueString)
+			builder.setValueString(((ValueString)this).serialize());
+		else
+			assert false;
+		return builder.build();
+	}
+
 }
