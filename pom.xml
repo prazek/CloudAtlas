@@ -87,7 +87,7 @@
         <dependency>
             <groupId>java_cup</groupId>
             <artifactId>java_cup</artifactId>
-            <version>0.1337</version>
+            <version>11b</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/junit/junit -->
         <dependency>
