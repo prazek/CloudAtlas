@@ -6,7 +6,8 @@ message ValueBoolean {
 }
 
 message ValueContact {
-
+    PathName pathName = 1;
+    string inetAddress = 2;
 }
 
 message ValueDouble {
@@ -14,7 +15,7 @@ message ValueDouble {
 }
 
 message ValueDuration {
-
+    int64 duration = 1;
 }
 
 message ValueInt {
@@ -29,7 +30,7 @@ message ValueNull {
 }
 
 message ValueSet {
-
+    repeated Value values = 1;
 }
 
 message ValueString {
@@ -37,7 +38,7 @@ message ValueString {
 }
 
 message ValueTime {
-
+    int64 time = 1;
 }
 
 message Value  {
@@ -73,6 +74,8 @@ message AttributesMap {
   map<string, Value> map = 1;
 }
 
+
+// Czy to jest potrzebne?
 message Zone {
   PathName path = 1;
   AttributesMap attrs = 2;

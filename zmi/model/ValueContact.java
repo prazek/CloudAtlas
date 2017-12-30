@@ -24,9 +24,9 @@
 
 package model;
 
-import java.io.Serializable;
 import java.net.InetAddress;
 
+import core.Model;
 import model.Value;
 import model.ValueContact;
 
@@ -97,5 +97,11 @@ public class ValueContact extends Value {
 	@Override
 	public boolean isNull() {
 		return name == null || address == null;
+	}
+
+	public Model.ValueContact serialize() {
+		return Model.ValueContact.newBuilder().
+				setPathName(name.serialize()).
+				setInetAddress(address.toString()).build();
 	}
 }

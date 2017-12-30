@@ -25,6 +25,8 @@
 package model;
 
 
+import core.Model;
+
 /**
  * A class representing duration in milliseconds. The duration can be negative. This is a simple wrapper of a Java
  * <code>Long</code> object.
@@ -194,5 +196,9 @@ public class ValueDuration extends ValueSimple<Long> {
 			default:
 				throw new UnsupportedConversionException(getType(), type);
 		}
+	}
+
+	public Model.ValueDuration serialize() {
+		return Model.ValueDuration.newBuilder().setDuration(getValue()).build();
 	}
 }

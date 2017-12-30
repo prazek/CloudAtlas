@@ -253,16 +253,24 @@ public abstract class Value implements Serializable, Comparable<Value>  {
 		Model.Value.Builder builder = Model.Value.newBuilder();
 		if (this instanceof ValueBoolean)
 			builder.setValueBoolean(((ValueBoolean)this).serialize());
+		else if (this instanceof ValueContact)
+			builder.setValueContact(((ValueContact)this).serialize());
 		else if (this instanceof ValueDouble)
 			builder.setValueDouble(((ValueDouble)this).serialize());
+		else if (this instanceof ValueDuration)
+			builder.setValueDuration(((ValueDuration)this).serialize());
 		else if (this instanceof ValueInt)
 			builder.setValueInt(((ValueInt)this).serialize());
 		else if (this instanceof ValueList)
 			builder.setValueList(((ValueList)this).serialize());
 		else if (this instanceof ValueNull)
 			builder.setValueNull(((ValueNull)this).serialize());
+		else if (this instanceof ValueSet)
+			builder.setValueSet(((ValueSet)this).serialize());
 		else if (this instanceof ValueString)
 			builder.setValueString(((ValueString)this).serialize());
+		else if (this instanceof ValueTime)
+			builder.setValueTime(((ValueTime)this).serialize());
 		else
 			assert false;
 		return builder.build();
