@@ -24,6 +24,7 @@
 
 package model;
 
+import core.Model;
 import model.Value;
 import model.ValueDouble;
 
@@ -109,5 +110,9 @@ public class ValueDouble extends ValueSimple<Double> {
 			default:
 				throw new UnsupportedConversionException(getType(), type);
 		}
+	}
+
+	public final Model.ValueDouble serialize() {
+		return Model.ValueDouble.newBuilder().setValue(getValue()).build();
 	}
 }

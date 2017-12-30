@@ -26,6 +26,7 @@ package model;
 
 import java.text.ParseException;
 
+import core.Model;
 import model.Value;
 import model.ValueString;
 
@@ -116,5 +117,9 @@ public class ValueString extends ValueSimple<String> {
 	@Override
 	public ValueInt valueSize() {
 		return new ValueInt(getValue() == null? null : (long)getValue().length());
+	}
+
+	public final Model.ValueString serialize() {
+		return Model.ValueString.newBuilder().setValue(getValue()).build();
 	}
 }

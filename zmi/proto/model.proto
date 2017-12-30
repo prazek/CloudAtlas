@@ -41,7 +41,7 @@ message ValueTime {
 }
 
 message Value  {
-    oneof Dummy {
+    oneof value {
         ValueBoolean valueBoolean = 1;
         ValueContact valueContact = 2;
         ValueDouble valueDouble = 3;

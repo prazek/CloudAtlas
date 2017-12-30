@@ -24,6 +24,7 @@
 
 package model;
 
+import core.Model;
 import model.Value;
 import model.ValueNull;
 
@@ -151,5 +152,10 @@ public class ValueNull extends Value {
 	@Override
 	public Value valueSize() {
 		return this;
+	}
+
+
+	public final Model.ValueNull serialize() {
+		return Model.ValueNull.newBuilder().build();
 	}
 }

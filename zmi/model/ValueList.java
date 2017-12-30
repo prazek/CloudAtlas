@@ -30,6 +30,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import core.Model;
 import model.TypeCollection;
 import model.Value;
 import model.ValueList;
@@ -268,5 +269,13 @@ public class ValueList extends ValueSimple<List<Value>> implements List<Value> {
 	@Override
 	public <Y> Y[] toArray(Y[] a) {
 		return getList().toArray(a);
+	}
+
+	public final Model.ValueList serialize() {
+		Model.ValueList.Builder builder = Model.ValueList.newBuilder();
+		for (Value v : getValue())
+			// TODO check if it works
+			builder.addValues(v.serializeValue());
+		return builder.build();
 	}
 }
