@@ -276,4 +276,8 @@ public abstract class Value implements Serializable, Comparable<Value>  {
 		return builder.build();
 	}
 
+
+	public static Value fromProtobuf(Model.Value value) {
+		return null;
+	}
 }

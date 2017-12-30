@@ -36,7 +36,7 @@ import java.util.TreeMap;
  * Represents a map from <code>Attribute</code> to <code>Value</code>. It cannot contain duplicate keys.
  */
 public class AttributesMap implements Iterable<Entry<Attribute, Value>>, Cloneable, Serializable {
-	private Map<Attribute, Value> map = new TreeMap<Attribute, Value>();
+	private Map<Attribute, Value> map = new TreeMap<>();
 	
 	private void checkNulls(Attribute attribute, Value value) {
 		if(attribute == null)
@@ -289,5 +289,14 @@ public class AttributesMap implements Iterable<Entry<Attribute, Value>>, Cloneab
 			builder.putMap(entry.getKey().getName(), entry.getValue().serializeValue());
 		}
 		return builder.build();
+	}
+
+	public static AttributesMap fromProtobuf(Model.AttributesMap protoMap) {
+
+		AttributesMap result = new AttributesMap();
+		for (Entry<String, Model.Value> entry : protoMap.getMapMap().entrySet()) {
+			result.add(entry.getKey(), Value.fromProtobuf(entry.getValue()));
+		}
+		return result;
 	}
 }

@@ -79,7 +79,7 @@ public class Client {
         public void handle(HttpExchange t) throws IOException {
             try {
                 Gson gson = new CustomJsonSerializer().getSerializer();
-                HashMap<PathName, ZMI> zmi = agent.zones();
+                Map<PathName, ZMI> zmi = agent.zones();
                 String response = gson.toJson(zmi);
                 t.getResponseHeaders().add("Content-Type", "application/json");
                 t.sendResponseHeaders(200, response.length());
