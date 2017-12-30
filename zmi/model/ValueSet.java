@@ -26,9 +26,9 @@ package model;
 
 import java.util.*;
 
+import core.Model;
 import model.TypeCollection;
 import model.Value;
-import model.ValueSet;
 
 /**
  * A value representing a set of values of the specified type. Implements <code>Set</code> interface.
@@ -102,7 +102,7 @@ public class ValueSet extends ValueSimple<SortedSet<Value>> implements Set<Value
 		if(set == null)
 			super.setValue(null);
 		else {
-			super.setValue(new TreeSet<Value>());
+			super.setValue(new TreeSet<>());
 			for(Value e : set)
 				add(e);
 		}
@@ -222,5 +222,13 @@ public class ValueSet extends ValueSimple<SortedSet<Value>> implements Set<Value
 			default:
 				throw new UnsupportedConversionException(getType(), type);
 		}
+	}
+
+	public Model.ValueSet serialize() {
+		Model.ValueSet.Builder builder =  Model.ValueSet.newBuilder();
+		for (Value v : getSet()) {
+			builder.addValues(v.serializeValue());
+		}
+		return builder.build();
 	}
 }

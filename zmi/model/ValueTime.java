@@ -28,6 +28,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
+import core.Model;
 import model.Value;
 import model.ValueTime;
 
@@ -113,5 +114,9 @@ public class ValueTime extends ValueSimple<Long> {
 			default:
 				throw new UnsupportedConversionException(getType(), type);
 		}
+	}
+
+	public Model.ValueTime serialize() {
+		return Model.ValueTime.newBuilder().setTime(getValue()).build();
 	}
 }
