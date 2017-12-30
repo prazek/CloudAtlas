@@ -8,3 +8,8 @@ message Callback {
 service Timer {
     rpc Search (Callback) returns (Callback);
 }
+
+
+message Delay {
+    int32 duration = 1;
+}

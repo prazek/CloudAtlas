@@ -4,10 +4,12 @@ import java.util.TimerTask;
 
 public class Timer extends Executor {
 
+
+
     java.util.Timer timer = new java.util.Timer();
     void execute(ExecuteContext context) {
-        // TODO time
-        int time = 10;
+
+        int duration = context.data.getDelay().getDuration();
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -15,6 +17,6 @@ public class Timer extends Executor {
                 context.sender.execute(new ExecuteContext());
                 cancel();
             }
-        }, time);
+        }, duration);
     }
 }
