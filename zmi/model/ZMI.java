@@ -39,7 +39,7 @@ import java.util.Map.Entry;
  * references to its father and sons in the tree.
  */
 public class ZMI implements Cloneable, Serializable {
-	private final AttributesMap attributes = new AttributesMap();
+	private AttributesMap attributes = new AttributesMap();
 	
 	private transient final List<ZMI> sons = new ArrayList<>();
 	private transient ZMI father;
@@ -171,4 +171,11 @@ public class ZMI implements Cloneable, Serializable {
 	public Model.ZMI serialize() {
 		return Model.ZMI.newBuilder().setMap(attributes.serialize()).build();
 	}
+
+	public static ZMI fromProtobuf(Model.ZMI protoZMI) {
+		ZMI zmi = new ZMI();
+		zmi.attributes = AttributesMap.fromProtobuf(protoZMI.getMap());
+		return zmi;
+	}
+
 }

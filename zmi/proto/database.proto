@@ -6,3 +6,12 @@ import "model.proto";
 message UpdateDatabase {
     AttributesMap attributesMap = 1;
 }
+
+message Zones {
+    int32 msgID = 1;
+}
+
+message ZonesResponse {
+    int32 responseID = 1;
+    map<string, ZMI> zones = 2;
+}
