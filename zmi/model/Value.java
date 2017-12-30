@@ -24,7 +24,6 @@
 
 package model;
 
-import model.Value;
 
 import java.io.Serializable;
 

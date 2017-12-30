@@ -112,12 +112,12 @@ public class Agent implements AgentIface {
         }
 
         @Override
-        public void getZones(AgentOuterClass.Empty request, StreamObserver<AgentOuterClass.Zone> responseObserver) {
+        public void getZones(AgentOuterClass.Empty request, StreamObserver<Model.Zone> responseObserver) {
             super.getZones(request, responseObserver);
         }
 
         @Override
-        public void installQuery(AgentOuterClass.Query request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+        public void installQuery(Model.Query request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
             super.installQuery(request, responseObserver);
         }
 
@@ -132,24 +132,24 @@ public class Agent implements AgentIface {
         }
 
         @Override
-        public void setFallbackContacts(AgentOuterClass.Contact request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+        public void setFallbackContacts(Model.ValueContact request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
             super.setFallbackContacts(request, responseObserver);
         }
 
         @Override
-        public void getFallbackContacts(AgentOuterClass.Contact request, StreamObserver<AgentOuterClass.Contact> responseObserver) {
+        public void getFallbackContacts(Model.ValueContact request, StreamObserver<Model.ValueContact> responseObserver) {
             super.getFallbackContacts(request, responseObserver);
         }
 
         @Override
-        public void getQueries(AgentOuterClass.Empty request, StreamObserver<AgentOuterClass.AttributesMap> responseObserver) {
+        public void getQueries(AgentOuterClass.Empty request, StreamObserver<Model.AttributesMap> responseObserver) {
             super.getQueries(request, responseObserver);
         }
 
         @Override
-        public void getZone(core.AgentOuterClass.PathName request,
-                            io.grpc.stub.StreamObserver<core.AgentOuterClass.Zone> responseObserver) {
-            responseObserver.onNext(core.AgentOuterClass.Zone.newBuilder().build());
+        public void getZone(Model.PathName request,
+                            io.grpc.stub.StreamObserver<Model.Zone> responseObserver) {
+            responseObserver.onNext(Model.Zone.newBuilder().build());
             responseObserver.onCompleted();
         }
     }

@@ -1,0 +1,80 @@
+syntax = "proto3";
+option java_package = "core";
+
+message ValueBoolean {
+    bool value = 1;
+}
+
+message ValueContact {
+
+}
+
+message ValueDouble {
+    double value = 1;
+}
+
+message ValueDuration {
+
+}
+
+message ValueInt {
+    int64 value = 1;
+}
+
+message ValueList {
+    repeated Value values = 1;
+}
+
+message ValueNull {
+}
+
+message ValueSet {
+
+}
+
+message ValueString {
+    string value = 1;
+}
+
+message ValueTime {
+
+}
+
+message Value  {
+    oneof Dummy {
+        ValueBoolean valueBoolean = 1;
+        ValueContact valueContact = 2;
+        ValueDouble valueDouble = 3;
+        ValueDuration valueDuration = 4;
+        ValueInt valueInt = 5;
+        ValueList valueList = 6;
+        ValueNull valueNull = 7;
+        ValueSet valueSet = 8;
+        ValueString valueString = 9;
+        ValueTime valueTime = 10;
+    }
+}
+
+
+message Query {
+
+}
+
+message PathName {
+  string p = 1;
+}
+
+message ZMI {
+  map<string, string> s = 1;
+}
+
+
+message AttributesMap {
+  map<string, Value> map = 1;
+}
+
+message Zone {
+  PathName path = 1;
+  AttributesMap attrs = 2;
+  repeated PathName sons = 3;
+}

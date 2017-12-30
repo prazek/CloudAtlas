@@ -1,7 +1,7 @@
 syntax = "proto3";
 option java_package = "core";
 
-import "agent.proto";
+import "model.proto";
 
 message UpdateDatabase {
     AttributesMap attributesMap = 1;
