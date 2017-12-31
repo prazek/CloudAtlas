@@ -8,17 +8,13 @@ import io.grpc.stub.StreamObserver;
 import model.*;
 
 import java.io.IOException;
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 
 import java.util.*;
 
 import static java.lang.System.exit;
 import static java.lang.Thread.sleep;
 
-public class Agent implements AgentIface {
+public class Agent {
     private HashMap<PathName, ZMI> zones = new HashMap<>();
     private PathName pathName;
     // This map stores which attributes are created by running one query.
@@ -53,16 +49,16 @@ public class Agent implements AgentIface {
     }
 
 
-    public HashMap<PathName, ZMI> zones() throws RemoteException {
+    public HashMap<PathName, ZMI> zones() {
         return this.zones;
     }
 
-    public synchronized ZMI zone(PathName zoneName) throws RemoteException {
+    public synchronized ZMI zone(PathName zoneName) {
         ZMI zmi = zones().get(zoneName);
         return zmi;
     }
 
-    public synchronized void installQuery(String queryCertificate, String query) throws RemoteException, Exception {
+    public synchronized void installQuery(String queryCertificate, String query) throws Exception {
         if (!queryCertificate.startsWith("&"))
             throw new RuntimeException("name must start with &");
         for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
@@ -72,7 +68,7 @@ public class Agent implements AgentIface {
         }
     }
 
-    public synchronized void uninstallQuery(String queryCertificate) throws RemoteException {
+    public synchronized void uninstallQuery(String queryCertificate)  {
         if (!queryCertificate.startsWith("&"))
             throw new RuntimeException("name must start with &");
         for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
@@ -82,7 +78,7 @@ public class Agent implements AgentIface {
         queryAttributes.remove(queryCertificate);
     }
 
-    public synchronized AttributesMap getQueries() throws RemoteException {
+    public synchronized AttributesMap getQueries()  {
         for (Map.Entry<PathName, ZMI> zone : this.zones.entrySet()) {
             if (!zone.getValue().getSons().isEmpty())
                 return getQueriesForZone(zone.getValue());
@@ -90,7 +86,7 @@ public class Agent implements AgentIface {
         return new AttributesMap();
     }
 
-    public synchronized void setZoneValue(PathName zoneName, Attribute valueName, Value value) throws RemoteException {
+    public synchronized void setZoneValue(PathName zoneName, Attribute valueName, Value value) {
         System.out.println(zoneName + " " + valueName + " " + value.toString());
 
         if (!zone(zoneName).getSons().isEmpty())
@@ -123,7 +119,7 @@ public class Agent implements AgentIface {
                     responseObserver.onNext(z);
                 }
                 responseObserver.onCompleted();
-            } catch (RemoteException r) {
+            } catch (Exception r) {
                 System.err.println(r);
                 responseObserver.onError(r);
             }
@@ -157,8 +153,10 @@ public class Agent implements AgentIface {
                         PathName.fromProtobuf(request.getPath()),
                         new Attribute(request.getAttribute()),
                         Value.fromProtobuf(request.getValue()));
+                responseObserver.onNext(AgentOuterClass.Empty.newBuilder().build());
                 responseObserver.onCompleted();
             } catch (Exception r) {
+                System.err.println(r);
                 responseObserver.onError(r);
             }
         }
@@ -237,11 +235,6 @@ public class Agent implements AgentIface {
             String zoneName = args[0];
             Agent agent = new Agent(new PathName(zoneName));
             agent.startServer();
-            AgentIface stub =
-                    (AgentIface) UnicastRemoteObject.exportObject(agent, 0);
-            Registry registry = LocateRegistry.getRegistry(4242);
-            registry.rebind(zoneName, stub);
-            System.out.println("Agent bound");
             RunQueries queryRunner = new RunQueries(agent);
             Thread t = new Thread(queryRunner);
             t.run();
@@ -264,7 +257,7 @@ public class Agent implements AgentIface {
         }
     }
     
-    private AttributesMap getQueriesForZone(ZMI zone) throws RemoteException {
+    private AttributesMap getQueriesForZone(ZMI zone) {
         AttributesMap result = new AttributesMap();
         for (Map.Entry<Attribute, Value> entry :  zone.getAttributes()) {
             if (Attribute.isQuery(entry.getKey()))
