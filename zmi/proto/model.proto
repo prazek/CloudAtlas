@@ -24,6 +24,7 @@ message ValueInt {
 
 message ValueList {
     repeated Value values = 1;
+    Type type = 2;
 }
 
 message ValueNull {
@@ -31,6 +32,7 @@ message ValueNull {
 
 message ValueSet {
     repeated Value values = 1;
+    Type type = 2;
 }
 
 message ValueString {
@@ -56,9 +58,42 @@ message Value  {
     }
 }
 
+
 message QueryName {
     string s = 1;
 }
+
+enum TypePrimary {
+    BOOLEAN = 0;
+    CONTACT = 1;
+    DOUBLE = 2;
+    DURATION = 3;
+    INT = 4;
+    LIST = 5;
+    NULL = 6;
+    STRING = 7;
+    SET = 8;
+    TIME = 9;
+}
+
+
+message Type {
+    oneof Concrete {
+        TypePrimitive primitive = 1;
+        TypeCollection collection = 2;
+    }
+}
+
+message TypeCollection {
+    // SET or LIST
+    TypePrimary typePrimary = 1;
+    Type elementType = 2;
+}
+
+message TypePrimitive {
+    TypePrimary typePrimary = 1;
+}
+
 
 
 message Query {

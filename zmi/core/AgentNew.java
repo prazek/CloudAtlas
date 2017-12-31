@@ -45,11 +45,11 @@ public class AgentNew {
             String zoneName = args[0];
             core.Agent agent = new core.Agent(new PathName(zoneName));
 
-            AgentIface stub =
+            /*AgentIface stub =
                     (AgentIface) UnicastRemoteObject.exportObject(agent, 0);
             Registry registry = LocateRegistry.getRegistry(4242);
             registry.rebind(zoneName, stub);
-            System.out.println("Agent bound");
+            */System.out.println("Agent bound");
             core.Agent.RunQueries queryRunner = new core.Agent.RunQueries(agent);
             Thread t = new Thread(queryRunner);
             t.run();

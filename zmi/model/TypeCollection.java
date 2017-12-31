@@ -26,6 +26,7 @@ package model;
 
 import java.util.Collection;
 
+import core.Model;
 import model.Type;
 import model.TypePrimitive;
 import model.Value;
@@ -112,5 +113,15 @@ public class TypeCollection extends Type {
 		}
 		
 		return mainType == null? TypePrimitive.NULL : mainType;
+	}
+
+	public Model.TypeCollection serialize() {
+		return Model.TypeCollection.newBuilder().setElementType(elementType.serializeType())
+				.setTypePrimary(serializePrimary()).build();
+	}
+
+	public static TypeCollection fromProtobuf(Model.TypeCollection type) {
+		return new TypeCollection(fromProtobuf(type.getTypePrimary()),
+				fromProtobuf(type.getElementType()));
 	}
 }

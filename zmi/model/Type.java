@@ -24,6 +24,8 @@
 
 package model;
 
+import core.Model;
+
 import java.io.Serializable;
 
 /**
@@ -79,5 +81,71 @@ public abstract class Type implements Serializable {
 	 */
 	public boolean isCollection() {
 		return false;
+	}
+
+	public Model.Type serializeType() {
+		if (this instanceof TypeCollection)
+			return Model.Type.newBuilder().setCollection(((TypeCollection)this).serialize()).build();
+		if (this instanceof TypePrimitive)
+			return Model.Type.newBuilder().setPrimitive(((TypePrimitive)this).serialize()).build();
+		assert false;
+		return null;
+	}
+
+	public Model.TypePrimary serializePrimary() {
+		switch (getPrimaryType()) {
+			case BOOLEAN:
+				return Model.TypePrimary.BOOLEAN;
+			case CONTACT:
+				return Model.TypePrimary.CONTACT;
+			case DOUBLE:
+				return Model.TypePrimary.DOUBLE;
+			case DURATION:
+				return Model.TypePrimary.DURATION;
+			case INT:
+				return Model.TypePrimary.INT;
+			case NULL:
+				return Model.TypePrimary.NULL;
+			case STRING:
+				return Model.TypePrimary.STRING;
+			case TIME:
+				return Model.TypePrimary.TIME;
+		}
+		assert false;
+		return null;
+	}
+
+	public static Type fromProtobuf(Model.Type type) {
+		if (type.hasCollection())
+			return TypeCollection.fromProtobuf(type.getCollection());
+		else
+			return TypePrimitive.fromProtobuf(type.getPrimitive());
+	}
+
+	public static PrimaryType fromProtobuf(Model.TypePrimary type) {
+		switch (type.getNumber()) {
+			case Model.TypePrimary.BOOLEAN_VALUE:
+				return PrimaryType.BOOLEAN;
+			case Model.TypePrimary.CONTACT_VALUE:
+				return PrimaryType.CONTACT;
+			case Model.TypePrimary.DOUBLE_VALUE:
+				return PrimaryType.DOUBLE;
+			case Model.TypePrimary.DURATION_VALUE:
+				return PrimaryType.DURATION;
+			case Model.TypePrimary.INT_VALUE:
+				return PrimaryType.INT;
+			case Model.TypePrimary.LIST_VALUE:
+				return PrimaryType.LIST;
+			case Model.TypePrimary.NULL_VALUE:
+				return PrimaryType.NULL;
+			case Model.TypePrimary.SET_VALUE:
+				return PrimaryType.SET;
+			case Model.TypePrimary.STRING_VALUE:
+				return PrimaryType.STRING;
+			case Model.TypePrimary.TIME_VALUE:
+				return PrimaryType.TIME;
+		}
+		assert false;
+		return null;
 	}
 }

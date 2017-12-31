@@ -276,8 +276,8 @@ public class ValueList extends ValueSimple<List<Value>> implements List<Value> {
 	public final Model.ValueList serialize() {
 		Model.ValueList.Builder builder = Model.ValueList.newBuilder();
 		for (Value v : getValue())
-			// TODO check if it works
 			builder.addValues(v.serializeValue());
+		builder.setType(type.serializeType());
 		return builder.build();
 	}
 
@@ -286,11 +286,6 @@ public class ValueList extends ValueSimple<List<Value>> implements List<Value> {
 		for (Model.Value value : valueList.getValuesList()) {
 			values.add(Value.fromProtobuf(value));
 		}
-		if (values.isEmpty()) {
-			return new ValueList(values, TypePrimitive.NULL);
-		} else {
-			Type type = values.get(0).getType();
-			return new ValueList(values, type);
-		}
+		return new ValueList(values, Type.fromProtobuf(valueList.getType()));
 	}
 }

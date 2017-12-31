@@ -24,6 +24,8 @@
 
 package model;
 
+import core.Model;
+
 /**
  * Convenient class for types that just wrap ordinary Java types.
  * 
@@ -105,4 +107,13 @@ public class TypePrimitive extends Type {
 	public boolean isCompatible(Type type) {
 		return super.isCompatible(type) || getPrimaryType() == type.getPrimaryType();
 	}
+
+	public Model.TypePrimitive serialize() {
+		return Model.TypePrimitive.newBuilder().setTypePrimary(serializePrimary()).build();
+	}
+
+	public static TypePrimitive fromProtobuf(Model.TypePrimitive type) {
+		return new TypePrimitive(Type.fromProtobuf(type.getTypePrimary()));
+	}
+
 }
