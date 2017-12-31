@@ -88,8 +88,8 @@ public class CustomJsonSerializer {
                                      JsonSerializationContext context) {
             JsonObject obj = new JsonObject();
             obj.addProperty("type", src.getClass().getSimpleName());
-            obj.addProperty("name", src.getName().getName());
-            obj.addProperty("address", src.getAddress().getHostName());
+            obj.addProperty("name", src.getName() == null ? "N/A" : src.getName().getName());
+            obj.addProperty("address", src.getAddress() == null ? "N/A" : src.getAddress().getHostName());
             return obj;
         }
     }
