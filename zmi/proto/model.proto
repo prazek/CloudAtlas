@@ -56,9 +56,14 @@ message Value  {
     }
 }
 
+message QueryName {
+    string s = 1;
+}
+
 
 message Query {
-
+    QueryName name = 1;
+    string code = 2;
 }
 
 message PathName {
@@ -66,9 +71,8 @@ message PathName {
 }
 
 message ZMI {
-  AttributesMap map = 1;
+    AttributesMap map = 1;
 }
-
 
 message AttributesMap {
   map<string, Value> map = 1;
@@ -78,6 +82,6 @@ message AttributesMap {
 // Czy to jest potrzebne?
 message Zone {
   PathName path = 1;
-  AttributesMap attrs = 2;
+  ZMI zmi = 2;
   repeated PathName sons = 3;
 }

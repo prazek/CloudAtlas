@@ -8,7 +8,12 @@ import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import core.AgentGrpc;
 import core.AgentIface;
+import core.AgentOuterClass;
+import core.Model;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import model.*;
 
 import java.io.*;
@@ -17,10 +22,7 @@ import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -31,18 +33,19 @@ public class Client {
         }
         String agentName = args[0];
         try {
-            Registry registry = LocateRegistry.getRegistry(4242);
-            AgentIface agent = (AgentIface) registry.lookup(agentName);
+            ManagedChannel channel = ManagedChannelBuilder.forAddress("127.0.0.1", 4321).usePlaintext(true).build();
+
+            AgentGrpc.AgentBlockingStub agentStub = AgentGrpc.newBlockingStub(channel);
 
             HttpServer server = HttpServer.create(new InetSocketAddress(8042), 0);
             // Pages
             server.createContext("/", new MainPage());
             server.createContext("/zmi/", new ServeFileHandler("client/ZMI.html", "text/html"));
-            server.createContext("/fallbackContacts/", new ContactsPage(agent));
-            server.createContext("/installedQueries/", new InstalledQueriesPage(agent));
-            server.createContext("/installQuery/", new InstallQueryPage(agent));
-            server.createContext("/uninstallQuery/", new UninstallQueryPage(agent));
-            server.createContext("/attributes/", new AttributesPage(agent));
+            server.createContext("/fallbackContacts/", new ContactsPage(agentStub));
+            server.createContext("/installedQueries/", new InstalledQueriesPage(agentStub));
+            server.createContext("/installQuery/", new InstallQueryPage(agentStub));
+            server.createContext("/uninstallQuery/", new UninstallQueryPage(agentStub));
+            server.createContext("/attributes/", new AttributesPage(agentStub));
             server.createContext("/plot/", new PlotPage());
 
             // Resouces
@@ -69,9 +72,9 @@ public class Client {
     }
 
     private static class AttributesPage implements HttpHandler {
-        private final AgentIface agent;
+        private final AgentGrpc.AgentBlockingStub agent;
 
-        AttributesPage(AgentIface agent) {
+        AttributesPage(AgentGrpc.AgentBlockingStub agent) {
             this.agent = agent;
         }
 
@@ -79,7 +82,12 @@ public class Client {
         public void handle(HttpExchange t) throws IOException {
             try {
                 Gson gson = new CustomJsonSerializer().getSerializer();
-                Map<PathName, ZMI> zmi = agent.zones();
+                Iterator<Model.Zone> zmiIterator = agent.getZones(AgentOuterClass.Empty.newBuilder().build());
+                Map<PathName, ZMI> zmi = new HashMap<>();
+                while(zmiIterator.hasNext()) {
+                    Model.Zone zone = zmiIterator.next();
+                    zmi.put(PathName.fromProtobuf(zone.getPath()), ZMI.fromProtobuf(zone.getZmi()));
+                }
                 String response = gson.toJson(zmi);
                 t.getResponseHeaders().add("Content-Type", "application/json");
                 t.sendResponseHeaders(200, response.length());
@@ -171,12 +179,12 @@ public class Client {
     }
 
     private static class InstallQueryPage implements HttpHandler {
-        private final AgentIface agent;
+        private final AgentGrpc.AgentBlockingStub agent;
 
-        InstallQueryPage(AgentIface agent) {
+
+        InstallQueryPage(AgentGrpc.AgentBlockingStub agent) {
             this.agent = agent;
         }
-
         @Override
         public void handle(HttpExchange t) throws IOException {
             try {
@@ -201,7 +209,7 @@ public class Client {
             String response = "ok";
             Map<String, String> data = parseFormUrlencoded(inputStreamToString(t.getRequestBody()));
             try {
-                agent.installQuery(data.get("queryName"), data.get("query"));
+                agent.installQuery(Model.Query.newBuilder().setName(Model.QueryName.newBuilder().setS(data.get("queryName"))).setCode(data.get("query")).build());
             } catch (Exception ex) {
                 System.err.println("Error:\n" + ex);
                 t.getResponseHeaders().add("Content-Type", "text/html");
@@ -220,16 +228,16 @@ public class Client {
     }
 
     private static class InstalledQueriesPage implements HttpHandler {
-        private final AgentIface agent;
+        private final AgentGrpc.AgentBlockingStub agent;
 
-        InstalledQueriesPage(AgentIface agent) {
+        InstalledQueriesPage(AgentGrpc.AgentBlockingStub agent) {
             this.agent = agent;
         }
         @Override
         public void handle(HttpExchange t) throws IOException {
             try {
                 Gson gson = CustomJsonSerializer.getSerializer();
-                AttributesMap queries = agent.getQueries();
+                AttributesMap queries = AttributesMap.fromProtobuf(agent.getQueries(AgentOuterClass.Empty.newBuilder().build()));
                 //ZMI other = agent.zone(new PathName("/pjwstk"));
                 String response = gson.toJson(queries);
                 t.getResponseHeaders().add("Content-Type", "application/json");
@@ -245,9 +253,10 @@ public class Client {
     }
 
     private static class UninstallQueryPage implements HttpHandler {
-        private final AgentIface agent;
+        private final AgentGrpc.AgentBlockingStub agent;
 
-        UninstallQueryPage(AgentIface agent) {
+
+        UninstallQueryPage(AgentGrpc.AgentBlockingStub agent) {
             this.agent = agent;
         }
 
@@ -275,7 +284,7 @@ public class Client {
             String response = "ok";
             Map<String, String> data = parseFormUrlencoded(inputStreamToString(t.getRequestBody()));
             try {
-                agent.uninstallQuery(data.get("queryName"));
+                agent.uninstallQuery(Model.QueryName.newBuilder().setS(data.get("queryName")).build());
             } catch (Exception ex) {
                 System.err.println("Error:\n" + ex);
                 t.getResponseHeaders().add("Content-Type", "text/html");
@@ -294,9 +303,9 @@ public class Client {
     }
 
     private static class ContactsPage implements HttpHandler {
-        private final AgentIface agent;
+        private final AgentGrpc.AgentBlockingStub agent;
 
-        ContactsPage(AgentIface agent) {
+        ContactsPage(AgentGrpc.AgentBlockingStub agent) {
             this.agent = agent;
         }
 
@@ -321,7 +330,8 @@ public class Client {
         private void handleGET(HttpExchange t) throws IOException {
             String response = "___";
             try {
-                Set<ValueContact> s = agent.getFallbackContacts();
+                Iterator<Model.ValueContact> s = agent.getFallbackContacts(AgentOuterClass.Empty.newBuilder().build());
+                //////////////////////////////////////////////////////////////////
                 Gson gson = new CustomJsonSerializer().getSerializer();
                 response = gson.toJson(s);
             } catch (Exception ex) {
@@ -347,16 +357,17 @@ public class Client {
                 JsonParser parser = new JsonParser();
                 JsonElement allContacts = parser.parse(jString);
                 JsonArray contacts = allContacts.getAsJsonArray();
-                Set<ValueContact> newSet = new TreeSet<ValueContact>();
+                Set<Model.ValueContact> newSet = new TreeSet<>();
+                AgentOuterClass.ValueContacts.Builder builder = AgentOuterClass.ValueContacts.newBuilder();
                 for (JsonElement e: contacts) {
                     String name = e.getAsJsonObject().get("name").getAsString();
                     String address = e.getAsJsonObject().get("address").getAsString();
                     // TODO(sbarzowski) not sure if getByName is a good idea
                     InetAddress addr = InetAddress.getByName(address);
-                    ValueContact c = new ValueContact(new PathName(name), addr);
-                    newSet.add(c);
+                    Model.ValueContact c = Model.ValueContact.newBuilder().setPathName(Model.PathName.newBuilder().setP(name)).setInetAddress(addr.toString()).build();
+                    builder.addContacts(c);
                 }
-                agent.setFallbackContacts(newSet);
+                agent.setFallbackContacts(builder.build());
             } catch (Exception ex) {
                 System.err.println("Error:\n" + ex);
                 t.getResponseHeaders().add("Content-Type", "text/html");

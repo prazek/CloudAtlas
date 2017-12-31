@@ -120,7 +120,7 @@ public class ValueString extends ValueSimple<String> {
 	}
 
 	public final Model.ValueString serialize() {
-		return Model.ValueString.newBuilder().setValue(getValue()).build();
+		return Model.ValueString.newBuilder().setValue(getValue() == null ? "": getValue()).build();
 	}
 
 	public static ValueString fromProtobuf(Model.ValueString valueString) {
