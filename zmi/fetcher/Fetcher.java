@@ -2,12 +2,12 @@ package fetcher;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.RemoteException;
-import java.rmi.registry.Registry;
 
-import core.AgentIface;
+import core.AgentGrpc;
+import core.AgentOuterClass;
 import interpreter.MachineInfoFetcher;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import model.*;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
@@ -16,8 +16,6 @@ import java.util.*;
 
 import static java.lang.System.exit;
 import static java.lang.Thread.sleep;
-import static java.util.Arrays.setAll;
-
 
 public class Fetcher {
     private static Sigar sigar = new Sigar();
@@ -76,7 +74,7 @@ public class Fetcher {
         return combined;
     }
 
-    public static void main(String[] args) throws RemoteException {
+    public static void main(String[] args) {
         if (args.length < 2) {
             System.err.println("Usage: ./fetcher zone_name fetcher.ini");
             exit(1);
@@ -87,8 +85,9 @@ public class Fetcher {
         String agentName = args[0];
         String iniFileName = args[1];
         try {
-            Registry registry = LocateRegistry.getRegistry(4242);
-            AgentIface stub = (AgentIface) registry.lookup(agentName);
+            ManagedChannel channel = ManagedChannelBuilder.forAddress("127.0.0.1", 4321).usePlaintext(true).build();
+
+            AgentGrpc.AgentBlockingStub stub = AgentGrpc.newBlockingStub(channel);
             AttributesMap machineInfo = MachineInfoFetcher.getMachineInfo();
 
             InputStream iniFile = new FileInputStream(iniFileName);
@@ -159,9 +158,13 @@ public class Fetcher {
         }
     }
 
-    private void sendAttributes(AgentIface stub, AttributesMap attributes) throws RemoteException {
+    private void sendAttributes(AgentGrpc.AgentBlockingStub stub, AttributesMap attributes) {
         for (Map.Entry<Attribute, Value> attribute : attributes)
-            stub.setZoneValue(agentPathName, attribute.getKey(), attribute.getValue());
+            stub.setZoneValue(AgentOuterClass.SetZoneValueData.newBuilder()
+                    .setPath(agentPathName.serialize())
+                    .setAttribute(attribute.getKey().toString())
+                    .setValue(attribute.getValue().serializeValue())
+                    .build());
     }
 
 }

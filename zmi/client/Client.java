@@ -9,7 +9,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import core.AgentGrpc;
-import core.AgentIface;
 import core.AgentOuterClass;
 import core.Model;
 import io.grpc.ManagedChannel;
@@ -20,8 +19,6 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.util.*;
 import java.util.stream.Collectors;
 
