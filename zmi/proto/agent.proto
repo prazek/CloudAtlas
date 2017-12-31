@@ -16,9 +16,8 @@ message Empty {
 
 }
 
-
-message QueryName {
-  string s = 1;
+message ValueContacts {
+  repeated ValueContact contacts = 1;
 }
 
 service Agent {
@@ -27,7 +26,7 @@ service Agent {
   rpc InstallQuery(Query) returns (Empty);
   rpc uninstallQuery(QueryName) returns (Empty);
   rpc SetZoneValue(SetZoneValueData) returns (Empty);
-  rpc SetFallbackContacts(ValueContact) returns (Empty);
-  rpc GetFallbackContacts(ValueContact) returns (stream ValueContact);
+  rpc SetFallbackContacts(ValueContacts) returns (Empty);
+  rpc GetFallbackContacts(Empty) returns (stream ValueContact);
   rpc getQueries(Empty) returns (AttributesMap);
 }

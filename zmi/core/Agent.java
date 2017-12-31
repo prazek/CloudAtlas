@@ -113,44 +113,101 @@ public class Agent implements AgentIface {
 
         @Override
         public void getZones(AgentOuterClass.Empty request, StreamObserver<Model.Zone> responseObserver) {
-            super.getZones(request, responseObserver);
+            try {
+                for (Map.Entry<PathName, ZMI> i: zones().entrySet()) {
+                    // mild schizophrenia
+                    Model.ZMI zmi = i.getValue().serialize();
+                    Model.Zone z = Model.Zone.newBuilder().setZmi(zmi).build();
+                    responseObserver.onNext(z);
+                }
+                responseObserver.onCompleted();
+            } catch (RemoteException r) {
+                System.err.println(r);
+                responseObserver.onError(r);
+            }
+
         }
 
         @Override
         public void installQuery(Model.Query request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
-            super.installQuery(request, responseObserver);
+            try {
+                Agent.this.installQuery(request.getName().getS(), request.getCode());
+                responseObserver.onCompleted();
+            } catch (Exception r) {
+                responseObserver.onError(r);
+            }
         }
 
         @Override
-        public void uninstallQuery(AgentOuterClass.QueryName request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
-            super.uninstallQuery(request, responseObserver);
+        public void uninstallQuery(Model.QueryName request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+            try {
+                Agent.this.uninstallQuery(request.getS());
+                responseObserver.onCompleted();
+            } catch (Exception r) {
+                responseObserver.onError(r);
+            }
         }
 
         @Override
         public void setZoneValue(AgentOuterClass.SetZoneValueData request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
-            super.setZoneValue(request, responseObserver);
+            try {
+                Agent.this.setZoneValue(
+                        PathName.fromProtobuf(request.getPath()),
+                        new Attribute(request.getAttribute()),
+                        Value.fromProtobuf(request.getValue()));
+                responseObserver.onCompleted();
+            } catch (Exception r) {
+                responseObserver.onError(r);
+            }
+        }
+
+
+        @Override
+        public void setFallbackContacts(AgentOuterClass.ValueContacts request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+            try {
+                HashSet<ValueContact> contacts = new HashSet<>();
+                for (Model.ValueContact c: request.getContactsList()) {
+                    contacts.add(ValueContact.fromProtobuf(c));
+                }
+                Agent.this.setFallbackContacts(contacts);
+                responseObserver.onCompleted();
+            } catch (Exception r) {
+                responseObserver.onError(r);
+            }
         }
 
         @Override
-        public void setFallbackContacts(Model.ValueContact request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
-            super.setFallbackContacts(request, responseObserver);
-        }
-
-        @Override
-        public void getFallbackContacts(Model.ValueContact request, StreamObserver<Model.ValueContact> responseObserver) {
-            super.getFallbackContacts(request, responseObserver);
+        public void getFallbackContacts(AgentOuterClass.Empty request, StreamObserver<Model.ValueContact> responseObserver) {
+            try {
+                Set<ValueContact> contacts = Agent.this.getFallbackContacts();
+                for (ValueContact c: contacts) {
+                    responseObserver.onNext(c.serialize());
+                }
+                responseObserver.onCompleted();
+            } catch (Exception r) {
+                responseObserver.onError(r);
+            }
         }
 
         @Override
         public void getQueries(AgentOuterClass.Empty request, StreamObserver<Model.AttributesMap> responseObserver) {
-            super.getQueries(request, responseObserver);
+            try {
+                AttributesMap contacts = Agent.this.getQueries();
+                responseObserver.onNext(contacts.serialize());
+            } catch (Exception r) {
+                responseObserver.onError(r);
+            }
         }
 
         @Override
         public void getZone(Model.PathName request,
                             io.grpc.stub.StreamObserver<Model.Zone> responseObserver) {
-            responseObserver.onNext(Model.Zone.newBuilder().build());
-            responseObserver.onCompleted();
+            try {
+                responseObserver.onNext(Model.Zone.newBuilder().build());
+                responseObserver.onCompleted();
+            } catch (Exception r) {
+                responseObserver.onError(r);
+            }
         }
     }
 
