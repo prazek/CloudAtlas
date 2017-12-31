@@ -14,6 +14,14 @@ public class DatabaseUpdater extends Executor {
 
     @Override
     void execute(ExecuteContext context) {
+        if (context.data.hasZones()) {
+            context.sender.pushToExecute(new ExecuteContext(this,
+                    MessageOuterClass.Message.newBuilder().
+                            setZonesResponse(Database.ZonesResponse.newBuilder().
+                                    setResponseID(context.data.getZones().getMsgID()).build()).build())
+                    );
+        }
+
         //Database.UpdateDatabase updateDatabase = context.data.getUpdateDatabase();
 
 
