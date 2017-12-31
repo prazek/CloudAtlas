@@ -117,7 +117,9 @@ public class Agent implements AgentIface {
                 for (Map.Entry<PathName, ZMI> i: zones().entrySet()) {
                     // mild schizophrenia
                     Model.ZMI zmi = i.getValue().serialize();
-                    Model.Zone z = Model.Zone.newBuilder().setZmi(zmi).build();
+                    // TODO(sbarzowski) set sons
+                    Model.Zone z = Model.Zone.newBuilder().setPath(i.getKey().serialize()).setZmi(zmi).build();
+                    System.err.println(z.toString());
                     responseObserver.onNext(z);
                 }
                 responseObserver.onCompleted();

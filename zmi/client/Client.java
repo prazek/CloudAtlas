@@ -88,6 +88,7 @@ public class Client {
                     Model.Zone zone = zmiIterator.next();
                     zmi.put(PathName.fromProtobuf(zone.getPath()), ZMI.fromProtobuf(zone.getZmi()));
                 }
+                //String response = "{}";
                 String response = gson.toJson(zmi);
                 t.getResponseHeaders().add("Content-Type", "application/json");
                 t.sendResponseHeaders(200, response.length());
