@@ -135,4 +135,8 @@ public class ValueInt extends ValueSimple<Long> {
 	public final Model.ValueInt serialize() {
 		return Model.ValueInt.newBuilder().setValue(getValue()).build();
 	}
+
+	public static ValueInt fromProtobuf(Model.ValueInt valueInt) {
+		return new ValueInt(valueInt.getValue());
+	}
 }

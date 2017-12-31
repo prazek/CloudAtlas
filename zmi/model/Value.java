@@ -278,6 +278,27 @@ public abstract class Value implements Serializable, Comparable<Value>  {
 
 
 	public static Value fromProtobuf(Model.Value value) {
+		if (value.hasValueBoolean())
+			return ValueBoolean.fromProtobuf(value.getValueBoolean());
+		if (value.hasValueContact())
+			return ValueContact.fromProtobuf(value.getValueContact());
+		if (value.hasValueDouble())
+			return ValueDouble.fromProtobuf(value.getValueDouble());
+		if (value.hasValueDuration())
+			return ValueDuration.fromProtobuf(value.getValueDuration());
+		if (value.hasValueInt())
+			return ValueInt.fromProtobuf(value.getValueInt());
+		if (value.hasValueList())
+			return ValueList.fromProtobuf(value.getValueList());
+		if (value.hasValueNull())
+			return ValueNull.fromProtobuf(value.getValueNull());
+		if (value.hasValueSet())
+			return ValueSet.fromProtobuf(value.getValueSet());
+		if (value.hasValueString())
+			return ValueString.fromProtobuf(value.getValueString());
+		if (value.hasValueTime())
+			return ValueTime.fromProtobuf(value.getValueTime());
+		assert false;
 		return null;
 	}
 }

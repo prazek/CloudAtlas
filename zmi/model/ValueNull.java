@@ -158,4 +158,8 @@ public class ValueNull extends Value {
 	public final Model.ValueNull serialize() {
 		return Model.ValueNull.newBuilder().build();
 	}
+
+	public static ValueNull fromProtobuf(Model.ValueNull value) {
+		return new ValueNull();
+	}
 }

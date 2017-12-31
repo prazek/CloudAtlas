@@ -278,4 +278,14 @@ public class ValueList extends ValueSimple<List<Value>> implements List<Value> {
 			builder.addValues(v.serializeValue());
 		return builder.build();
 	}
+
+	public static ValueList fromProtobuf(Model.ValueList valueList) {
+		List<Value> values = new ArrayList<>();
+		for (Model.Value value : valueList.getValuesList()) {
+			values.add(Value.fromProtobuf(value));
+		}
+		// TODO fix if empty
+		Type type = values.get(0).getType();
+		return new ValueList(values, type);
+	}
 }
