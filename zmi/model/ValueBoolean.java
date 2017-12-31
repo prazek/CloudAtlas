@@ -95,4 +95,8 @@ public class ValueBoolean extends ValueSimple<Boolean> {
 	public final Model.ValueBoolean serialize() {
 		return Model.ValueBoolean.newBuilder().setValue(getValue()).build();
 	}
+
+	public static ValueBoolean fromProtobuf(Model.ValueBoolean value) {
+		return new ValueBoolean(value.getValue());
+	}
 }

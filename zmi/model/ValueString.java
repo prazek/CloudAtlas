@@ -122,4 +122,8 @@ public class ValueString extends ValueSimple<String> {
 	public final Model.ValueString serialize() {
 		return Model.ValueString.newBuilder().setValue(getValue()).build();
 	}
+
+	public static ValueString fromProtobuf(Model.ValueString valueString) {
+		return new ValueString(valueString.getValue());
+	}
 }

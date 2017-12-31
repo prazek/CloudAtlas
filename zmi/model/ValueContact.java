@@ -25,6 +25,7 @@
 package model;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import core.Model;
 import model.Value;
@@ -103,5 +104,14 @@ public class ValueContact extends Value {
 		return Model.ValueContact.newBuilder().
 				setPathName(name.serialize()).
 				setInetAddress(address.toString()).build();
+	}
+
+	public static ValueContact fromProtobuf(Model.ValueContact value) {
+		try {
+			return new ValueContact(PathName.fromProtobuf(value.getPathName()),
+					InetAddress.getByName(value.getInetAddress()));
+		} catch (UnknownHostException ex){
+			return null;
+		}
 	}
 }

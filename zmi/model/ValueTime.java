@@ -119,4 +119,8 @@ public class ValueTime extends ValueSimple<Long> {
 	public Model.ValueTime serialize() {
 		return Model.ValueTime.newBuilder().setTime(getValue()).build();
 	}
+
+	public static ValueTime fromProtobuf(Model.ValueTime value) {
+		return new ValueTime(value.getTime());
+	}
 }

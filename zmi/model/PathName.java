@@ -184,4 +184,8 @@ public class PathName implements Serializable {
 	public Model.PathName serialize() {
 		return Model.PathName.newBuilder().setP(name).build();
 	}
+
+	public static PathName fromProtobuf(Model.PathName pathName) {
+		return new PathName(pathName.getP());
+	}
 }

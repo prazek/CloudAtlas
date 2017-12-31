@@ -201,4 +201,8 @@ public class ValueDuration extends ValueSimple<Long> {
 	public Model.ValueDuration serialize() {
 		return Model.ValueDuration.newBuilder().setDuration(getValue()).build();
 	}
+
+	public static ValueDuration fromProtobuf(Model.ValueDuration value) {
+		return new ValueDuration(value.getDuration());
+	}
 }

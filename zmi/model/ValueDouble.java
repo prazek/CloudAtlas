@@ -115,4 +115,8 @@ public class ValueDouble extends ValueSimple<Double> {
 	public final Model.ValueDouble serialize() {
 		return Model.ValueDouble.newBuilder().setValue(getValue()).build();
 	}
+
+	public static ValueDouble fromProtobuf(Model.ValueDouble value) {
+		return new ValueDouble(value.getValue());
+	}
 }

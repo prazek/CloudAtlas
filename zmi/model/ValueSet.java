@@ -231,4 +231,17 @@ public class ValueSet extends ValueSimple<SortedSet<Value>> implements Set<Value
 		}
 		return builder.build();
 	}
+
+	public static ValueSet fromProtobuf(Model.ValueSet valueSet) {
+		SortedSet<Value> values = new TreeSet<>();
+		Type type = null;
+		for (Model.Value value : valueSet.getValuesList()) {
+			// TODO fix if empty
+			Value v = Value.fromProtobuf(value);
+			type = v.getType();
+			values.add(v);
+		}
+		return new ValueSet(values, type);
+	}
+
 }
