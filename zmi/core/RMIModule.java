@@ -48,6 +48,9 @@ public class RMIModule extends Executor implements AgentIface{
 
     @Override
     void execute(ExecuteContext context) {
+        if (context.data.hasZonesResponse()) {
+
+        }
 
     }
 
@@ -56,12 +59,11 @@ public class RMIModule extends Executor implements AgentIface{
 
 
     public Map<PathName, ZMI> zones() throws RemoteException {
-        ExecuteContext context = new ExecuteContext();
-        context.sender = this;
         int id = currentId++;
-
-        context.data = MessageOuterClass.Message.newBuilder()
-                .setZones(Database.Zones.newBuilder().setMsgID(id).build()).build();
+        ExecuteContext context = new ExecuteContext(this,
+                MessageOuterClass.Message.newBuilder()
+                        .setZones(Database.Zones.newBuilder().setMsgID(id).build()).build());
+        
         databaseUpdater.pushToExecute(context);
 
         // WAIT somehow
