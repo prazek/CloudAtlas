@@ -63,7 +63,7 @@ public class RMIModule extends Executor implements AgentIface{
         ExecuteContext context = new ExecuteContext(this,
                 MessageOuterClass.Message.newBuilder()
                         .setZones(Database.Zones.newBuilder().setMsgID(id).build()).build());
-        
+
         databaseUpdater.pushToExecute(context);
 
         // WAIT somehow
