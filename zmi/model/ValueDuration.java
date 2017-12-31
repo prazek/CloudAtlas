@@ -199,7 +199,7 @@ public class ValueDuration extends ValueSimple<Long> {
 	}
 
 	public Model.ValueDuration serialize() {
-		return Model.ValueDuration.newBuilder().setDuration(getValue()).build();
+		return Model.ValueDuration.newBuilder().setDuration(getValue() == null ? 0L : getValue()).build();
 	}
 
 	public static ValueDuration fromProtobuf(Model.ValueDuration value) {

@@ -103,7 +103,7 @@ public class ValueContact extends Value {
 	public Model.ValueContact serialize() {
 		return Model.ValueContact.newBuilder().
 				setPathName(name.serialize()).
-				setInetAddress(address.toString()).build();
+				setInetAddress(address == null ? "N/A" : address.toString()).build();
 	}
 
 	public static ValueContact fromProtobuf(Model.ValueContact value) {
@@ -111,7 +111,8 @@ public class ValueContact extends Value {
 			return new ValueContact(PathName.fromProtobuf(value.getPathName()),
 					InetAddress.getByName(value.getInetAddress()));
 		} catch (UnknownHostException ex){
-			return null;
+			assert false;
+			return new ValueContact(null, null);
 		}
 	}
 }

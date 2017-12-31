@@ -357,7 +357,6 @@ public class Client {
                 JsonParser parser = new JsonParser();
                 JsonElement allContacts = parser.parse(jString);
                 JsonArray contacts = allContacts.getAsJsonArray();
-                Set<Model.ValueContact> newSet = new TreeSet<>();
                 AgentOuterClass.ValueContacts.Builder builder = AgentOuterClass.ValueContacts.newBuilder();
                 for (JsonElement e: contacts) {
                     String name = e.getAsJsonObject().get("name").getAsString();
