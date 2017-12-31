@@ -35,6 +35,8 @@ import model.TypeCollection;
 import model.Value;
 import model.ValueList;
 
+import javax.lang.model.type.NullType;
+
 /**
  * A value representing a list of values of the specified type. Implements <code>List</code> interface.
  * <p>
@@ -284,8 +286,11 @@ public class ValueList extends ValueSimple<List<Value>> implements List<Value> {
 		for (Model.Value value : valueList.getValuesList()) {
 			values.add(Value.fromProtobuf(value));
 		}
-		// TODO fix if empty
-		Type type = values.get(0).getType();
-		return new ValueList(values, type);
+		if (values.isEmpty()) {
+			return new ValueList(values, TypePrimitive.NULL);
+		} else {
+			Type type = values.get(0).getType();
+			return new ValueList(values, type);
+		}
 	}
 }

@@ -93,7 +93,7 @@ public class ValueBoolean extends ValueSimple<Boolean> {
 	}
 
 	public final Model.ValueBoolean serialize() {
-		return Model.ValueBoolean.newBuilder().setValue(getValue()).build();
+		return Model.ValueBoolean.newBuilder().setValue(getValue() == null ? false : getValue()).build();
 	}
 
 	public static ValueBoolean fromProtobuf(Model.ValueBoolean value) {
