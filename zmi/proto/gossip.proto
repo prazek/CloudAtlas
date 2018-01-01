@@ -9,7 +9,7 @@ message GossipingRequestFromDB {
 
 message GossipingResponseFromDB {
     AttributesMap attributesMap = 1;
-    map<string, ValueTime> freshness = 2;
+    map<string, int64> freshness = 2;
 }
 
 

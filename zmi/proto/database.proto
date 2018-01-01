@@ -9,6 +9,10 @@ message UpdateDatabase {
     map<string, int64> freshness = 2;
 }
 
+message CurrentDatabaseRequest {
+
+}
+
 message Zones {
     int32 msgID = 1;
 }
