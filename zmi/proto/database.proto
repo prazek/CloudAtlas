@@ -26,4 +26,6 @@ service DatabaseService {
     rpc SetZoneValue(SetZoneValueData) returns (Empty);
     rpc GetZones(Empty) returns (stream Zone);
     rpc GetZone(PathName) returns (Zone);
+    rpc ReceiveGossip(UpdateDatabase) returns (Empty);
+    rpc GetCurrentDatabase(CurrentDatabaseRequest) returns (UpdateDatabase);
 }
