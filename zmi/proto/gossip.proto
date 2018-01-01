@@ -2,16 +2,11 @@ syntax = "proto3";
 option java_package = "core";
 
 import "model.proto";
+import "database.proto";
 
 message GossipingRequestFromDB {
     ValueContact contact = 1;
 }
-
-message GossipingResponseFromDB {
-    AttributesMap attributesMap = 1;
-    map<string, int64> freshness = 2;
-}
-
 
 message GossipRequestUDP {
     int64 requestTimestamp = 1;

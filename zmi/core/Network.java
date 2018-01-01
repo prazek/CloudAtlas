@@ -23,7 +23,7 @@ public class Network {
 //    private DatabaseUpdater databaseUpdater = null;
     private DatagramSocket receivingSocket;
     private Map<Long, RequestExtraData> requestsExtraData = new HashMap<>();
-
+    DatabaseServiceGrpc.DatabaseServiceStub databaseStub;
 
     Network() {
         try {
@@ -39,10 +39,10 @@ public class Network {
         t.start();
     }
 
+    void setDatabaseStub(DatabaseServiceGrpc.DatabaseServiceStub databaseStub) {
+        this.databaseStub = databaseStub;
 
-   /* void setDatabaseUpdater(DatabaseUpdater databaseUpdater) {
-        this.databaseUpdater = databaseUpdater;
-    }*/
+    }
 
 
     class Message {
@@ -87,7 +87,7 @@ public class Network {
         InetAddress address;
     }
 
-    private void handleGossipingResponseFromDB(Gossip.GossipingResponseFromDB response) {
+    private void handleGossipingResponseFromDB(Database.UpdateDatabase response) {
         // TODO
         RequestExtraData extraData = requestsExtraData.get(2137L);
 
@@ -186,8 +186,21 @@ public class Network {
                     .setAttributesMap(response.getAttributesMap())
                     .putAllFreshness(freshness).build();
 
+            StreamObserver<Model.Empty> responseObserver = new StreamObserver<Model.Empty>() {
+                @Override
+                public void onNext(Model.Empty empty) {
+                }
 
-            // Send updateDatabase to database
+                @Override
+                public void onError(Throwable throwable) {
+                    System.err.println(throwable);
+                }
+
+                @Override
+                public void onCompleted() {
+                }
+            };
+            databaseStub.receiveGossip(updateDatabase, responseObserver);
         }
 
         void handleGossipRequest(core.Gossip.GossipRequestUDP request, InetAddress address) {
@@ -197,12 +210,23 @@ public class Network {
             requestsExtraData.put(42L,
                     new RequestExtraData(request.getRequestTimestamp(), System.currentTimeMillis(), address));
 
+            StreamObserver<Database.UpdateDatabase> responseObserver = new StreamObserver<Database.UpdateDatabase>() {
+                @Override
+                public void onNext(Database.UpdateDatabase updateDatabase) {
+                    handleGossipingResponseFromDB(updateDatabase);
+                }
 
-            Database.CurrentDatabaseRequest databaseRequest =
-                    Database.CurrentDatabaseRequest.newBuilder().build();
-            // ASK database for data
+                @Override
+                public void onError(Throwable throwable) {
+                    System.err.println(throwable);
+                }
 
+                @Override
+                public void onCompleted() {
 
+                }
+            };
+            databaseStub.getCurrentDatabase(Database.CurrentDatabaseRequest.newBuilder().build(), responseObserver);
         }
     }
 

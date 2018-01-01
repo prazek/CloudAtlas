@@ -108,6 +108,8 @@ public class Agent {
         ManagedChannel dbChannel = InProcessChannelBuilder.forName("db_module").build();
         DatabaseServiceGrpc.DatabaseServiceStub dbStub = DatabaseServiceGrpc.newStub(dbChannel);
 
+        network.setDatabaseStub(dbStub);
+
         int port = 4321;
         ServerBuilder serverBuilder = ServerBuilder.forPort(port);
         serverBuilder.addService(new AgentService(dbStub));

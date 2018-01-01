@@ -9,7 +9,6 @@ message UpdateDatabase {
 }
 
 message CurrentDatabaseRequest {
-
 }
 
 message Zones {
