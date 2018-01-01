@@ -17,9 +17,9 @@ import java.util.Map;
 
 import static java.lang.Thread.sleep;
 
-public class Network extends Executor {
+public class Network {
 
-    private DatabaseUpdater databaseUpdater = null;
+//    private DatabaseUpdater databaseUpdater = null;
     private DatagramSocket receivingSocket;
     private Map<Long, RequestExtraData> requestsExtraData = new HashMap<>();
 
@@ -39,15 +39,11 @@ public class Network extends Executor {
     }
 
 
-    void setDatabaseUpdater(DatabaseUpdater databaseUpdater) {
+   /* void setDatabaseUpdater(DatabaseUpdater databaseUpdater) {
         this.databaseUpdater = databaseUpdater;
-    }
+    }*/
 
 
-    @Override
-    void execute(ExecuteContext context) {
-
-    }
     class Message {
         Message(core.Gossip.GossipMessageUDP messageUDP, InetAddress senderAddress) {
             this.messageUDP = messageUDP;

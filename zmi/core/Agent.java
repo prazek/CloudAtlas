@@ -219,6 +219,16 @@ public class Agent {
                 responseObserver.onError(r);
             }
         }
+
+        @Override
+        public void receiveGossip(Database.UpdateDatabase request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+            super.receiveGossip(request, responseObserver);
+        }
+
+        @Override
+        public void getCurrentDatabase(Database.CurrentDatabaseRequest request, StreamObserver<Database.UpdateDatabase> responseObserver) {
+            super.getCurrentDatabase(request, responseObserver);
+        }
     }
 
     private class AgentService extends AgentGrpc.AgentImplBase {
