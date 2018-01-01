@@ -168,6 +168,10 @@ public class Agent {
             callback.responseObserver = responseObserver;
             timerQueue.addCallback(currentTimeMillis() + request.getDelay().getDuration(), callback);
         }
+
+        public void startQueue() {
+            timerQueue.start();
+        }
     }
 
     private class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
@@ -300,6 +304,11 @@ public class Agent {
     }
 
     private void startServer() throws IOException {
+        TimerService timerService = new TimerService();
+        timerService.startQueue();
+        Server timerServer = InProcessServerBuilder.forName("timer_module").addService(timerService).build();
+        timerServer.start();
+        ManagedChannel timerChannel = InProcessChannelBuilder.forName("timer_module").build();
         Server dbServer = InProcessServerBuilder.forName("db_module").addService(new DatabaseService()).build();
         dbServer.start();
         ManagedChannel dbChannel = InProcessChannelBuilder.forName("db_module").build();
