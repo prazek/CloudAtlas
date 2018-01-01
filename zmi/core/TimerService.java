@@ -25,6 +25,7 @@ class TimerService extends TimerGrpc.TimerImplBase {
                 waiting.remove(waiting.firstKey());
                 for (Callback c: callbacks) {
                     c.responseObserver.onNext(TimerOuterClass.TimerResponse.newBuilder().setId(c.id).build());
+                    c.responseObserver.onCompleted();
                 }
             }
         }
@@ -67,7 +68,8 @@ class TimerService extends TimerGrpc.TimerImplBase {
         Callback callback = new Callback();
         callback.id = request.getId();
         callback.responseObserver = responseObserver;
-        timerQueue.addCallback(currentTimeMillis() + request.getDelay().getDuration(), callback);
+        timerQueue.addCallback(currentTimeMillis() + request.getDelay(), callback);
+        timerQueue.notify();
     }
 
     public void startQueue() {

@@ -10,6 +10,7 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import model.*;
+import sun.nio.ch.Net;
 
 import javax.xml.crypto.Data;
 import java.io.IOException;
@@ -88,8 +89,18 @@ public class Agent {
         Server timerServer = InProcessServerBuilder.forName("timer_module").addService(timerService).build();
         timerServer.start();
         ManagedChannel timerChannel = InProcessChannelBuilder.forName("timer_module").build();
+        TimerGrpc.TimerStub timerStub = TimerGrpc.newStub(timerChannel);
 
-        DatabaseService dbService = new DatabaseService(this);
+        Network network = new Network();
+        Network.NetworkService networkService = network.new NetworkService();
+        //networkService.startQueryRunner();
+        Server networkServer = InProcessServerBuilder.forName("network_module").addService(networkService).build();
+        networkServer.start();
+        ManagedChannel networkChannel = InProcessChannelBuilder.forName("network_module").build();
+        NetworkGrpc.NetworkStub networkStub = NetworkGrpc.newStub(networkChannel);
+
+
+        DatabaseService dbService = new DatabaseService(this, timerStub, networkStub);
         dbService.startQueryRunner();
         Server dbServer = InProcessServerBuilder.forName("db_module").addService(dbService).build();
         dbServer.start();

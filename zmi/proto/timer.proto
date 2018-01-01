@@ -1,13 +1,10 @@
 syntax = "proto3";
 option java_package = "core";
 
-message Delay {
-    int32 duration = 1;
-}
 
 message TimerRequest {
     int32 id = 1;
-    Delay delay = 2;
+    int32 delay = 2;
 }
 
 message TimerResponse {

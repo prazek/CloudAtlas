@@ -12,7 +12,7 @@ public class AgentTests {
     @org.junit.Test
     public void installQuery() throws Exception {
         Agent agent = new Agent(new PathName("/uw"));
-        DatabaseService database = new DatabaseService(agent);
+        DatabaseService database = new DatabaseService(agent, null, null);
 
         Value res1 = database.zone(new PathName("/uw")).getAttributes().getOrNull("res1");
         assertNull(res1);

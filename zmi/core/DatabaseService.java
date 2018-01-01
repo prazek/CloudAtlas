@@ -5,6 +5,7 @@ import interpreter.QueryResult;
 import io.grpc.stub.StreamObserver;
 import model.*;
 
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.util.*;
@@ -13,20 +14,74 @@ import static java.lang.Thread.sleep;
 
 class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     private Agent agent;
+    private TimerGrpc.TimerStub timerStub;
+    private NetworkGrpc.NetworkStub networkStub;
+
     private HashMap<PathName, ZMI> zones = new HashMap<>();
     private Set<ValueContact> fallbackContacts = new HashSet<>();
     private HashMap<Attribute, List<Attribute>> queryAttributes = new HashMap<>();
+    static private int GOSSIPING_DELAY = 4200;
 
 
-    DatabaseService(Agent agent) throws ParseException, UnknownHostException {
+
+    DatabaseService(Agent agent, TimerGrpc.TimerStub timerStub,
+                    NetworkGrpc.NetworkStub networkStub) throws ParseException, UnknownHostException {
         this.agent = agent;
         this.setRoot(ZMIConfig.getZMIConfiguration());
+        this.timerStub = timerStub;
+        this.networkStub = networkStub;
     }
 
-    void startQueryRunner() {
+    public void startQueryRunner() {
         RunQueries queryRunner = new RunQueries();
         Thread t = new Thread(queryRunner);
         t.start();
+    }
+
+    class NoOpResponseObserver implements StreamObserver<Model.Empty> {
+        @Override
+        public void onNext(Model.Empty empty) {
+        }
+        @Override
+        public void onError(Throwable throwable) {
+            System.err.println("Error from NoOPResponceObserver");
+        }
+        @Override
+        public void onCompleted() {
+        }
+    }
+
+
+    private void startGossiping() {
+        StreamObserver<core.TimerOuterClass.TimerResponse> responseObserver = new StreamObserver<TimerOuterClass.TimerResponse>() {
+            @Override
+            public void onNext(TimerOuterClass.TimerResponse timerResponse) {
+
+
+                NoOpResponseObserver observer = new NoOpResponseObserver();
+                // TODO wylosowac
+                try {
+                    // TODO dupa
+                    ValueContact contact = new ValueContact(new PathName("/dupa"), InetAddress.getLocalHost());
+                    networkStub.requestGossip(
+                            Gossip.GossipingRequestFromDB.newBuilder().setContact(contact.serialize()).build(), observer);
+
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex.getMessage());
+                }
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                System.err.println(throwable);
+            }
+
+            @Override
+            public void onCompleted() {
+                startGossiping();
+            }
+        };
+        timerStub.set(TimerOuterClass.TimerRequest.newBuilder().setDelay(GOSSIPING_DELAY).build(), responseObserver);
     }
 
     @Override
@@ -276,7 +331,6 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
             z.getAttributes().remove(attr);
         }
     }
-
 
     public class RunQueries implements Runnable {
         public void run() {

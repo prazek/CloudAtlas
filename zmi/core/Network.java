@@ -1,6 +1,7 @@
 package core;
 
 
+import io.grpc.stub.StreamObserver;
 import model.ValueContact;
 import model.ZMI;
 
@@ -85,12 +86,6 @@ public class Network {
         long requestReceivedTimestamp;
         InetAddress address;
     }
-
-
-
-
-
-
 
     private void handleGossipingResponseFromDB(Gossip.GossipingResponseFromDB response) {
         // TODO
@@ -213,6 +208,15 @@ public class Network {
 
 
 
+    public class NetworkService extends NetworkGrpc.NetworkImplBase {
+
+        @Override
+        public void requestGossip(Gossip.GossipingRequestFromDB request, StreamObserver<Model.Empty> responseObserver) {
+            handleGossipingRequestFromDB(request);
+            responseObserver.onNext(Model.Empty.newBuilder().build());
+            responseObserver.onCompleted();
+        }
+    }
 
 
 
