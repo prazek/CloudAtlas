@@ -26,6 +26,11 @@ service DatabaseService {
     rpc SetZoneValue(SetZoneValueData) returns (Empty);
     rpc GetZones(Empty) returns (stream Zone);
     rpc GetZone(PathName) returns (Zone);
+    rpc InstallQuery(Query) returns (Empty);
+    rpc uninstallQuery(QueryName) returns (Empty);
     rpc ReceiveGossip(UpdateDatabase) returns (Empty);
     rpc GetCurrentDatabase(CurrentDatabaseRequest) returns (UpdateDatabase);
+    rpc SetFallbackContacts(ValueContacts) returns (Empty);
+    rpc GetFallbackContacts(Empty) returns (stream ValueContact);
+    rpc getQueries(Empty) returns (AttributesMap);
 }
