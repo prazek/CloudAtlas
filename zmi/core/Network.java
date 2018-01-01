@@ -3,7 +3,6 @@ package core;
 
 import model.ValueContact;
 import model.ZMI;
-import sun.misc.Request;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
