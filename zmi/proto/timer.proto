@@ -1,15 +1,21 @@
 syntax = "proto3";
 option java_package = "core";
 
-message Callback {
-    string xx = 1;
-}
-
-service Timer {
-    rpc Search (Callback) returns (Callback);
-}
-
-
 message Delay {
     int32 duration = 1;
 }
+
+message TimerRequest {
+    int32 id = 1;
+    Delay delay = 2;
+}
+
+message TimerResponse {
+    int32 id = 1;
+}
+
+service Timer {
+    rpc Set (TimerRequest) returns (TimerResponse);
+}
+
+

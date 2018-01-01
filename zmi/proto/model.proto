@@ -7,7 +7,7 @@ message ValueBoolean {
 
 message ValueContact {
     PathName pathName = 1;
-    string inetAddress = 2;
+    bytes inetAddress = 2;
 }
 
 message ValueDouble {

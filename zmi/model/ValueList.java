@@ -286,6 +286,6 @@ public class ValueList extends ValueSimple<List<Value>> implements List<Value> {
 		for (Model.Value value : valueList.getValuesList()) {
 			values.add(Value.fromProtobuf(value));
 		}
-		return new ValueList(values, Type.fromProtobuf(valueList.getType()));
+		return new ValueList(values, Type.fromProtobuf(valueList.getType().getCollection().getElementType()));
 	}
 }

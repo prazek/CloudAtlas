@@ -104,8 +104,12 @@ public abstract class Type implements Serializable {
 				return Model.TypePrimary.DURATION;
 			case INT:
 				return Model.TypePrimary.INT;
+			case LIST:
+				return Model.TypePrimary.LIST;
 			case NULL:
 				return Model.TypePrimary.NULL;
+			case SET:
+				return Model.TypePrimary.SET;
 			case STRING:
 				return Model.TypePrimary.STRING;
 			case TIME:

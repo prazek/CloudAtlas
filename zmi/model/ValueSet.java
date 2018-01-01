@@ -238,7 +238,7 @@ public class ValueSet extends ValueSimple<SortedSet<Value>> implements Set<Value
 		for (Model.Value value : valueSet.getValuesList()) {
 			values.add(Value.fromProtobuf(value));
 		}
-		return new ValueSet(values, Type.fromProtobuf(valueSet.getType()));
+		return new ValueSet(values, Type.fromProtobuf(valueSet.getType().getCollection().getElementType()));
 	}
 
 }

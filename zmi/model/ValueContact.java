@@ -27,6 +27,7 @@ package model;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import com.google.protobuf.ByteString;
 import core.Model;
 import model.Value;
 import model.ValueContact;
@@ -103,13 +104,13 @@ public class ValueContact extends Value {
 	public Model.ValueContact serialize() {
 		return Model.ValueContact.newBuilder().
 				setPathName(name.serialize()).
-				setInetAddress(address == null ? "N/A" : address.toString()).build();
+				setInetAddress(ByteString.copyFrom(address == null ? new byte[]{} : address.getAddress())).build();
 	}
 
 	public static ValueContact fromProtobuf(Model.ValueContact value) {
 		try {
 			return new ValueContact(PathName.fromProtobuf(value.getPathName()),
-					InetAddress.getByName(value.getInetAddress()));
+					InetAddress.getByAddress(value.getInetAddress().toByteArray()));
 		} catch (UnknownHostException ex){
 			assert false;
 			return new ValueContact(null, null);

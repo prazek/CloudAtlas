@@ -2,6 +2,7 @@ syntax = "proto3";
 option java_package = "core";
 
 import "model.proto";
+import "agent.proto";
 
 message UpdateDatabase {
     AttributesMap attributesMap = 1;
@@ -14,4 +15,10 @@ message Zones {
 message ZonesResponse {
     int32 responseID = 1;
     map<string, ZMI> zones = 2;
+}
+
+service DatabaseService {
+    rpc SetZoneValue(SetZoneValueData) returns (Empty);
+    rpc GetZones(Empty) returns (stream Zone);
+    rpc GetZone(PathName) returns (Zone);
 }

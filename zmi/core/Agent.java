@@ -2,11 +2,15 @@ package core;
 
 import interpreter.Interpreter;
 import interpreter.QueryResult;
+import io.grpc.ManagedChannel;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.inprocess.InProcessChannelBuilder;
+import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import model.*;
 
+import javax.xml.crypto.Data;
 import java.io.IOException;
 
 import java.util.*;
@@ -102,11 +106,46 @@ public class Agent {
         return fallbackContacts;
     }
 
-    private class AgentService extends AgentGrpc.AgentImplBase {
-        public AgentService() {
+    private class TimerService extends TimerGrpc.TimerImplBase {
+        private class TimerQueue extends Thread {
+            SortedMap<Long, Callback> waiting;
 
+            public void run() {
+                long timestamp = System.currentTimeMillis();
+                try {
+                    if (waiting.isEmpty()) {
+                        wait();
+                    } else {
+                        long delay = waiting.firstKey() - timestamp;
+                        if (delay < 0) {
+                            delay = 0;
+                        }
+                        wait(delay);
+                    }
+                } catch (InterruptedException e) {
+                    // Do nothing
+                }
+                while (waiting.firstKey() <= timestamp) {
+                    Callback callback = waiting.get(waiting.firstKey());
+                    waiting.remove(waiting.firstKey());
+                    callback.responseObserver.onNext(TimerOuterClass.TimerResponse.newBuilder().setId(callback.id).build());
+                }
+            }
         }
 
+        // TODO(sbarzowski) better name
+        private class Callback {
+            public int id;
+            StreamObserver<TimerOuterClass.TimerResponse> responseObserver;
+        }
+
+        @Override
+        public void set(TimerOuterClass.TimerRequest request, StreamObserver<TimerOuterClass.TimerResponse> responseObserver) {
+
+        }
+    }
+
+    private class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         @Override
         public void getZones(AgentOuterClass.Empty request, StreamObserver<Model.Zone> responseObserver) {
             try {
@@ -124,6 +163,45 @@ public class Agent {
                 responseObserver.onError(r);
             }
 
+        }
+
+        @Override
+        public void setZoneValue(AgentOuterClass.SetZoneValueData request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+            try {
+                Agent.this.setZoneValue(
+                        PathName.fromProtobuf(request.getPath()),
+                        new Attribute(request.getAttribute()),
+                        Value.fromProtobuf(request.getValue()));
+                responseObserver.onNext(AgentOuterClass.Empty.newBuilder().build());
+                responseObserver.onCompleted();
+            } catch (Exception r) {
+                System.err.println(r);
+                responseObserver.onError(r);
+            }
+        }
+
+        @Override
+        public void getZone(Model.PathName request,
+                            io.grpc.stub.StreamObserver<Model.Zone> responseObserver) {
+            try {
+                responseObserver.onNext(Model.Zone.newBuilder().build());
+                responseObserver.onCompleted();
+            } catch (Exception r) {
+                responseObserver.onError(r);
+            }
+        }
+    }
+
+    private class AgentService extends AgentGrpc.AgentImplBase {
+        DatabaseServiceGrpc.DatabaseServiceStub dbStub;
+
+        public AgentService(DatabaseServiceGrpc.DatabaseServiceStub dbStub) {
+            this.dbStub = dbStub;
+        }
+
+        @Override
+        public void getZones(AgentOuterClass.Empty request, StreamObserver<Model.Zone> responseObserver) {
+            dbStub.getZones(request, responseObserver);
         }
 
         @Override
@@ -148,17 +226,7 @@ public class Agent {
 
         @Override
         public void setZoneValue(AgentOuterClass.SetZoneValueData request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
-            try {
-                Agent.this.setZoneValue(
-                        PathName.fromProtobuf(request.getPath()),
-                        new Attribute(request.getAttribute()),
-                        Value.fromProtobuf(request.getValue()));
-                responseObserver.onNext(AgentOuterClass.Empty.newBuilder().build());
-                responseObserver.onCompleted();
-            } catch (Exception r) {
-                System.err.println(r);
-                responseObserver.onError(r);
-            }
+            dbStub.setZoneValue(request, responseObserver);
         }
 
 
@@ -202,20 +270,20 @@ public class Agent {
         @Override
         public void getZone(Model.PathName request,
                             io.grpc.stub.StreamObserver<Model.Zone> responseObserver) {
-            try {
-                responseObserver.onNext(Model.Zone.newBuilder().build());
-                responseObserver.onCompleted();
-            } catch (Exception r) {
-                responseObserver.onError(r);
-            }
+            dbStub.getZone(request, responseObserver);
         }
     }
 
     private void startServer() throws IOException {
+        Server dbServer = InProcessServerBuilder.forName("db_module").addService(new DatabaseService()).build();
+        dbServer.start();
+        ManagedChannel dbChannel = InProcessChannelBuilder.forName("db_module").build();
+        DatabaseServiceGrpc.DatabaseServiceStub dbStub = DatabaseServiceGrpc.newStub(dbChannel);
+
         int port = 4321;
         ServerBuilder serverBuilder = ServerBuilder.forPort(port);
-        Server server = serverBuilder.addService(new AgentService())
-                .build();
+        serverBuilder.addService(new AgentService(dbStub));
+        Server server = serverBuilder.build();
         server.start();
         System.err.println("Server started, listening on " + port);
     }

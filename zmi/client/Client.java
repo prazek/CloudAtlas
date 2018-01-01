@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.google.protobuf.ByteString;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -19,6 +20,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,18 +36,18 @@ public class Client {
 
             AgentGrpc.AgentBlockingStub agentStub = AgentGrpc.newBlockingStub(channel);
 
-            HttpServer server = HttpServer.create(new InetSocketAddress(8042), 0);
+            HttpServer server = HttpServer.create(new InetSocketAddress(8043), 0);
             // Pages
             server.createContext("/", new MainPage());
             server.createContext("/zmi/", new ServeFileHandler("client/ZMI.html", "text/html"));
-            server.createContext("/fallbackContacts/", new ContactsPage(agentStub));
-            server.createContext("/installedQueries/", new InstalledQueriesPage(agentStub));
+            //server.createContext("/fallbackContacts/", new ContactsPage(agentStub));
+            //server.createContext("/installedQueries/", new InstalledQueriesPage(agentStub));
             server.createContext("/installQuery/", new InstallQueryPage(agentStub));
             server.createContext("/uninstallQuery/", new UninstallQueryPage(agentStub));
             server.createContext("/attributes/", new AttributesPage(agentStub));
             server.createContext("/plot/", new PlotPage());
 
-            // Resouces
+            // Resources
             server.createContext("/zmi.js", new ServeFileHandler("client/zmi.js", "application/javascript"));
             server.createContext("/lib.js", new ServeFileHandler("client/lib.js", "application/javascript"));
             server.createContext("/jquery.js", new ServeFileHandler("client/jquery.js", "application/javascript"));
@@ -78,20 +80,29 @@ public class Client {
         @Override
         public void handle(HttpExchange t) throws IOException {
             try {
+                System.err.println(time() + ": Got Attributes request");
                 Gson gson = new CustomJsonSerializer().getSerializer();
+                System.err.println(time() + ": Starting gRPC request");
                 Iterator<Model.Zone> zmiIterator = agent.getZones(AgentOuterClass.Empty.newBuilder().build());
+                System.err.println(time() + ": got gRPC response");
                 Map<PathName, ZMI> zmi = new HashMap<>();
                 while(zmiIterator.hasNext()) {
+                    System.err.println(time() + ": next zone requested");
                     Model.Zone zone = zmiIterator.next();
+                    System.err.println(time() + ": converting zone");
                     zmi.put(PathName.fromProtobuf(zone.getPath()), ZMI.fromProtobuf(zone.getZmi()));
+                    System.err.println(time() + ": ready for next");
                 }
+                System.err.println(time() + ": finished gRPC");
                 //String response = "{}";
                 String response = gson.toJson(zmi);
+                System.err.println(time() + ": converted to JSON");
                 t.getResponseHeaders().add("Content-Type", "application/json");
                 t.sendResponseHeaders(200, response.length());
                 OutputStream os = t.getResponseBody();
                 os.write(response.getBytes());
                 os.close();
+                System.err.println(time() + ": replied");
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -160,6 +171,10 @@ public class Client {
             os.write(response.getBytes());
             os.close();
         }
+    }
+
+    private static String time() {
+        return new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
     }
 
     private static Map<String, String> parseFormUrlencoded(String data) throws UnsupportedEncodingException {
@@ -361,7 +376,7 @@ public class Client {
                     String address = e.getAsJsonObject().get("address").getAsString();
                     // TODO(sbarzowski) not sure if getByName is a good idea
                     InetAddress addr = InetAddress.getByName(address);
-                    Model.ValueContact c = Model.ValueContact.newBuilder().setPathName(Model.PathName.newBuilder().setP(name)).setInetAddress(addr.toString()).build();
+                    Model.ValueContact c = Model.ValueContact.newBuilder().setPathName(Model.PathName.newBuilder().setP(name)).setInetAddress(ByteString.copyFrom(addr.getAddress())).build();
                     builder.addContacts(c);
                 }
                 agent.setFallbackContacts(builder.build());
