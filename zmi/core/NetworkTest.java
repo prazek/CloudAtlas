@@ -18,10 +18,11 @@ public class NetworkTest {
                 InetAddress addr = InetAddress.getByName("127.0.0.1");
                 while (true) {
                     try {
-                        core.GossipOuterClass.Gossip gossip =
-                                core.GossipOuterClass.Gossip.newBuilder().setPacketID(id++).build();
+                        core.Gossip.GossipResponseUDP gossip =
+                                core.Gossip.GossipResponseUDP.newBuilder().setResponseTimestamp(id++).build();
 
-                        network.sendMsg(gossip, addr);
+                        network.sendMsg(core.Gossip.GossipMessageUDP.newBuilder().
+                                setGossipResponseUDP(gossip).build(), addr);
 
                     } catch (IOException ex) {
                         System.err.println("IO exception: " + ex);

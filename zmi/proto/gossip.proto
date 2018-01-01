@@ -1,7 +1,34 @@
 syntax = "proto3";
 option java_package = "core";
 
+import "model.proto";
 
-message Gossip {
-    int32 packetID = 1;
+message GossipingRequestFromDB {
+    ValueContact contact = 1;
+}
+
+message GossipingResponseFromDB {
+    AttributesMap attributesMap = 1;
+    map<string, ValueTime> freshness = 2;
+}
+
+
+message GossipRequestUDP {
+    int64 requestTimestamp = 1;
 };
+
+message GossipResponseUDP {
+    int64 requestTimestamp = 1;
+    int64 requestReceivedTimestamp = 2;
+    int64 responseTimestamp = 3;
+
+    AttributesMap attributesMap = 4;
+    map<string, int64> freshness = 5;
+}
+
+message GossipMessageUDP {
+    oneof data {
+        GossipRequestUDP gossipRequestUDP = 1;
+        GossipResponseUDP gossipResponseUDP = 2;
+    }
+}

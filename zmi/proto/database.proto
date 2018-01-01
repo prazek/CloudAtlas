@@ -6,6 +6,7 @@ import "agent.proto";
 
 message UpdateDatabase {
     AttributesMap attributesMap = 1;
+    map<string, int64> freshness = 2;
 }
 
 message Zones {
