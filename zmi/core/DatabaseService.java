@@ -17,9 +17,10 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     private TimerGrpc.TimerStub timerStub;
     private NetworkGrpc.NetworkStub networkStub;
 
-    private HashMap<PathName, ZMI> zones = new HashMap<>();
+    private Map<PathName, ZMI> zones = new HashMap<>();
     private Set<ValueContact> fallbackContacts = new HashSet<>();
-    private HashMap<Attribute, List<Attribute>> queryAttributes = new HashMap<>();
+    private Map<Attribute, List<Attribute>> queryAttributes = new HashMap<>();
+
     static private int GOSSIPING_DELAY = 4200;
 
 
@@ -217,7 +218,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
             addZMI(son, path);
         }
     }
-    public HashMap<PathName, ZMI> zones() {
+    public Map<PathName, ZMI> zones() {
         return this.zones;
     }
 

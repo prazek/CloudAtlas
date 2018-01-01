@@ -27,6 +27,7 @@ package model;
 import core.Model;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,7 +38,6 @@ import java.util.TreeMap;
  */
 public class AttributesMap implements Iterable<Entry<Attribute, Value>>, Cloneable, Serializable {
 	private Map<Attribute, Value> map = new TreeMap<>();
-	
 	private void checkNulls(Attribute attribute, Value value) {
 		if(attribute == null)
 			throw new NullPointerException("The attribute cannot be null.");

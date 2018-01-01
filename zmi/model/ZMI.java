@@ -29,9 +29,7 @@ import interpreter.QueryResult;
 
 import java.io.PrintStream;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
 
 /**
@@ -40,7 +38,6 @@ import java.util.Map.Entry;
  */
 public class ZMI implements Cloneable, Serializable {
 	private AttributesMap attributes = new AttributesMap();
-	
 	private transient final List<ZMI> sons = new ArrayList<>();
 	private transient ZMI father;
 	
