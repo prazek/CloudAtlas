@@ -32,3 +32,7 @@ message GossipMessageUDP {
         GossipResponseUDP gossipResponseUDP = 2;
     }
 }
+
+service Network {
+    rpc RequestGossip(GossipingRequestFromDB) returns (Empty);
+}

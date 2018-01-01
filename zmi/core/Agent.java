@@ -40,38 +40,38 @@ public class Agent {
         }
 
         @Override
-        public void getZones(AgentOuterClass.Empty request, StreamObserver<Model.Zone> responseObserver) {
+        public void getZones(Model.Empty request, StreamObserver<Model.Zone> responseObserver) {
             dbStub.getZones(request, responseObserver);
         }
 
         @Override
-        public void installQuery(Model.Query request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+        public void installQuery(Model.Query request, StreamObserver<Model.Empty> responseObserver) {
             dbStub.installQuery(request, responseObserver);
         }
 
         @Override
-        public void uninstallQuery(Model.QueryName request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+        public void uninstallQuery(Model.QueryName request, StreamObserver<Model.Empty> responseObserver) {
             dbStub.uninstallQuery(request, responseObserver);
         }
 
         @Override
-        public void setZoneValue(AgentOuterClass.SetZoneValueData request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+        public void setZoneValue(Database.SetZoneValueData request, StreamObserver<Model.Empty> responseObserver) {
             dbStub.setZoneValue(request, responseObserver);
         }
 
 
         @Override
-        public void setFallbackContacts(AgentOuterClass.ValueContacts request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+        public void setFallbackContacts(Database.ValueContacts request, StreamObserver<Model.Empty> responseObserver) {
             dbStub.setFallbackContacts(request, responseObserver);
         }
 
         @Override
-        public void getFallbackContacts(AgentOuterClass.Empty request, StreamObserver<Model.ValueContact> responseObserver) {
+        public void getFallbackContacts(Model.Empty request, StreamObserver<Model.ValueContact> responseObserver) {
             dbStub.getFallbackContacts(request, responseObserver);
         }
 
         @Override
-        public void getQueries(AgentOuterClass.Empty request, StreamObserver<Model.AttributesMap> responseObserver) {
+        public void getQueries(Model.Empty request, StreamObserver<Model.AttributesMap> responseObserver) {
             dbStub.getQueries(request, responseObserver);
         }
 

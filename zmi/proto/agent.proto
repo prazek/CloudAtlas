@@ -2,23 +2,7 @@ syntax = "proto3";
 option java_package = "core";
 
 import "model.proto";
-
-
-
-message SetZoneValueData {
-  PathName path = 1;
-  string attribute = 2;
-  Value value = 3;
-}
-
-
-message Empty {
-
-}
-
-message ValueContacts {
-  repeated ValueContact contacts = 1;
-}
+import "database.proto";
 
 service Agent {
   rpc GetZones(Empty) returns (stream Zone);

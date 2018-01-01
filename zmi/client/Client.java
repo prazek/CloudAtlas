@@ -11,6 +11,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import core.AgentGrpc;
 import core.AgentOuterClass;
+import core.Database;
 import core.Model;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -83,7 +84,7 @@ public class Client {
                 System.err.println(time() + ": Got Attributes request");
                 Gson gson = new CustomJsonSerializer().getSerializer();
                 System.err.println(time() + ": Starting gRPC request");
-                Iterator<Model.Zone> zmiIterator = agent.getZones(AgentOuterClass.Empty.newBuilder().build());
+                Iterator<Model.Zone> zmiIterator = agent.getZones(Model.Empty.newBuilder().build());
                 System.err.println(time() + ": got gRPC response");
                 Map<PathName, ZMI> zmi = new HashMap<>();
                 while(zmiIterator.hasNext()) {
@@ -250,7 +251,7 @@ public class Client {
         public void handle(HttpExchange t) throws IOException {
             try {
                 Gson gson = CustomJsonSerializer.getSerializer();
-                AttributesMap queries = AttributesMap.fromProtobuf(agent.getQueries(AgentOuterClass.Empty.newBuilder().build()));
+                AttributesMap queries = AttributesMap.fromProtobuf(agent.getQueries(Model.Empty.newBuilder().build()));
                 //ZMI other = agent.zone(new PathName("/pjwstk"));
                 String response = gson.toJson(queries);
                 t.getResponseHeaders().add("Content-Type", "application/json");
@@ -343,7 +344,7 @@ public class Client {
         private void handleGET(HttpExchange t) throws IOException {
             String response = "___";
             try {
-                Iterator<Model.ValueContact> s = agent.getFallbackContacts(AgentOuterClass.Empty.newBuilder().build());
+                Iterator<Model.ValueContact> s = agent.getFallbackContacts(Model.Empty.newBuilder().build());
                 //////////////////////////////////////////////////////////////////
                 Gson gson = new CustomJsonSerializer().getSerializer();
                 response = gson.toJson(s);
@@ -370,7 +371,7 @@ public class Client {
                 JsonParser parser = new JsonParser();
                 JsonElement allContacts = parser.parse(jString);
                 JsonArray contacts = allContacts.getAsJsonArray();
-                AgentOuterClass.ValueContacts.Builder builder = AgentOuterClass.ValueContacts.newBuilder();
+                Database.ValueContacts.Builder builder = Database.ValueContacts.newBuilder();
                 for (JsonElement e: contacts) {
                     String name = e.getAsJsonObject().get("name").getAsString();
                     String address = e.getAsJsonObject().get("address").getAsString();

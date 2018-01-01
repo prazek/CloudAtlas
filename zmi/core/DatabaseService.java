@@ -30,7 +30,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     }
 
     @Override
-    public void getZones(AgentOuterClass.Empty request, StreamObserver<Model.Zone> responseObserver) {
+    public void getZones(Model.Empty request, StreamObserver<Model.Zone> responseObserver) {
         try {
             for (Map.Entry<PathName, ZMI> i: zones().entrySet()) {
                 // mild schizophrenia
@@ -48,7 +48,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     }
 
     @Override
-    public void installQuery(Model.Query request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+    public void installQuery(Model.Query request, StreamObserver<Model.Empty> responseObserver) {
         try {
            installQuery(request.getName().getS(), request.getCode());
             responseObserver.onCompleted();
@@ -58,7 +58,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     }
 
     @Override
-    public void uninstallQuery(Model.QueryName request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+    public void uninstallQuery(Model.QueryName request, StreamObserver<Model.Empty> responseObserver) {
         try {
             uninstallQuery(request.getS());
             responseObserver.onCompleted();
@@ -68,7 +68,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     }
 
     @Override
-    public void setFallbackContacts(AgentOuterClass.ValueContacts request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+    public void setFallbackContacts(Database.ValueContacts request, StreamObserver<Model.Empty> responseObserver) {
         try {
             HashSet<ValueContact> contacts = new HashSet<>();
             for (Model.ValueContact c: request.getContactsList()) {
@@ -82,7 +82,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     }
 
     @Override
-    public void getFallbackContacts(AgentOuterClass.Empty request, StreamObserver<Model.ValueContact> responseObserver) {
+    public void getFallbackContacts(Model.Empty request, StreamObserver<Model.ValueContact> responseObserver) {
         try {
             Set<ValueContact> contacts = getFallbackContacts();
             for (ValueContact c: contacts) {
@@ -95,7 +95,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     }
 
     @Override
-    public void getQueries(AgentOuterClass.Empty request, StreamObserver<Model.AttributesMap> responseObserver) {
+    public void getQueries(Model.Empty request, StreamObserver<Model.AttributesMap> responseObserver) {
         try {
             AttributesMap contacts = getQueries();
             responseObserver.onNext(contacts.serialize());
@@ -106,13 +106,13 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
 
 
     @Override
-    public void setZoneValue(AgentOuterClass.SetZoneValueData request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+    public void setZoneValue(Database.SetZoneValueData request, StreamObserver<Model.Empty> responseObserver) {
         try {
             setZoneValue(
                     PathName.fromProtobuf(request.getPath()),
                     new Attribute(request.getAttribute()),
                     Value.fromProtobuf(request.getValue()));
-            responseObserver.onNext(AgentOuterClass.Empty.newBuilder().build());
+            responseObserver.onNext(Model.Empty.newBuilder().build());
             responseObserver.onCompleted();
         } catch (Exception r) {
             System.err.println(r);
@@ -132,7 +132,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     }
 
     @Override
-    public void receiveGossip(Database.UpdateDatabase request, StreamObserver<AgentOuterClass.Empty> responseObserver) {
+    public void receiveGossip(Database.UpdateDatabase request, StreamObserver<Model.Empty> responseObserver) {
         super.receiveGossip(request, responseObserver);
     }
 

@@ -94,8 +94,6 @@ message TypePrimitive {
     TypePrimary typePrimary = 1;
 }
 
-
-
 message Query {
     QueryName name = 1;
     string code = 2;
@@ -119,4 +117,8 @@ message Zone {
   PathName path = 1;
   ZMI zmi = 2;
   repeated PathName sons = 3;
+}
+
+message Empty {
+
 }

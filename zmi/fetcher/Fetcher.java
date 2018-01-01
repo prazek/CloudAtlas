@@ -5,6 +5,7 @@ import java.io.InputStream;
 
 import core.AgentGrpc;
 import core.AgentOuterClass;
+import core.Database;
 import interpreter.MachineInfoFetcher;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -160,7 +161,7 @@ public class Fetcher {
 
     private void sendAttributes(AgentGrpc.AgentBlockingStub stub, AttributesMap attributes) {
         for (Map.Entry<Attribute, Value> attribute : attributes)
-            stub.setZoneValue(AgentOuterClass.SetZoneValueData.newBuilder()
+            stub.setZoneValue(Database.SetZoneValueData.newBuilder()
                     .setPath(agentPathName.serialize())
                     .setAttribute(attribute.getKey().toString())
                     .setValue(attribute.getValue().serializeValue())
