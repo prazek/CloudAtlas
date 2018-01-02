@@ -1,8 +1,6 @@
 package core;
 
-import com.google.common.collect.SortedSetMultimap;
-import interpreter.Interpreter;
-import interpreter.QueryResult;
+
 import io.grpc.ManagedChannel;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -11,16 +9,11 @@ import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import model.*;
 
-import javax.xml.crypto.Data;
 import java.io.IOException;
 
 import java.text.ParseException;
-import java.util.*;
 
-import static java.lang.System.currentTimeMillis;
 import static java.lang.System.exit;
-import static java.lang.Thread.sleep;
-
 public class Agent {
 
     private PathName pathName;
@@ -43,16 +36,18 @@ public class Agent {
         public void getZones(Model.Empty request, StreamObserver<Model.Zone> responseObserver) {
             dbStub.getZones(request, responseObserver);
         }
-
         @Override
-        public void installQuery(Model.Query request, StreamObserver<Model.Empty> responseObserver) {
-            dbStub.installQuery(request, responseObserver);
+        public void installQuery(SignerOuterClass.SignedQuery request, StreamObserver<Model.Empty> responseObserver) {
+            // TODO check signature here
+            dbStub.installQuery(request.getQuery(), responseObserver);
         }
 
         @Override
-        public void uninstallQuery(Model.QueryName request, StreamObserver<Model.Empty> responseObserver) {
-            dbStub.uninstallQuery(request, responseObserver);
+        public void uninstallQuery(SignerOuterClass.SignedUnistallQuery request, StreamObserver<Model.Empty> responseObserver) {
+            // TODO check signature here
+            dbStub.uninstallQuery(request.getName(), responseObserver);
         }
+
 
         @Override
         public void setZoneValue(Database.SetZoneValueData request, StreamObserver<Model.Empty> responseObserver) {
@@ -80,6 +75,8 @@ public class Agent {
                             io.grpc.stub.StreamObserver<Model.Zone> responseObserver) {
             dbStub.getZone(request, responseObserver);
         }
+
+
     }
 
     private void startServer() throws IOException, ParseException {

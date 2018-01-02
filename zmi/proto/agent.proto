@@ -3,12 +3,13 @@ option java_package = "core";
 
 import "model.proto";
 import "database.proto";
+import "signer.proto";
 
 service Agent {
   rpc GetZones(Empty) returns (stream Zone);
   rpc GetZone(PathName) returns (Zone);
-  rpc InstallQuery(Query) returns (Empty);
-  rpc uninstallQuery(QueryName) returns (Empty);
+  rpc InstallQuery(SignedQuery) returns (Empty);
+  rpc uninstallQuery(SignedUnistallQuery) returns (Empty);
   rpc SetZoneValue(SetZoneValueData) returns (Empty);
   rpc SetFallbackContacts(ValueContacts) returns (Empty);
   rpc GetFallbackContacts(Empty) returns (stream ValueContact);

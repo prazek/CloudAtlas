@@ -9,10 +9,7 @@ import com.google.protobuf.ByteString;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-import core.AgentGrpc;
-import core.AgentOuterClass;
-import core.Database;
-import core.Model;
+import core.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import model.*;
@@ -37,14 +34,19 @@ public class Client {
 
             AgentGrpc.AgentBlockingStub agentStub = AgentGrpc.newBlockingStub(channel);
 
+            ManagedChannel signerChannel = ManagedChannelBuilder.forAddress("127.0.0.1", 2137).usePlaintext(true).build();
+
+            SignerGrpc.SignerBlockingStub signerStub = SignerGrpc.newBlockingStub(signerChannel);
+
+
             HttpServer server = HttpServer.create(new InetSocketAddress(8043), 0);
             // Pages
             server.createContext("/", new MainPage());
             server.createContext("/zmi/", new ServeFileHandler("client/ZMI.html", "text/html"));
             server.createContext("/fallbackContacts/", new ContactsPage(agentStub));
-            //server.createContext("/installedQueries/", new InstalledQueriesPage(agentStub));
-            //server.createContext("/installQuery/", new InstallQueryPage(agentStub));
-            //server.createContext("/uninstallQuery/", new UninstallQueryPage(agentStub));
+            //server.createContext("/installedQueries/", new InstalledQueriesPage(signerStub));
+            //server.createContext("/installQuery/", new InstallQueryPage(signerStub, agentStub));
+            //server.createContext("/uninstallQuery/", new UninstallQueryPage(signerStub, agentStub));
             server.createContext("/attributes/", new AttributesPage(agentStub));
             server.createContext("/plot/", new PlotPage());
 
@@ -194,10 +196,11 @@ public class Client {
 
     private static class InstallQueryPage implements HttpHandler {
         private final AgentGrpc.AgentBlockingStub agent;
+        private final SignerGrpc.SignerBlockingStub signer;
 
-
-        InstallQueryPage(AgentGrpc.AgentBlockingStub agent) {
+        InstallQueryPage(SignerGrpc.SignerBlockingStub signer, AgentGrpc.AgentBlockingStub agent) {
             this.agent = agent;
+            this.signer = signer;
         }
         @Override
         public void handle(HttpExchange t) throws IOException {
@@ -223,7 +226,13 @@ public class Client {
             String response = "ok";
             Map<String, String> data = parseFormUrlencoded(inputStreamToString(t.getRequestBody()));
             try {
-                agent.installQuery(Model.Query.newBuilder().setName(Model.QueryName.newBuilder().setS(data.get("queryName"))).setCode(data.get("query")).build());
+                SignerOuterClass.SignedQuery signedQuery =
+                        signer.signInstallQuery(Model.Query.newBuilder()
+                            .setName(Model.QueryName.newBuilder()
+                                    .setS(data.get("queryName")))
+                            .setCode(data.get("query")).build());
+
+                agent.installQuery(signedQuery);
             } catch (Exception ex) {
                 System.err.println("Error:\n" + ex);
                 t.getResponseHeaders().add("Content-Type", "text/html");
@@ -241,6 +250,7 @@ public class Client {
         }
     }
 
+    // TODO should it communicate with Signer? probably not
     private static class InstalledQueriesPage implements HttpHandler {
         private final AgentGrpc.AgentBlockingStub agent;
 
@@ -267,10 +277,11 @@ public class Client {
     }
 
     private static class UninstallQueryPage implements HttpHandler {
+        private final SignerGrpc.SignerBlockingStub signer;
         private final AgentGrpc.AgentBlockingStub agent;
 
-
-        UninstallQueryPage(AgentGrpc.AgentBlockingStub agent) {
+        UninstallQueryPage(SignerGrpc.SignerBlockingStub signer, AgentGrpc.AgentBlockingStub agent) {
+            this.signer = signer;
             this.agent = agent;
         }
 
@@ -298,7 +309,10 @@ public class Client {
             String response = "ok";
             Map<String, String> data = parseFormUrlencoded(inputStreamToString(t.getRequestBody()));
             try {
-                agent.uninstallQuery(Model.QueryName.newBuilder().setS(data.get("queryName")).build());
+                SignerOuterClass.SignedUnistallQuery unistallQuery =
+                        signer.signQueryRemove(Model.QueryName.newBuilder().setS(data.get("queryName")).build());
+
+                agent.uninstallQuery(unistallQuery);
             } catch (Exception ex) {
                 System.err.println("Error:\n" + ex);
                 t.getResponseHeaders().add("Content-Type", "text/html");

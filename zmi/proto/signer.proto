@@ -1,0 +1,19 @@
+syntax = "proto3";
+option java_package = "core";
+
+
+import "model.proto";
+
+message SignedQuery {
+    // Make it signed
+    Query query = 1;
+}
+
+message SignedUnistallQuery {
+    QueryName name = 1;
+}
+
+service Signer {
+    rpc SignInstallQuery(Query) returns (SignedQuery);
+    rpc SignQueryRemove(QueryName) returns (SignedUnistallQuery);
+}

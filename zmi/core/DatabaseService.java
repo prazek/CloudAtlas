@@ -20,6 +20,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
 
     private Map<PathName, ZMI> zones = new HashMap<>();
     private Set<ValueContact> fallbackContacts = new HashSet<>();
+    // TODO remove it
     private Map<Attribute, List<Attribute>> queryAttributes = new HashMap<>();
     private Map<PathName, Map<String, Long>> freshness;
 
@@ -109,7 +110,8 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     @Override
     public void installQuery(Model.Query request, StreamObserver<Model.Empty> responseObserver) {
         try {
-           installQuery(request.getName().getS(), request.getCode());
+            installQuery(request.getName().getS(), request.getCode());
+            responseObserver.onNext(Model.Empty.newBuilder().build());
             responseObserver.onCompleted();
         } catch (Exception r) {
             responseObserver.onError(Status.INTERNAL
@@ -124,6 +126,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     public void uninstallQuery(Model.QueryName request, StreamObserver<Model.Empty> responseObserver) {
         try {
             uninstallQuery(request.getS());
+            responseObserver.onNext(Model.Empty.newBuilder().build());
             responseObserver.onCompleted();
         } catch (Exception r) {
             responseObserver.onError(r);
@@ -269,7 +272,6 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
             if (!zone.getValue().getSons().isEmpty())
                 uninstallQueryInZone(zone.getValue(), queryCertificate);
         }
-        queryAttributes.remove(queryCertificate);
     }
 
     public synchronized AttributesMap getQueries()  {
