@@ -12,6 +12,7 @@ import model.*;
 import java.io.IOException;
 
 import java.text.ParseException;
+import java.util.concurrent.Executors;
 
 import static java.lang.System.exit;
 public class Agent {
@@ -82,36 +83,39 @@ public class Agent {
     private void startServer() throws IOException, ParseException {
         TimerService timerService = new TimerService();
         timerService.startQueue();
-        Server timerServer = InProcessServerBuilder.forName("timer_module").addService(timerService).build();
+        Server timerServer = InProcessServerBuilder.forName("timer_module").executor(Executors.newFixedThreadPool(1)).addService(timerService).build();
+        //Server timerServer = ServerBuilder.forPort(9999).addService(timerService).build();
         timerServer.start();
-        ManagedChannel timerChannel = InProcessChannelBuilder.forName("timer_module").build();
-        TimerGrpc.TimerStub timerStub = TimerGrpc.newStub(timerChannel);
+
 
         Network network = new Network();
         Network.NetworkService networkService = network.new NetworkService();
         //networkService.startQueryRunner();
-        Server networkServer = InProcessServerBuilder.forName("network_module").addService(networkService).build();
+        Server networkServer = InProcessServerBuilder.forName("network_module").executor(Executors.newFixedThreadPool(1)).addService(networkService).build();
         networkServer.start();
-        ManagedChannel networkChannel = InProcessChannelBuilder.forName("network_module").build();
+        ManagedChannel networkChannel = InProcessChannelBuilder.forName("network_module").directExecutor().build();
         NetworkGrpc.NetworkStub networkStub = NetworkGrpc.newStub(networkChannel);
 
 
-        DatabaseService dbService = new DatabaseService(pathName, timerStub, networkStub);
+        DatabaseService dbService = new DatabaseService(pathName, networkStub);
         dbService.startQueryRunner();
-        Server dbServer = InProcessServerBuilder.forName("db_module").addService(dbService).build();
+        Server dbServer = InProcessServerBuilder.forName("db_module").executor(Executors.newFixedThreadPool(1)).addService(dbService).build();
         dbServer.start();
 
-        ManagedChannel dbChannel = InProcessChannelBuilder.forName("db_module").build();
+        ManagedChannel dbChannel = InProcessChannelBuilder.forName("db_module").directExecutor().build();
         DatabaseServiceGrpc.DatabaseServiceStub dbStub = DatabaseServiceGrpc.newStub(dbChannel);
 
         network.setDatabaseStub(dbStub);
 
         int port = 4321;
-        ServerBuilder serverBuilder = ServerBuilder.forPort(port);
+        ServerBuilder serverBuilder = ServerBuilder.forPort(port).executor(Executors.newFixedThreadPool(1));
         serverBuilder.addService(new AgentService(dbStub));
         Server server = serverBuilder.build();
         server.start();
         System.err.println("Server started, listening on " + port);
+
+        //dbService.startGossiping();
+        dbStub.startGossiping(Model.Empty.newBuilder().build(), new DatabaseService.NoOpResponseObserver());
     }
 
     static public void main(String args[]) {

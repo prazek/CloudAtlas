@@ -32,6 +32,7 @@ message ValueContacts {
 
 
 service DatabaseService {
+    rpc StartGossiping(Empty) returns (Empty);
     rpc SetZoneValue(SetZoneValueData) returns (Empty);
     rpc GetZones(Empty) returns (stream Zone);
     rpc GetZone(PathName) returns (Zone);

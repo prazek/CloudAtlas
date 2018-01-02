@@ -2,7 +2,10 @@ package core;
 
 import interpreter.Interpreter;
 import interpreter.QueryResult;
+import io.grpc.Context;
+import io.grpc.ManagedChannel;
 import io.grpc.Status;
+import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import model.*;
 
@@ -15,7 +18,6 @@ import static java.lang.Thread.sleep;
 
 class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     private PathName current;
-    private TimerGrpc.TimerStub timerStub;
     private NetworkGrpc.NetworkStub networkStub;
 
     private Map<PathName, ZMI> zones = new HashMap<>();
@@ -24,15 +26,12 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     private Map<Attribute, List<Attribute>> queryAttributes = new HashMap<>();
     private Map<PathName, Map<String, Long>> freshness;
 
-    static private int GOSSIPING_DELAY = 4200;
+    static private int GOSSIPING_DELAY = 4000;
 
-
-
-    DatabaseService(PathName current, TimerGrpc.TimerStub timerStub,
+    DatabaseService(PathName current,
                     NetworkGrpc.NetworkStub networkStub) throws ParseException, UnknownHostException {
         this.current = current;
         this.setRoot(ZMIConfig.getZMIConfiguration());
-        this.timerStub = timerStub;
         this.networkStub = networkStub;
     }
 
@@ -42,13 +41,13 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         t.start();
     }
 
-    class NoOpResponseObserver implements StreamObserver<Model.Empty> {
+    public static class NoOpResponseObserver implements StreamObserver<Model.Empty> {
         @Override
         public void onNext(Model.Empty empty) {
         }
         @Override
         public void onError(Throwable throwable) {
-            System.err.println("Error from NoOPResponceObserver");
+            System.err.println("Error from NoOpResponseObserver");
         }
         @Override
         public void onCompleted() {
@@ -56,37 +55,59 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     }
 
 
-    private void startGossiping() {
+    public void startGossiping() {
+        System.err.println("Attempting gossiping");
         StreamObserver<core.TimerOuterClass.TimerResponse> responseObserver = new StreamObserver<TimerOuterClass.TimerResponse>() {
             @Override
             public void onNext(TimerOuterClass.TimerResponse timerResponse) {
 
-
-                NoOpResponseObserver observer = new NoOpResponseObserver();
-                ZoneChoiceStrategy zoneChoiceStrategy = new ZoneChoiceStrategy();
-                zoneChoiceStrategy.chooseZone(zones, current);
+                System.err.println("gossiping onNext");
                 try {
+//                    NoOpResponseObserver observer = new NoOpResponseObserver();
+//                    ZoneChoiceStrategy zoneChoiceStrategy = new ZoneChoiceStrategy();
+//                    zoneChoiceStrategy.chooseZone(zones, current);
+
                     // TODO dupa
-                    ValueContact contact = new ValueContact(new PathName("/dupa"), InetAddress.getLocalHost());
-                    networkStub.requestGossip(
-                            Gossip.GossipingRequestFromDB.newBuilder().setContact(contact.serialize()).build(), observer);
+//                    ValueContact contact = new ValueContact(new PathName("/dupa"), InetAddress.getLocalHost());
+//                    networkStub.requestGossip(
+//                            Gossip.GossipingRequestFromDB.newBuilder().setContact(contact.serialize()).build(), observer);
 
                 } catch (Exception ex) {
+                    System.err.println("gossiping onNext error");
+                    System.err.println(ex);
                     throw new RuntimeException(ex.getMessage());
                 }
             }
 
             @Override
             public void onError(Throwable throwable) {
-                System.err.println(throwable);
+                System.err.println("Gossiping error: " + throwable);
             }
 
             @Override
             public void onCompleted() {
-                startGossiping();
+                System.err.println("Gossiping completed");
+                try {
+                    startGossiping();
+                } catch (Exception e) {
+                    System.err.println("error in onCompleted");
+                    System.err.println(e);
+                    throw e;
+                }
+
             }
         };
-        timerStub.set(TimerOuterClass.TimerRequest.newBuilder().setDelay(GOSSIPING_DELAY).build(), responseObserver);
+        ManagedChannel timerChannel = InProcessChannelBuilder.forName("timer_module").directExecutor().build();
+        //ManagedChannel timerChannel = ManagedChannelBuilder.forAddress("127.0.0.1", 9999).usePlaintext(true).build();
+        TimerGrpc.TimerStub timerStub = TimerGrpc.newStub(timerChannel);
+        Context fork = Context.current().fork();
+        Context previous = fork.attach();
+        try {
+            timerStub.set(TimerOuterClass.TimerRequest.newBuilder().setDelay(GOSSIPING_DELAY).build(), responseObserver);
+        } finally {
+            fork.detach(previous);
+        }
+        System.err.println("DB: request to timer sent");
     }
 
     @Override
@@ -223,6 +244,14 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         Database.UpdateDatabase db = Database.UpdateDatabase.newBuilder().setAttributesMap(zones.get(pathName).getAttributes().serialize()).putAllFreshness(freshness.get(pathName)).build();
         responseObserver.onNext(db);
         responseObserver.onCompleted();
+    }
+
+    @Override
+    public void startGossiping(Model.Empty request,
+                               io.grpc.stub.StreamObserver<Model.Empty> responseObserver) {
+        responseObserver.onNext(request);
+        responseObserver.onCompleted();
+        startGossiping();
     }
 
 
