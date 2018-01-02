@@ -41,10 +41,10 @@ public class Client {
             // Pages
             server.createContext("/", new MainPage());
             server.createContext("/zmi/", new ServeFileHandler("client/ZMI.html", "text/html"));
-            //server.createContext("/fallbackContacts/", new ContactsPage(agentStub));
+            server.createContext("/fallbackContacts/", new ContactsPage(agentStub));
             //server.createContext("/installedQueries/", new InstalledQueriesPage(agentStub));
-            server.createContext("/installQuery/", new InstallQueryPage(agentStub));
-            server.createContext("/uninstallQuery/", new UninstallQueryPage(agentStub));
+            //server.createContext("/installQuery/", new InstallQueryPage(agentStub));
+            //server.createContext("/uninstallQuery/", new UninstallQueryPage(agentStub));
             server.createContext("/attributes/", new AttributesPage(agentStub));
             server.createContext("/plot/", new PlotPage());
 
@@ -345,9 +345,12 @@ public class Client {
             String response = "___";
             try {
                 Iterator<Model.ValueContact> s = agent.getFallbackContacts(Model.Empty.newBuilder().build());
-                //////////////////////////////////////////////////////////////////
+                List<ValueContact> contacts = new ArrayList<>();
+                while (s.hasNext()) {
+                    contacts.add(ValueContact.fromProtobuf(s.next()));
+                }
                 Gson gson = new CustomJsonSerializer().getSerializer();
-                response = gson.toJson(s);
+                response = gson.toJson(contacts);
             } catch (Exception ex) {
                 System.err.println("Error:\n" + ex);
                 t.getResponseHeaders().add("Content-Type", "text/html");

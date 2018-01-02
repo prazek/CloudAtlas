@@ -10,7 +10,6 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.stub.StreamObserver;
 import model.*;
-import sun.nio.ch.Net;
 
 import javax.xml.crypto.Data;
 import java.io.IOException;
@@ -100,7 +99,7 @@ public class Agent {
         NetworkGrpc.NetworkStub networkStub = NetworkGrpc.newStub(networkChannel);
 
 
-        DatabaseService dbService = new DatabaseService(this, timerStub, networkStub);
+        DatabaseService dbService = new DatabaseService(pathName, timerStub, networkStub);
         dbService.startQueryRunner();
         Server dbServer = InProcessServerBuilder.forName("db_module").addService(dbService).build();
         dbServer.start();

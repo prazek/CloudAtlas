@@ -2,6 +2,7 @@ package core;
 
 import interpreter.Interpreter;
 import interpreter.QueryResult;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import model.*;
 
@@ -13,21 +14,22 @@ import java.util.*;
 import static java.lang.Thread.sleep;
 
 class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
-    private Agent agent;
+    private PathName current;
     private TimerGrpc.TimerStub timerStub;
     private NetworkGrpc.NetworkStub networkStub;
 
     private Map<PathName, ZMI> zones = new HashMap<>();
     private Set<ValueContact> fallbackContacts = new HashSet<>();
     private Map<Attribute, List<Attribute>> queryAttributes = new HashMap<>();
+    private Map<PathName, Map<String, Long>> freshness;
 
     static private int GOSSIPING_DELAY = 4200;
 
 
 
-    DatabaseService(Agent agent, TimerGrpc.TimerStub timerStub,
+    DatabaseService(PathName current, TimerGrpc.TimerStub timerStub,
                     NetworkGrpc.NetworkStub networkStub) throws ParseException, UnknownHostException {
-        this.agent = agent;
+        this.current = current;
         this.setRoot(ZMIConfig.getZMIConfiguration());
         this.timerStub = timerStub;
         this.networkStub = networkStub;
@@ -60,7 +62,8 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
 
 
                 NoOpResponseObserver observer = new NoOpResponseObserver();
-                // TODO wylosowac
+                ZoneChoiceStrategy zoneChoiceStrategy = new ZoneChoiceStrategy();
+                zoneChoiceStrategy.chooseZone(zones, current);
                 try {
                     // TODO dupa
                     ValueContact contact = new ValueContact(new PathName("/dupa"), InetAddress.getLocalHost());
@@ -109,7 +112,11 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
            installQuery(request.getName().getS(), request.getCode());
             responseObserver.onCompleted();
         } catch (Exception r) {
-            responseObserver.onError(r);
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription(r.getMessage())
+                    .augmentDescription("customException()")
+                    .withCause(r) // This can be attached to the Status locally, but NOT transmitted to the client! ???
+                    .asRuntimeException());
         }
     }
 
@@ -131,9 +138,16 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
                 contacts.add(ValueContact.fromProtobuf(c));
             }
             setFallbackContacts(contacts);
+            responseObserver.onNext(Model.Empty.newBuilder().build());
             responseObserver.onCompleted();
         } catch (Exception r) {
-            responseObserver.onError(r);
+            System.err.println(r);
+            // TODO nicer message
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription(r.getMessage())
+                    .augmentDescription("customException()")
+                    .withCause(r) // This can be attached to the Status locally, but NOT transmitted to the client!
+                    .asRuntimeException());
         }
     }
 
@@ -189,12 +203,23 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
 
     @Override
     public void receiveGossip(Database.UpdateDatabase request, StreamObserver<Model.Empty> responseObserver) {
-        super.receiveGossip(request, responseObserver);
+        Map<String, Long> map = request.getFreshnessMap();
+        AttributesMap attrs = AttributesMap.fromProtobuf(request.getAttributesMap());
+        for (Map.Entry<Attribute, Value> e: attrs) {
+            // TODO freshness comparison
+            zones.get(new PathName("/uw/violet07" /* TODO */)).getAttributes().add(e);
+        }
+        responseObserver.onNext(Model.Empty.newBuilder().build());
+        responseObserver.onCompleted();
     }
 
     @Override
     public void getCurrentDatabase(Database.CurrentDatabaseRequest request, StreamObserver<Database.UpdateDatabase> responseObserver) {
-        super.getCurrentDatabase(request, responseObserver);
+        // TODO choose pathname
+        PathName pathName = new PathName("/uw/violet07");
+        Database.UpdateDatabase db = Database.UpdateDatabase.newBuilder().setAttributesMap(zones.get(pathName).getAttributes().serialize()).putAllFreshness(freshness.get(pathName)).build();
+        responseObserver.onNext(db);
+        responseObserver.onCompleted();
     }
 
 
@@ -261,6 +286,9 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         if (!zone(zoneName).getSons().isEmpty())
             throw new RuntimeException("Can't set up attribute for non leaf node");
         zone(zoneName).getAttributes().addOrChange(valueName, value);
+
+        freshness.putIfAbsent(zoneName, new HashMap<>());
+        freshness.get(zoneName).put(valueName.getName(), System.currentTimeMillis());
     }
 
     public synchronized void setFallbackContacts(Set<ValueContact> fallbackContacts) {
