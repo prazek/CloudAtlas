@@ -11,7 +11,7 @@ public class AgentTests {
 
     @org.junit.Test
     public void installQuery() throws Exception {
-        Agent agent = new Agent(new PathName("/uw"));
+        //Agent agent = new Agent(new PathName("/uw"), null);
         DatabaseService database = new DatabaseService(new PathName("/uw/violet07"), null);
 
         Value res1 = database.zone(new PathName("/uw")).getAttributes().getOrNull("res1");

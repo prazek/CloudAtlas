@@ -11,6 +11,9 @@ import model.*;
 
 import java.io.IOException;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.Signature;
 import java.text.ParseException;
 import java.util.concurrent.Executors;
 
@@ -19,10 +22,13 @@ public class Agent {
 
     private PathName pathName;
     // This map stores which attributes are created by running one query.
+    private Signature verifier;
+    private PublicKey publicKey;
 
-
-    Agent(PathName pathName) {
+    Agent(PathName pathName, PublicKey publicKey) throws NoSuchAlgorithmException {
         this.pathName = pathName;
+        this.verifier = Signature.getInstance("SHA256withRSA");
+        this.publicKey = publicKey;
     }
 
 
@@ -37,10 +43,29 @@ public class Agent {
         public void getZones(Model.Empty request, StreamObserver<Model.Zone> responseObserver) {
             dbStub.getZones(request, responseObserver);
         }
+
+        boolean verify(Model.Query query, byte[] signature) {
+            try {
+                verifier.initVerify(publicKey);
+                verifier.update(query.toByteArray());
+
+                System.out.println(signature);
+                System.out.println(query.toByteArray());
+                return verifier.verify(signature);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            return false;
+        }
+
         @Override
         public void installQuery(SignerOuterClass.SignedQuery request, StreamObserver<Model.Empty> responseObserver) {
-            // TODO check signature here
-            dbStub.installQuery(request.getQuery(), responseObserver);
+                if (verify(request.getQuery(), request.getSignedQueryBytes().toByteArray())) {
+                    System.out.println("Verification successfull; installing query");
+                    dbStub.installQuery(request.getQuery(), responseObserver);
+                } else {
+                    System.err.println("Verification failed; Can't install query");
+                }
         }
 
         @Override
@@ -118,8 +143,8 @@ public class Agent {
     }
 
     static public void main(String args[]) {
-        if (args.length == 0) {
-            System.err.println("Usage: ./agent zone_name");
+        if (args.length != 2) {
+            System.err.println("Usage: ./agent zone_name signer_public_key");
             exit(1);
         }
 
@@ -128,7 +153,8 @@ public class Agent {
         }
         try {
             String zoneName = args[0];
-            Agent agent = new Agent(new PathName(zoneName));
+            PublicKey publicKey = QuerySignerService.PublicKeyReader.get(args[1]);
+            Agent agent = new Agent(new PathName(zoneName), publicKey);
             agent.startServer();
         } catch (Exception e) {
             System.err.println("Agent exception:");
