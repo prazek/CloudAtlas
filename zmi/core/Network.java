@@ -7,12 +7,10 @@ import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import model.ValueContact;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
 
-import static java.lang.Thread.sleep;
 
 public class Network {
 
@@ -97,8 +95,8 @@ public class Network {
     private void handleGossipingRequestFromDB(Gossip.GossipingRequestFromDB request) {
         System.out.println("Handling request of gossiping");
         Gossip.GossipRequestUDP requestUDP = Gossip.GossipRequestUDP.newBuilder()
-                .setRequestTimestamp(System.currentTimeMillis())
-                .setZmiPathName(request.getContact().getPathName().getP()).build();
+                .setRequestTimestamp(System.currentTimeMillis()).build();
+
 
         ValueContact contact = ValueContact.fromProtobuf(request.getContact());
         // TODO set any data indicating that we are waiting for response?
@@ -150,46 +148,36 @@ public class Network {
 
         long timeDelta = timeDelta(response.getResponseTimestamp(), rtd, time);
 
-        Map<String, Long> freshness = getUpdatedFreshnessMap(response.getFreshnessMap(), timeDelta);
+        Database.UpdateDatabase.Builder updateDatabaseBuilder = Database.UpdateDatabase.newBuilder();
 
-        Database.UpdateDatabase updateDatabase = Database.UpdateDatabase.newBuilder()
-                .setAttributesMap(response.getAttributesMap())
-                .putAllFreshness(freshness)
-                .setZmiPathName(response.getZmiPathName()).build();
+        for (Database.DatabaseState gossipZone: response.getZonesList()) {
+            Map<String, Long> freshness = getUpdatedFreshnessMap(gossipZone.getFreshnessMap(), timeDelta);
 
-        StreamObserver<Model.Empty> responseObserver = new StreamObserver<Model.Empty>() {
-            @Override
-            public void onNext(Model.Empty empty) {
-            }
+            Database.DatabaseState dbState = Database.DatabaseState.newBuilder()
+                    .setAttributesMap(gossipZone.getAttributesMap())
+                    .putAllFreshness(freshness)
+                    .setZmiPathName(gossipZone.getZmiPathName())
+                    .build();
 
-            @Override
-            public void onError(Throwable throwable) {
-                System.err.println(throwable);
-            }
+            updateDatabaseBuilder.addDatabaseState(dbState);
+        }
 
-            @Override
-            public void onCompleted() {
-            }
-        };
-        databaseStub.receiveGossip(updateDatabase, responseObserver);
+        StreamObserver<Model.Empty> responseObserver = new DatabaseService.NoOpResponseObserver();
+        databaseStub.receiveGossip(updateDatabaseBuilder.build(), responseObserver);
     }
 
     private void handleGossipingResponseFromDB(Database.UpdateDatabase response,
                                                SocketAddress address, long requestTimestamp,
-                                               long responseTimestamp, String zmiPathName) {
+                                               long responseTimestamp) {
 
         Gossip.GossipResponseUDP responseUDP = Gossip.GossipResponseUDP.newBuilder()
-                .setResponseTimestamp(System.currentTimeMillis())
-                .setAttributesMap(response.getAttributesMap())
-                .putAllFreshness(response.getFreshnessMap())
+                .addAllZones(response.getDatabaseStateList())
                 .setRequestReceivedTimestamp(requestTimestamp)
                 .setRequestTimestamp(responseTimestamp)
-                .setZmiPathName(zmiPathName).build();
-
+                .setResponseTimestamp(System.currentTimeMillis()).build();
         try {
             sendMsg(Gossip.GossipMessageUDP.newBuilder().setGossipResponseUDP(responseUDP).build(), address);
         } catch(IOException ex) {
-            // TODO redo 5 times?
             System.err.println(ex);
         }
     }
@@ -200,16 +188,11 @@ public class Network {
         StreamObserver<Database.UpdateDatabase> responseObserver = new StreamObserver<Database.UpdateDatabase>() {
             @Override
             public void onNext(Database.UpdateDatabase updateDatabase) {
-                if (!updateDatabase.getZmiPathName().equals(request.getZmiPathName())) {
-                    System.err.println("Invalid request send; ["
-                            + updateDatabase.getZmiPathName() + "] != [" + request.getZmiPathName() + "]");
-                    return;
-                }
+
 
                 try {
                     handleGossipingResponseFromDB(updateDatabase,
-                            address, request.getRequestTimestamp(), System.currentTimeMillis(),
-                            updateDatabase.getZmiPathName());
+                            address, request.getRequestTimestamp(), System.currentTimeMillis());
                 } catch (Exception e) {
                     System.err.println("onNext CurrentDatabase");
                     System.err.println(e);
@@ -227,8 +210,7 @@ public class Network {
 
             }
         };
-        databaseStub.getCurrentDatabase(Database.CurrentDatabaseRequest.newBuilder()
-                .setZmiPathName(request.getZmiPathName()).build(), responseObserver);
+        databaseStub.getCurrentDatabase(Database.CurrentDatabaseRequest.newBuilder().build(), responseObserver);
     }
 
 

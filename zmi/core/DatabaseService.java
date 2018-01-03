@@ -11,6 +11,7 @@ import model.*;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.*;
 
@@ -31,10 +32,27 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     DatabaseService(PathName current,
                     NetworkGrpc.NetworkStub networkStub) throws ParseException, UnknownHostException {
         this.current = current;
-        // TODO set configuration?
-        this.setRoot(ZMIConfig.getZMIConfiguration());
+        this.setRoot(initialTree(current));
+
         freshness = startupFreshness();
         this.networkStub = networkStub;
+    }
+
+    static ZMI initialTree(PathName current) {
+        ZMI root = new ZMI();
+        ZMI node = root;
+        root.getAttributes().add("level", new ValueInt(0l));
+        root.getAttributes().add("name", new ValueString(null));
+        long level = 1;
+        for (String i: current.getComponents()) {
+            ZMI newNode = new ZMI(node);
+            newNode.getAttributes().add("level", new ValueInt(level));
+            newNode.getAttributes().add("name", new ValueString(i));
+            node.addSon(newNode);
+            node = newNode;
+            ++level;
+        }
+        return root;
     }
 
     public void startQueryRunner() {
@@ -67,16 +85,17 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
                     ZoneChoiceStrategy zoneChoiceStrategy = new ZoneChoiceStrategy();
                     PathName choosedZone = zoneChoiceStrategy.chooseZone(zones, current);
 
-                    // TODO choose
-                    Value vcontacts = zones.get(choosedZone).getAttributes().getOrNull("contacts");
-                    if (vcontacts == null) {
-                        //// TODO
-                    }
                     ArrayList<Value> contacts = new ArrayList<>();
-                    contacts.addAll(((ValueSet)vcontacts).getValue());
+
+                    Value vcontacts = zones.get(choosedZone).getAttributes().getOrNull("contacts");
+                    if (vcontacts != null) {
+                        contacts.addAll(((ValueSet)vcontacts).getValue());
+                    }
+
                     if (contacts.isEmpty()) {
                         if (fallbackContacts.isEmpty()) {
-                      //      throw new RuntimeException("Fallback contacts not set, can't gossip");
+                              System.err.println("No available contacts in zone and fallback contacts not set");
+                              return;
                         }
                         contacts.addAll(fallbackContacts);
                     }
@@ -245,35 +264,40 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         }
     }
 
+    private void receiveGossipForZone(Database.DatabaseState dbState) throws Exception {
+        Map<String, Long> gossipFreshness = dbState.getFreshnessMap();
+        PathName updatingZMIName = new PathName(dbState.getZmiPathName());
+        Map<String, Long> databaseFresshness = freshness.getOrDefault(updatingZMIName, new HashMap<>());
+        AttributesMap attrs = AttributesMap.fromProtobuf(dbState.getAttributesMap());
+
+        for (Map.Entry<Attribute, Value> e: attrs) {
+            Long currentFreshness = databaseFresshness.get(e.getKey().getName());
+            Long newFreshness = gossipFreshness.get(e.getKey().getName());
+            if (currentFreshness == null || (newFreshness > currentFreshness )) {
+                System.out.println("Fresher data from gossip [" + e.getKey() + ":" + e.getValue() + "]");
+                if (e.getKey().getName().startsWith("&")) {
+                    if (e.getValue().isNull()) {
+                        uninstallQueryInZone(zones.get(updatingZMIName), databaseFresshness, e.getKey().getName());
+                    } else if (e.getValue() instanceof ValueString) {
+                        installQueryInZone(zones.get(updatingZMIName), databaseFresshness, e.getKey(), ((ValueString) e.getValue()).getValue());
+                    } else {
+                        throw new IllegalArgumentException("Bad type");
+                    }
+                } else {
+                    zones.get(updatingZMIName).getAttributes().addOrChange(e);
+                }
+                databaseFresshness.put(e.getKey().getName(), newFreshness);
+            }
+        }
+        freshness.put(updatingZMIName, databaseFresshness);
+    }
+
     @Override
     public void receiveGossip(Database.UpdateDatabase request, StreamObserver<Model.Empty> responseObserver) {
         try {
-            Map<String, Long> gossipFreshness = request.getFreshnessMap();
-            PathName updatingZMIName = new PathName(request.getZmiPathName());
-            Map<String, Long> databaseFresshness = freshness.getOrDefault(updatingZMIName, new HashMap<>());
-            AttributesMap attrs = AttributesMap.fromProtobuf(request.getAttributesMap());
-
-            for (Map.Entry<Attribute, Value> e: attrs) {
-                Long currentFreshness = databaseFresshness.get(e.getKey().getName());
-                Long newFreshness = gossipFreshness.get(e.getKey().getName());
-                if (currentFreshness == null || (newFreshness > currentFreshness )) {
-                    System.out.println("Fresher data from gossip [" + e.getKey() + ":" + e.getValue() + "]");
-                    if (e.getKey().getName().startsWith("&")) {
-                        if (e.getValue().isNull()) {
-                            uninstallQueryInZone(zones.get(updatingZMIName), databaseFresshness, e.getKey().getName());
-                        } else if (e.getValue() instanceof ValueString) {
-                            installQueryInZone(zones.get(updatingZMIName), databaseFresshness, e.getKey(), ((ValueString) e.getValue()).getValue());
-                        } else {
-                            throw new IllegalArgumentException("Bad type");
-                        }
-                    } else {
-                        zones.get(updatingZMIName).getAttributes().addOrChange(e);
-                    }
-                    databaseFresshness.put(e.getKey().getName(), newFreshness);
-                }
+            for (Database.DatabaseState dbState: request.getDatabaseStateList()) {
+                receiveGossipForZone(dbState);
             }
-            freshness.put(updatingZMIName, databaseFresshness);
-
             responseObserver.onNext(Model.Empty.newBuilder().build());
             responseObserver.onCompleted();
         } catch (Exception e) {
@@ -283,16 +307,23 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
 
     @Override
     public void getCurrentDatabase(Database.CurrentDatabaseRequest request, StreamObserver<Database.UpdateDatabase> responseObserver) {
-        PathName pathName = new PathName(request.getZmiPathName());
-        Model.AttributesMap attrMap = zones.get(pathName).getAttributes().serialize();
-        Map<String, Long> zoneFreshness = freshness.getOrDefault(pathName, new HashMap<>());
-        Database.UpdateDatabase db = Database.UpdateDatabase.newBuilder()
-                .setAttributesMap(attrMap)
-                .putAllFreshness(zoneFreshness)
-                .setZmiPathName(pathName.getName())
-                .build();
-        responseObserver.onNext(db);
+        Database.UpdateDatabase.Builder dbBuilder = Database.UpdateDatabase.newBuilder();
+
+        for (Map.Entry<PathName, ZMI> zone: zones.entrySet()) {
+            PathName pathName = zone.getKey();
+            Model.AttributesMap attrMap = zones.get(pathName).getAttributes().serialize();
+            Map<String, Long> zoneFreshness = freshness.getOrDefault(pathName, new HashMap<>());
+
+            Database.DatabaseState state = Database.DatabaseState.newBuilder()
+                    .setAttributesMap(attrMap)
+                    .putAllFreshness(zoneFreshness)
+                    .setZmiPathName(pathName.getName())
+                    .build();
+            dbBuilder.addDatabaseState(state);
+        }
+        responseObserver.onNext(dbBuilder.build());
         responseObserver.onCompleted();
+
     }
 
     @Override

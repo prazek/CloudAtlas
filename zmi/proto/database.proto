@@ -3,14 +3,17 @@ option java_package = "core";
 
 import "model.proto";
 
-message UpdateDatabase {
+message DatabaseState {
     string zmiPathName = 1;
     AttributesMap attributesMap = 2;
     map<string, int64> freshness = 3;
 }
 
+message UpdateDatabase {
+    repeated DatabaseState databaseState = 1;
+}
+
 message CurrentDatabaseRequest {
-    string zmiPathName = 1;
 }
 
 message Zones {
