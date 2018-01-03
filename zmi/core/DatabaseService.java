@@ -269,7 +269,6 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
 
     @Override
     public void getCurrentDatabase(Database.CurrentDatabaseRequest request, StreamObserver<Database.UpdateDatabase> responseObserver) {
-        // TODO choose pathname
         PathName pathName = new PathName(request.getZmiPathName());
         Model.AttributesMap attrMap = zones.get(pathName).getAttributes().serialize();
         Map<String, Long> zoneFreshness = freshness.getOrDefault(pathName, new HashMap<>());

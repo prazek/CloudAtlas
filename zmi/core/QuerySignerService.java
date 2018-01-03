@@ -81,14 +81,12 @@ class QuerySignerService extends SignerGrpc.SignerImplBase {
             }
 
             System.out.println("adding query to the set");
-
             queries.add(request.getName().getS(), new ValueString(query));
 
             System.out.println("replying");
-            // TODO sign something
-            Model.Query returnedQuery = Model.Query.newBuilder().setName(request.getName()).setCode(request.getCode()).build();
-            System.err.println("query prepared");
-            responseObserver.onNext(SignerOuterClass.SignedQuery.newBuilder().setQuery(returnedQuery).build());
+
+            SignerOuterClass.SignedQuery signedQuery = signQuery(request.getName(), request.getCode());
+            responseObserver.onNext(signedQuery);
             System.err.println("response sent");
             responseObserver.onCompleted();
             System.out.println("installed");
@@ -103,7 +101,14 @@ class QuerySignerService extends SignerGrpc.SignerImplBase {
             responseObserver.onError(ex);
         }
 
+    }
 
+    SignerOuterClass.SignedQuery signQuery(Model.QueryName queryName, String query) {
+
+        // TODO sign something
+        Model.Query returnedQuery = Model.Query.newBuilder().setName(queryName).setCode(query).build();
+        System.err.println("query prepared");
+        return SignerOuterClass.SignedQuery.newBuilder().setQuery(returnedQuery).build();
     }
 
     @Override
