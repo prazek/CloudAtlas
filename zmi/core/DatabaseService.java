@@ -27,6 +27,9 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     private Map<Attribute, List<Attribute>> queryAttributes = new HashMap<>();
     private Map<PathName, Map<String, Long>> freshness;
     private Random randomGenerator = new Random();
+
+    ZMI root;
+
     static private int GOSSIPING_DELAY = 4000;
 
     DatabaseService(PathName current,
@@ -38,20 +41,38 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         this.networkStub = networkStub;
     }
 
+    static ZMI getSonByName(ZMI node, String name) {
+        for (ZMI son: node.getSons()) {
+            if (son.getAttributes().get("name").equals(name)) {
+                return son;
+            }
+        }
+        return null;
+    }
+
+    static void attachTreeFromPath(ZMI node, PathName pathName, long level) {
+        for (String name: pathName.getComponents()) {
+            ZMI son = getSonByName(node, name);
+            if (son == null) {
+                ZMI newNode = new ZMI(node);
+                newNode.getAttributes().add("level", new ValueInt(level));
+                newNode.getAttributes().add("name", new ValueString(name));
+                node.addSon(newNode);
+                node = newNode;
+            } else {
+                node = son;
+            }
+            ++level;
+        }
+    }
+
     static ZMI initialTree(PathName current) {
         ZMI root = new ZMI();
         ZMI node = root;
+        long level = 1;
         root.getAttributes().add("level", new ValueInt(0l));
         root.getAttributes().add("name", new ValueString(null));
-        long level = 1;
-        for (String i: current.getComponents()) {
-            ZMI newNode = new ZMI(node);
-            newNode.getAttributes().add("level", new ValueInt(level));
-            newNode.getAttributes().add("name", new ValueString(i));
-            node.addSon(newNode);
-            node = newNode;
-            ++level;
-        }
+        attachTreeFromPath(root, current, level);
         return root;
     }
 
@@ -95,7 +116,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
                     if (contacts.isEmpty()) {
                         if (fallbackContacts.isEmpty()) {
                               System.err.println("No available contacts in zone and fallback contacts not set");
-                              return;
+                              //return;
                         }
                         contacts.addAll(fallbackContacts);
                     }
@@ -104,7 +125,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
 
                     // TODO just for now pick localhost for testing.
                     //ValueContact contact = (ValueContact)contacts.get(index);
-                    ValueContact contact = new ValueContact(choosedZone, InetAddress.getByName("127.0.0.1"));
+                    ValueContact contact = new ValueContact(choosedZone, InetAddress.getByName("192.168.1.116"));
 
                     networkStub.requestGossip(
                             Gossip.GossipingRequestFromDB.newBuilder()
@@ -296,6 +317,9 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     public void receiveGossip(Database.UpdateDatabase request, StreamObserver<Model.Empty> responseObserver) {
         try {
             for (Database.DatabaseState dbState: request.getDatabaseStateList()) {
+                attachTreeFromPath(root, new PathName(dbState.getZmiPathName()), 1);
+            }
+            for (Database.DatabaseState dbState: request.getDatabaseStateList()) {
                 receiveGossipForZone(dbState);
             }
             responseObserver.onNext(Model.Empty.newBuilder().build());
@@ -338,6 +362,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
 
     private void setRoot(ZMI zmi) {
         zones.clear();
+        root = zmi;
         addZMI(zmi, null);
     }
 
