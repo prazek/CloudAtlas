@@ -39,6 +39,8 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
 
         freshness = startupFreshness();
         this.networkStub = networkStub;
+        fallbackContacts.add(new ValueContact(new PathName(System.getenv("fallback_contact_path")),
+                InetAddress.getByName(System.getenv("fallback_contact"))));
     }
 
     static ZMI getSonByName(ZMI node, String name) {

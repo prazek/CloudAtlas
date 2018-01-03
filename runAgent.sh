@@ -12,6 +12,6 @@ java -cp "$CLASSPATH" \
   -Djava.rmi.server.codebase="$CODEBASE" \
   -Djava.rmi.server.hostname="$HOSTNAME" \
   -Djava.security.policy=Agent.policy \
-    core.Agent /uw/`hostname` signer-keys/public_key.der
+    core.Agent $name signer-keys/public_key.der
 
 

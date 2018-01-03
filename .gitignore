@@ -1,4 +1,5 @@
 classpath.txt
+config.sh
 out/
 .idea/
 target
