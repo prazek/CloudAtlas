@@ -19,15 +19,12 @@ class TimerService extends TimerGrpc.TimerImplBase {
         }
 
         synchronized void fireCallbacks() {
-            System.err.println("timer: firing callbacks");
             long timestamp = System.currentTimeMillis();
-            System.err.println("Waiting size: " + waiting.size());
             while (!waiting.isEmpty() && waiting.firstKey() <= timestamp) {
-                System.err.println("callbacks!");
                 List<Callback> callbacks = waiting.get(waiting.firstKey());
                 waiting.remove(waiting.firstKey());
                 for (Callback c: callbacks) {
-                    System.err.println("Sending response");
+                    System.out.println("Timer: Sending response");
                     try {
                         c.responseObserver.onNext(TimerOuterClass.TimerResponse.newBuilder().setId(c.id).build());
                         c.responseObserver.onCompleted();
@@ -40,18 +37,15 @@ class TimerService extends TimerGrpc.TimerImplBase {
         }
 
         synchronized void addCallback(long at, Callback callback) {
-            System.err.println("timer: adding callback");
             List<Callback> callbackList = waiting.getOrDefault(at, new ArrayList<>());
             callbackList.add(callback);
             waiting.put(at, callbackList);
-            System.err.println("timer: queue notified");
             notify();
         }
 
         synchronized public void run() {
             while (true) {
                 try {
-                    System.err.println("waiting");
                     if (waiting.isEmpty()) {
                         wait();
                     } else {
@@ -61,10 +55,9 @@ class TimerService extends TimerGrpc.TimerImplBase {
                         }
                         wait(delay);
                     }
-                    System.err.println("awake after timeout");
                 } catch (InterruptedException e) {
                     // Do nothing
-                    System.err.println("wait interrupted");
+                    System.err.println("Timer: wait interrupted");
                 }
                 fireCallbacks();
             }
@@ -81,12 +74,10 @@ class TimerService extends TimerGrpc.TimerImplBase {
 
     @Override
     public void set(TimerOuterClass.TimerRequest request, StreamObserver<TimerOuterClass.TimerResponse> responseObserver) {
-        System.err.println(("Timer set"));
         Callback callback = new Callback();
         callback.id = request.getId();
         callback.responseObserver = responseObserver;
         timerQueue.addCallback(currentTimeMillis() + request.getDelay(), callback);
-        System.err.println(("Timer callback added"));
     }
 
     public void startQueue() {

@@ -10,6 +10,7 @@ message GossipingRequestFromDB {
 
 message GossipRequestUDP {
     int64 requestTimestamp = 1;
+    string zmiPathName = 2;
 };
 
 message GossipResponseUDP {
@@ -17,6 +18,7 @@ message GossipResponseUDP {
     int64 requestReceivedTimestamp = 2;
     int64 responseTimestamp = 3;
 
+    string zmiPathName = 6;
     AttributesMap attributesMap = 4;
     map<string, int64> freshness = 5;
 }

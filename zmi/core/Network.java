@@ -17,15 +17,15 @@ import static java.lang.Thread.sleep;
 
 public class Network {
 
-//    private DatabaseUpdater databaseUpdater = null;
     private DatagramSocket receivingSocket;
-    private Map<Long, RequestExtraData> requestsExtraData = new HashMap<>();
     DatabaseServiceGrpc.DatabaseServiceStub databaseStub;
+    int GLOBAL_NETWORK_SERVICE_PORT = 2137;
+
 
     Network() {
         try {
             // TODO make it configurable
-            receivingSocket = new DatagramSocket(2137);
+            receivingSocket = new DatagramSocket(GLOBAL_NETWORK_SERVICE_PORT);
         } catch (SocketException ex) {
             System.err.println("Socket exception: " + ex);
             assert false;
@@ -51,7 +51,8 @@ public class Network {
     }
 
     Message receive() throws IOException {
-        byte buf[] = new byte[2137];
+        // TODO fragmentation
+        byte buf[] = new byte[2137*2];
         DatagramPacket packet
                 = new DatagramPacket(buf, buf.length);
         receivingSocket.receive(packet);
@@ -70,28 +71,17 @@ public class Network {
     }
 
 
-    class RequestExtraData {
-        RequestExtraData(long requestTimestamp,
-                         long requestReceivedTimestamp,
-                         InetAddress address) {
-            this.requestTimestamp = requestTimestamp;
-            this.requestReceivedTimestamp = requestReceivedTimestamp;
-            this.address = address;
-        }
-
-        long requestTimestamp;
-        long requestReceivedTimestamp;
-        InetAddress address;
-    }
-
-    private void handleGossipingResponseFromDB(Database.UpdateDatabase response, SocketAddress address, long requestTimestamp, long responseTimestamp) {
+    private void handleGossipingResponseFromDB(Database.UpdateDatabase response,
+                                               SocketAddress address, long requestTimestamp,
+                                               long responseTimestamp, String zmiPathName) {
 
         Gossip.GossipResponseUDP responseUDP = Gossip.GossipResponseUDP.newBuilder()
                 .setResponseTimestamp(System.currentTimeMillis())
                 .setAttributesMap(response.getAttributesMap())
                 .putAllFreshness(response.getFreshnessMap())
                 .setRequestReceivedTimestamp(requestTimestamp)
-                .setRequestTimestamp(responseTimestamp).build();
+                .setRequestTimestamp(responseTimestamp)
+                .setZmiPathName(zmiPathName).build();
 
         try {
             sendMsg(Gossip.GossipMessageUDP.newBuilder().setGossipResponseUDP(responseUDP).build(), address);
@@ -104,14 +94,15 @@ public class Network {
     private void handleGossipingRequestFromDB(Gossip.GossipingRequestFromDB request) {
         System.out.println("Handling request of gossiping");
         Gossip.GossipRequestUDP requestUDP = Gossip.GossipRequestUDP.newBuilder()
-                .setRequestTimestamp(System.currentTimeMillis()).build();
+                .setRequestTimestamp(System.currentTimeMillis())
+                .setZmiPathName(request.getContact().getPathName().getP()).build();
 
         ValueContact contact = ValueContact.fromProtobuf(request.getContact());
         // TODO set any data indicating that we are waiting for response?
 
         try {
             sendMsg(Gossip.GossipMessageUDP.newBuilder().setGossipRequestUDP(requestUDP).build(),
-                    new InetSocketAddress(contact.getAddress(), 2137));
+                    new InetSocketAddress(contact.getAddress(), GLOBAL_NETWORK_SERVICE_PORT));
         } catch (IOException ex) {
             // TODO redo?
             System.err.println(ex);
@@ -142,10 +133,10 @@ public class Network {
 
         private void handleMessage(Message message) {
             if (message.messageUDP.hasGossipRequestUDP()) {
-                handleGossipRequest(message.messageUDP.getGossipRequestUDP(), message.senderAddress);
+                handleGossipRequestFromNetwork(message.messageUDP.getGossipRequestUDP(), message.senderAddress);
             }
             else if (message.messageUDP.hasGossipResponseUDP()) {
-                handleGossipResponse(message.messageUDP.getGossipResponseUDP());
+                handleGossipResponseFromNetwork(message.messageUDP.getGossipResponseUDP());
             }
             else {
                 System.err.println("Invalid message" + message.toString());
@@ -164,25 +155,27 @@ public class Network {
         }
 
 
-        private void updateFreshnessMap(Map<String, Long> freshness, long timeDelta) {
+        private Map<String, Long> getUpdatedFreshnessMap(Map<String, Long> freshness, long timeDelta) {
+            Map<String, Long> updatedFresshnessMap = new HashMap<>();
             for (Map.Entry<String, Long> entry : freshness.entrySet()) {
-                entry.setValue(entry.getValue() + timeDelta);
+                updatedFresshnessMap.put(entry.getKey(), entry.getValue() + timeDelta);
             }
+            return updatedFresshnessMap;
         }
 
-        void handleGossipResponse(core.Gossip.GossipResponseUDP response) {
+        void handleGossipResponseFromNetwork(core.Gossip.GossipResponseUDP response) {
             long time = System.currentTimeMillis();
             long rtd = rtd(response.getRequestTimestamp(), response.getRequestReceivedTimestamp(),
                     response.getResponseTimestamp(), time);
 
             long timeDelta = timeDelta(response.getResponseTimestamp(), rtd, time);
 
-            Map<String, Long> freshness = response.getFreshnessMap();
-            updateFreshnessMap(freshness, timeDelta);
+            Map<String, Long> freshness = getUpdatedFreshnessMap(response.getFreshnessMap(), timeDelta);
 
             Database.UpdateDatabase updateDatabase = Database.UpdateDatabase.newBuilder()
                     .setAttributesMap(response.getAttributesMap())
-                    .putAllFreshness(freshness).build();
+                    .putAllFreshness(freshness)
+                    .setZmiPathName(response.getZmiPathName()).build();
 
             StreamObserver<Model.Empty> responseObserver = new StreamObserver<Model.Empty>() {
                 @Override
@@ -201,14 +194,22 @@ public class Network {
             databaseStub.receiveGossip(updateDatabase, responseObserver);
         }
 
-        void handleGossipRequest(core.Gossip.GossipRequestUDP request, SocketAddress address) {
+        void handleGossipRequestFromNetwork(core.Gossip.GossipRequestUDP request, SocketAddress address) {
             System.out.println("Handling gossiping request");
 
             StreamObserver<Database.UpdateDatabase> responseObserver = new StreamObserver<Database.UpdateDatabase>() {
                 @Override
                 public void onNext(Database.UpdateDatabase updateDatabase) {
+                    if (!updateDatabase.getZmiPathName().equals(request.getZmiPathName())) {
+                        System.err.println("Invalid request send; ["
+                                + updateDatabase.getZmiPathName() + "] != [" + request.getZmiPathName() + "]");
+                        return;
+                    }
+
                     try {
-                        handleGossipingResponseFromDB(updateDatabase, address, request.getRequestTimestamp(), System.currentTimeMillis());
+                        handleGossipingResponseFromDB(updateDatabase,
+                                address, request.getRequestTimestamp(), System.currentTimeMillis(),
+                                updateDatabase.getZmiPathName());
                     } catch (Exception e) {
                         System.err.println("onNext CurrentDatabase");
                         System.err.println(e);
@@ -226,7 +227,8 @@ public class Network {
 
                 }
             };
-            databaseStub.getCurrentDatabase(Database.CurrentDatabaseRequest.newBuilder().build(), responseObserver);
+            databaseStub.getCurrentDatabase(Database.CurrentDatabaseRequest.newBuilder()
+                    .setZmiPathName(request.getZmiPathName()).build(), responseObserver);
         }
     }
 

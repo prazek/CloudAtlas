@@ -21,17 +21,19 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     private NetworkGrpc.NetworkStub networkStub;
 
     private Map<PathName, ZMI> zones = new HashMap<>();
-    private Set<ValueContact> fallbackContacts = new HashSet<>();
+    private Set<ValueContact> fallbackContacts = new TreeSet<>();
     // TODO remove it
     private Map<Attribute, List<Attribute>> queryAttributes = new HashMap<>();
-    private Map<PathName, Map<String, Long>> freshness = new HashMap<>();
-
+    private Map<PathName, Map<String, Long>> freshness;
+    private Random randomGenerator = new Random();
     static private int GOSSIPING_DELAY = 4000;
 
     DatabaseService(PathName current,
                     NetworkGrpc.NetworkStub networkStub) throws ParseException, UnknownHostException {
         this.current = current;
+        // TODO set configuration?
         this.setRoot(ZMIConfig.getZMIConfiguration());
+        freshness = startupFreshness();
         this.networkStub = networkStub;
     }
 
@@ -60,22 +62,38 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         StreamObserver<core.TimerOuterClass.TimerResponse> responseObserver = new StreamObserver<TimerOuterClass.TimerResponse>() {
             @Override
             public void onNext(TimerOuterClass.TimerResponse timerResponse) {
-
-                System.err.println("gossiping onNext");
                 try {
                     NoOpResponseObserver observer = new NoOpResponseObserver();
                     ZoneChoiceStrategy zoneChoiceStrategy = new ZoneChoiceStrategy();
-                    zoneChoiceStrategy.chooseZone(zones, current);
+                    PathName choosedZone = zoneChoiceStrategy.chooseZone(zones, current);
 
-                    // TODO dupa
-                    ValueContact contact = new ValueContact(new PathName("/dupa"), InetAddress.getLocalHost());
+                    // TODO choose
+                    Value vcontacts = zones.get(choosedZone).getAttributes().getOrNull("contacts");
+                    if (vcontacts == null) {
+                        //// TODO
+                    }
+                    ArrayList<Value> contacts = new ArrayList<>();
+                    contacts.addAll(((ValueSet)vcontacts).getValue());
+                    if (contacts.isEmpty()) {
+                        if (fallbackContacts.isEmpty()) {
+                      //      throw new RuntimeException("Fallback contacts not set, can't gossip");
+                        }
+                        contacts.addAll(fallbackContacts);
+                    }
+
+                    //int index = randomGenerator.nextInt(contacts.size());
+
+                    // TODO just for now pick localhost for testing.
+                    //ValueContact contact = (ValueContact)contacts.get(index);
+                    ValueContact contact = new ValueContact(choosedZone, InetAddress.getByName("127.0.0.1"));
+
                     networkStub.requestGossip(
-                            Gossip.GossipingRequestFromDB.newBuilder().setContact(contact.serialize()).build(), observer);
+                            Gossip.GossipingRequestFromDB.newBuilder()
+                                    .setContact(contact.serialize()).build(), observer);
 
                 } catch (Exception ex) {
-                    System.err.println("gossiping onNext error");
-                    System.err.println(ex);
-                    throw new RuntimeException(ex.getMessage());
+                    System.err.println("Gossiping on next error: " + ex);
+                    //throw new RuntimeException(ex.getMessage());
                 }
             }
 
@@ -107,7 +125,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         } finally {
             fork.detach(previous);
         }
-        System.err.println("DB: request to timer sent");
+        System.out.println("DB: request to timer sent");
     }
 
     @Override
@@ -229,12 +247,22 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
 
     @Override
     public void receiveGossip(Database.UpdateDatabase request, StreamObserver<Model.Empty> responseObserver) {
-        Map<String, Long> map = request.getFreshnessMap();
+        Map<String, Long> gossipFreshness = request.getFreshnessMap();
+        PathName updatingZMIName = new PathName(request.getZmiPathName());
+        Map<String, Long> databaseFresshness = freshness.getOrDefault(updatingZMIName, new HashMap<>());
         AttributesMap attrs = AttributesMap.fromProtobuf(request.getAttributesMap());
+
         for (Map.Entry<Attribute, Value> e: attrs) {
-            // TODO freshness comparison
-            zones.get(new PathName("/uw/violet07" /* TODO */)).getAttributes().addOrChange(e);
+            Long currentFreshness = databaseFresshness.get(e.getKey().getName());
+            Long newFreshness = gossipFreshness.get(e.getKey().getName());
+            if (currentFreshness == null || (newFreshness > currentFreshness )) {
+                System.out.println("Freshed data from gossip [" + e.getKey() + ":" + e.getValue() + "]");
+                zones.get(updatingZMIName).getAttributes().addOrChange(e);
+                databaseFresshness.put(e.getKey().getName(), newFreshness);
+            }
         }
+        freshness.put(updatingZMIName, databaseFresshness);
+
         responseObserver.onNext(Model.Empty.newBuilder().build());
         responseObserver.onCompleted();
     }
@@ -242,12 +270,13 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     @Override
     public void getCurrentDatabase(Database.CurrentDatabaseRequest request, StreamObserver<Database.UpdateDatabase> responseObserver) {
         // TODO choose pathname
-        PathName pathName = new PathName("/uw/violet07");
+        PathName pathName = new PathName(request.getZmiPathName());
         Model.AttributesMap attrMap = zones.get(pathName).getAttributes().serialize();
         Map<String, Long> zoneFreshness = freshness.getOrDefault(pathName, new HashMap<>());
         Database.UpdateDatabase db = Database.UpdateDatabase.newBuilder()
                 .setAttributesMap(attrMap)
                 .putAllFreshness(zoneFreshness)
+                .setZmiPathName(pathName.getName())
                 .build();
         responseObserver.onNext(db);
         responseObserver.onCompleted();
@@ -397,6 +426,19 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         for (Attribute attr :  queryAttributes.get(new Attribute(queryName))) {
             z.getAttributes().remove(attr);
         }
+    }
+
+    private Map<PathName, Map<String, Long>> startupFreshness() {
+        Map<PathName, Map<String, Long>> result = new HashMap<>();
+        Long currentTimestamp = System.currentTimeMillis();
+        for (Map.Entry<PathName, ZMI> zone : zones.entrySet()) {
+            Map<String, Long> zoneFreshness = new HashMap<>();
+            for (Map.Entry<Attribute, Value> attribute : zone.getValue().getAttributes()) {
+                zoneFreshness.put(attribute.getKey().getName(), currentTimestamp);
+            }
+            result.put(zone.getKey(), zoneFreshness);
+        }
+        return result;
     }
 
     public class RunQueries implements Runnable {
