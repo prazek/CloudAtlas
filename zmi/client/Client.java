@@ -316,10 +316,10 @@ public class Client {
             String response = "ok";
             Map<String, String> data = parseFormUrlencoded(inputStreamToString(t.getRequestBody()));
             try {
-                SignerOuterClass.SignedUnistallQuery unistallQuery =
+                SignerOuterClass.SignedUninstallQuery uninstallQuery =
                         signer.signQueryRemove(Model.QueryName.newBuilder().setS(data.get("queryName")).build());
 
-                agent.uninstallQuery(unistallQuery);
+                agent.uninstallQuery(uninstallQuery);
             } catch (Exception ex) {
                 System.err.println("Error:\n" + ex);
                 t.getResponseHeaders().add("Content-Type", "text/html");

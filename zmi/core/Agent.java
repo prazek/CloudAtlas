@@ -69,7 +69,7 @@ public class Agent {
         }
 
         @Override
-        public void uninstallQuery(SignerOuterClass.SignedUnistallQuery request, StreamObserver<Model.Empty> responseObserver) {
+        public void uninstallQuery(SignerOuterClass.SignedUninstallQuery request, StreamObserver<Model.Empty> responseObserver) {
             // TODO check signature here
             dbStub.uninstallQuery(request.getName(), responseObserver);
         }

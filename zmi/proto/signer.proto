@@ -10,12 +10,12 @@ message SignedQuery {
     bytes signedQueryBytes = 2;
 }
 
-message SignedUnistallQuery {
+message SignedUninstallQuery {
     QueryName name = 1;
 }
 
 service Signer {
     rpc SignInstallQuery(Query) returns (SignedQuery);
-    rpc SignQueryRemove(QueryName) returns (SignedUnistallQuery);
+    rpc SignQueryRemove(QueryName) returns (SignedUninstallQuery);
     rpc GetQueries(Empty) returns (AttributesMap);
 }

@@ -108,6 +108,10 @@ class QuerySignerService extends SignerGrpc.SignerImplBase {
                 throw new BadQueryException("Query already exist");
             }
 
+            if (!queryCertificate.getName().startsWith("&")) {
+                throw new BadQueryException("name must start with &");
+            }
+
             ArrayList<Attribute> createdAttributes = new ArrayList<>();
             for (QueryResult r : results) {
                 Attribute producedValueName = r.getName();
@@ -178,7 +182,7 @@ class QuerySignerService extends SignerGrpc.SignerImplBase {
     }
 
     @Override
-    public void signQueryRemove(Model.QueryName request, StreamObserver<SignerOuterClass.SignedUnistallQuery> responseObserver) {
+    public void signQueryRemove(Model.QueryName request, StreamObserver<SignerOuterClass.SignedUninstallQuery> responseObserver) {
         String queryCertificate = request.getS();
         try {
             if (!queryCertificate.startsWith("&"))
@@ -192,12 +196,13 @@ class QuerySignerService extends SignerGrpc.SignerImplBase {
         }
 
 
-        responseObserver.onNext(SignerOuterClass.SignedUnistallQuery.newBuilder().build());
+        responseObserver.onNext(SignerOuterClass.SignedUninstallQuery.newBuilder().setName(Model.QueryName.newBuilder().setS(queryCertificate).build()).build());
         responseObserver.onCompleted();
     }
 
 
     private synchronized void uninstallQueryInZone(ZMI z, String queryName) {
+        System.err.println("Uninstalling");
         z.getAttributes().remove(queryName);
         for (Attribute attr : queryAttributes.get(new Attribute(queryName))) {
             z.getAttributes().remove(attr);
