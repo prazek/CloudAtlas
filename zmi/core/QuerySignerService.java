@@ -166,11 +166,6 @@ class QuerySignerService extends SignerGrpc.SignerImplBase {
             if (!signingEngine.verify(signature)) {
                 System.err.println("WTF is this?");
             }
-            else {
-                System.out.println("Everything is OK");
-                System.out.println(signature);
-                System.out.println(returnedQuery.toByteArray());
-            }
 
             return SignerOuterClass.SignedQuery.newBuilder()
                     .setQuery(returnedQuery)
@@ -195,18 +190,31 @@ class QuerySignerService extends SignerGrpc.SignerImplBase {
             return;
         }
 
+        Model.QueryName queryName = Model.QueryName.newBuilder().setS(queryCertificate).build();
+        try {
+            signingEngine.initSign(keyPair.getPrivate());
+            signingEngine.update(queryName.toByteArray());
+            byte[] signature = signingEngine.sign();
 
-        responseObserver.onNext(SignerOuterClass.SignedUninstallQuery.newBuilder().setName(Model.QueryName.newBuilder().setS(queryCertificate).build()).build());
-        responseObserver.onCompleted();
+            responseObserver.onNext(SignerOuterClass.SignedUninstallQuery.newBuilder()
+                    .setName(queryName)
+                    .setSignedNameBytes(ByteString.copyFrom(signature)).build());
+            responseObserver.onCompleted();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
 
     private synchronized void uninstallQueryInZone(ZMI z, String queryName) {
         System.err.println("Uninstalling");
         z.getAttributes().remove(queryName);
-        for (Attribute attr : queryAttributes.get(new Attribute(queryName))) {
+        Attribute queryNameAttr = new Attribute(queryName);
+        for (Attribute attr : queryAttributes.get(queryNameAttr)) {
             z.getAttributes().remove(attr);
         }
+        queryAttributes.remove(queryNameAttr);
+        queries.remove(queryNameAttr);
     }
 
     public static void main(String[] args) throws Exception {

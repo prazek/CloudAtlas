@@ -136,7 +136,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
                 Model.ZMI zmi = i.getValue().serialize();
                 // TODO(sbarzowski) set sons
                 Model.Zone z = Model.Zone.newBuilder().setPath(i.getKey().serialize()).setZmi(zmi).build();
-                System.err.println(z.toString());
+                //System.err.println(z.toString());
                 responseObserver.onNext(z);
             }
             responseObserver.onCompleted();

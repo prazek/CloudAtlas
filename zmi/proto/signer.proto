@@ -12,6 +12,7 @@ message SignedQuery {
 
 message SignedUninstallQuery {
     QueryName name = 1;
+    bytes signedNameBytes = 2;
 }
 
 service Signer {

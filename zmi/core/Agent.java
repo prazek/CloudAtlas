@@ -44,13 +44,13 @@ public class Agent {
             dbStub.getZones(request, responseObserver);
         }
 
-        boolean verify(Model.Query query, byte[] signature) {
+        boolean verify(byte[] queryBytes, byte[] signature) {
             try {
                 verifier.initVerify(publicKey);
-                verifier.update(query.toByteArray());
+                verifier.update(queryBytes);
 
                 System.out.println(signature);
-                System.out.println(query.toByteArray());
+                System.out.println(queryBytes);
                 return verifier.verify(signature);
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -60,7 +60,7 @@ public class Agent {
 
         @Override
         public void installQuery(SignerOuterClass.SignedQuery request, StreamObserver<Model.Empty> responseObserver) {
-                if (verify(request.getQuery(), request.getSignedQueryBytes().toByteArray())) {
+                if (verify(request.getQuery().toByteArray(), request.getSignedQueryBytes().toByteArray())) {
                     System.out.println("Verification successfull; installing query");
                     dbStub.installQuery(request.getQuery(), responseObserver);
                 } else {
@@ -70,8 +70,10 @@ public class Agent {
 
         @Override
         public void uninstallQuery(SignerOuterClass.SignedUninstallQuery request, StreamObserver<Model.Empty> responseObserver) {
-            // TODO check signature here
-            dbStub.uninstallQuery(request.getName(), responseObserver);
+            if (verify(request.getName().toByteArray(), request.getSignedNameBytes().toByteArray()))
+                dbStub.uninstallQuery(request.getName(), responseObserver);
+            else
+                System.err.println("Uninstall verification failed");
         }
 
 
