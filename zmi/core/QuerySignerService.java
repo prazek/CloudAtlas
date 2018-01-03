@@ -62,14 +62,6 @@ class QuerySignerService extends SignerGrpc.SignerImplBase {
     }
 
 
-    private String preparePrivateKey(String privateKey) {
-        return privateKey.replaceAll("-----END PRIVATE KEY-----", "")
-                .replaceAll("-----BEGIN PRIVATE KEY-----", "")
-                .replaceAll("\n", "");
-    }
-
-
-
     class BadQueryException extends Exception {
         String msg;
 
