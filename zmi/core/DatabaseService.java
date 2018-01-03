@@ -247,24 +247,38 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
 
     @Override
     public void receiveGossip(Database.UpdateDatabase request, StreamObserver<Model.Empty> responseObserver) {
-        Map<String, Long> gossipFreshness = request.getFreshnessMap();
-        PathName updatingZMIName = new PathName(request.getZmiPathName());
-        Map<String, Long> databaseFresshness = freshness.getOrDefault(updatingZMIName, new HashMap<>());
-        AttributesMap attrs = AttributesMap.fromProtobuf(request.getAttributesMap());
+        try {
+            Map<String, Long> gossipFreshness = request.getFreshnessMap();
+            PathName updatingZMIName = new PathName(request.getZmiPathName());
+            Map<String, Long> databaseFresshness = freshness.getOrDefault(updatingZMIName, new HashMap<>());
+            AttributesMap attrs = AttributesMap.fromProtobuf(request.getAttributesMap());
 
-        for (Map.Entry<Attribute, Value> e: attrs) {
-            Long currentFreshness = databaseFresshness.get(e.getKey().getName());
-            Long newFreshness = gossipFreshness.get(e.getKey().getName());
-            if (currentFreshness == null || (newFreshness > currentFreshness )) {
-                System.out.println("Freshed data from gossip [" + e.getKey() + ":" + e.getValue() + "]");
-                zones.get(updatingZMIName).getAttributes().addOrChange(e);
-                databaseFresshness.put(e.getKey().getName(), newFreshness);
+            for (Map.Entry<Attribute, Value> e: attrs) {
+                Long currentFreshness = databaseFresshness.get(e.getKey().getName());
+                Long newFreshness = gossipFreshness.get(e.getKey().getName());
+                if (currentFreshness == null || (newFreshness > currentFreshness )) {
+                    System.out.println("Fresher data from gossip [" + e.getKey() + ":" + e.getValue() + "]");
+                    if (e.getKey().getName().startsWith("&")) {
+                        if (e.getValue().isNull()) {
+                            uninstallQueryInZone(zones.get(updatingZMIName), databaseFresshness, e.getKey().getName());
+                        } else if (e.getValue() instanceof ValueString) {
+                            installQueryInZone(zones.get(updatingZMIName), databaseFresshness, e.getKey(), ((ValueString) e.getValue()).getValue());
+                        } else {
+                            throw new IllegalArgumentException("Bad type");
+                        }
+                    } else {
+                        zones.get(updatingZMIName).getAttributes().addOrChange(e);
+                    }
+                    databaseFresshness.put(e.getKey().getName(), newFreshness);
+                }
             }
-        }
-        freshness.put(updatingZMIName, databaseFresshness);
+            freshness.put(updatingZMIName, databaseFresshness);
 
-        responseObserver.onNext(Model.Empty.newBuilder().build());
-        responseObserver.onCompleted();
+            responseObserver.onNext(Model.Empty.newBuilder().build());
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(e);
+        }
     }
 
     @Override
@@ -325,7 +339,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
             // Dont install query in leaf node.
             if (!zone.getValue().getSons().isEmpty())
-                installQueryInZone(zone.getValue(), new Attribute(queryCertificate), query);
+                installQueryInZone(zone.getValue(), freshness.get(zone.getKey()), new Attribute(queryCertificate), query);
         }
     }
 
@@ -334,7 +348,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
             throw new RuntimeException("name must start with &");
         for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
             if (!zone.getValue().getSons().isEmpty())
-                uninstallQueryInZone(zone.getValue(), queryCertificate);
+                uninstallQueryInZone(zone.getValue(), freshness.get(zone.getKey()), queryCertificate);
         }
     }
 
@@ -372,8 +386,9 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         return results;
     }
 
-    private void applyQueryRunChanges(ZMI zmi, List<QueryResult> results) {
+    private void applyQueryRunChanges(ZMI zmi, Map<String, Long> freshness, List<QueryResult> results) {
         for (QueryResult r : results) {
+            freshness.put(r.getName().getName(), System.currentTimeMillis());
             zmi.getAttributes().addOrChange(r.getName(), r.getValue());
             System.out.println("Applying result for [" + r.getName() + "] with value [" + r.getValue() + "]");
         }
@@ -389,7 +404,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         return result;
     }
 
-    private synchronized void installQueryInZone(ZMI zmi, Attribute queryCertificate, String query) throws Exception {
+    private synchronized void installQueryInZone(ZMI zmi, Map<String, Long> freshness, Attribute queryCertificate, String query) throws Exception {
         System.err.println("Installing query " );
         if (zmi.getSons().isEmpty()) {
             throw new RuntimeException("Installing query on leaf node");
@@ -415,15 +430,18 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
                 }
             }
             queryAttributes.put(queryCertificate, createdAttributes);
+            freshness.put(queryCertificate.getName(), System.currentTimeMillis());
         }
-        applyQueryRunChanges(zmi, results);
+        applyQueryRunChanges(zmi, freshness, results);
         zmi.getAttributes().add(queryCertificate, q);
     }
 
-    private synchronized void uninstallQueryInZone(ZMI z, String queryName) {
-        z.getAttributes().remove(queryName);
+    private synchronized void uninstallQueryInZone(ZMI z, Map<String, Long> freshness, String queryName) {
+        z.getAttributes().addOrChange(queryName, new ValueNull());
+        freshness.put(queryName, System.currentTimeMillis());
         for (Attribute attr :  queryAttributes.get(new Attribute(queryName))) {
-            z.getAttributes().remove(attr);
+            z.getAttributes().addOrChange(attr, new ValueNull());
+            freshness.put(attr.getName(), System.currentTimeMillis());
         }
     }
 
@@ -454,7 +472,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
                         ValueString query = (ValueString)attribute.getValue();
                         try {
                             List<QueryResult> results = runQueryInZone(zmi, query.getValue());
-                            applyQueryRunChanges(zmi, results);
+                            applyQueryRunChanges(zmi, freshness.get(zone.getKey()), results);
                         }
                         catch (Exception ex) {
                             System.err.println("Exception in updater:");

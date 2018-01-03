@@ -141,7 +141,7 @@ public class Agent {
         server.start();
         System.err.println("Server started, listening on " + port);
 
-        //dbStub.startGossiping(Model.Empty.newBuilder().build(), new DatabaseService.NoOpResponseObserver());
+        dbStub.startGossiping(Model.Empty.newBuilder().build(), new DatabaseService.NoOpResponseObserver());
     }
 
     static public void main(String args[]) {

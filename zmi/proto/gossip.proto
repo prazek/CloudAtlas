@@ -30,6 +30,12 @@ message GossipMessageUDP {
     }
 }
 
+message GossipReceived {
+    GossipMessageUDP gossip = 1;
+    bytes inetAddress = 2;
+    int32 port = 3;
+}
+
 message Subpacket {
     int64 packetId = 1;
     int32 sequenceNr = 2;
@@ -39,4 +45,5 @@ message Subpacket {
 
 service Network {
     rpc RequestGossip(GossipingRequestFromDB) returns (Empty);
+    rpc Received(GossipReceived) returns (Empty);
 }
