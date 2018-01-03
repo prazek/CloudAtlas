@@ -31,7 +31,7 @@ message GossipMessageUDP {
 }
 
 message Subpacket {
-    int64 subpacketId = 1;
+    int64 packetId = 1;
     int32 sequenceNr = 2;
     int32 subpacketCount = 3;
     bytes data = 4;

@@ -23,7 +23,7 @@ public class NetworkTest {
                                 core.Gossip.GossipResponseUDP.newBuilder().setResponseTimestamp(id++).build();
 
                         network.sendMsg(core.Gossip.GossipMessageUDP.newBuilder().
-                                setGossipResponseUDP(gossip).build(), new InetSocketAddress(addr, 2137));
+                                setGossipResponseUDP(gossip).build(), new InetSocketAddress(addr, Network.GLOBAL_NETWORK_SERVICE_PORT));
 
                     } catch (IOException ex) {
                         System.err.println("IO exception: " + ex);

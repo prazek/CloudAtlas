@@ -119,6 +119,7 @@ class QuerySignerService extends SignerGrpc.SignerImplBase {
                 throw new RuntimeException("name must start with &");
 
             uninstallQueryInZone(fakeZMI, queryCertificate);
+            queries.remove(queryCertificate);
         } catch (Exception ex) {
             responseObserver.onError(ex);
             return;

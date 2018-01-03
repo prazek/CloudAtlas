@@ -1,17 +1,16 @@
 package core;
 
 
+import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import model.ValueContact;
 import model.ZMI;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.*;
 import java.security.Timestamp;
-import java.util.Arrays;
-import java.util.Currency;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static java.lang.Thread.sleep;
 
@@ -19,8 +18,13 @@ public class Network {
 
     private DatagramSocket receivingSocket;
     DatabaseServiceGrpc.DatabaseServiceStub databaseStub;
-    int GLOBAL_NETWORK_SERVICE_PORT = 2137;
+    public static final int GLOBAL_NETWORK_SERVICE_PORT = 2222;
+    static final int FRAGMENTATION_SIZE = 10000;
+    static final int MAX_SUBPACKETS = 1000;
 
+    Random random = new Random();
+
+    Map<Long, MessageStitcher> stichers = new HashMap<>();
 
     Network() {
         try {
@@ -28,7 +32,7 @@ public class Network {
             receivingSocket = new DatagramSocket(GLOBAL_NETWORK_SERVICE_PORT);
         } catch (SocketException ex) {
             System.err.println("Socket exception: " + ex);
-            assert false;
+            throw new RuntimeException("Failed to set up a socket");
         }
 
         Receiver receiver = new Receiver();
@@ -50,24 +54,116 @@ public class Network {
         SocketAddress senderAddress;
     }
 
+    private class MessageStitcher {
+        private long id;
+        byte messages[][];
+        int receivedCount;
+        int totalCount;
+
+        SocketAddress senderAddress;
+
+        public MessageStitcher(Gossip.Subpacket initial, SocketAddress senderAddress) {
+            this.senderAddress = senderAddress;
+            totalCount = initial.getSubpacketCount();
+            receivedCount = 0;
+            id = initial.getPacketId();
+            messages = new byte[totalCount][];
+            onNewSubpacket(initial);
+        }
+
+        public void onNewSubpacket(Gossip.Subpacket subpacket) {
+            if (messages[subpacket.getSequenceNr()] == null) {
+                messages[subpacket.getSequenceNr()] = subpacket.getData().toByteArray();
+                ++receivedCount;
+            }
+        }
+
+        public boolean ready() {
+            return receivedCount == totalCount;
+        }
+
+        public Message stitchedMessage() {
+            try {
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                for (int i = 0; i < totalCount; ++i) {
+                    outputStream.write(messages[i]);
+                }
+                return new Message(core.Gossip.GossipMessageUDP.parseFrom(outputStream.toByteArray()), senderAddress);
+            } catch (IOException ex) {
+                throw new RuntimeException("Failed to stitch message", ex);
+            }
+        }
+    };
+
+    Message stitchMessage(Gossip.Subpacket subpacket, SocketAddress senderAddress) {
+        System.err.println("Stitching...");
+        System.err.println(subpacket.getPacketId() + " " + subpacket.getSequenceNr());
+        MessageStitcher sticher = stichers.get(subpacket.getPacketId());
+        if (sticher == null) {
+            sticher = new MessageStitcher(subpacket, senderAddress);
+            stichers.put(sticher.id, sticher);
+        } else {
+            sticher.onNewSubpacket(subpacket);
+        }
+        if (sticher.ready()) {
+            return sticher.stitchedMessage();
+        }
+        return null;
+    }
+
     Message receive() throws IOException {
-        // TODO fragmentation
         byte buf[] = new byte[2137*2];
         DatagramPacket packet
                 = new DatagramPacket(buf, buf.length);
+
+        System.err.println("Waiting for UDP packet");
+
         receivingSocket.receive(packet);
+
+        System.err.println("UDP packet received");
 
         byte buf2[] = Arrays.copyOf(buf, packet.getLength());
 
-        return new Message(core.Gossip.GossipMessageUDP.parseFrom(buf2), packet.getSocketAddress());
+        Gossip.Subpacket subpacket = Gossip.Subpacket.parseFrom(buf2);
+
+        return stitchMessage(subpacket, packet.getSocketAddress());
+    }
+
+    List<Gossip.Subpacket> splitPacket(byte message[]) {
+        ArrayList<Gossip.Subpacket> subpackets = new ArrayList<>();
+        int size = (message.length + FRAGMENTATION_SIZE - 1) / FRAGMENTATION_SIZE;
+        if (size > MAX_SUBPACKETS) {
+            throw new RuntimeException("Too big packet");
+        }
+        long packetId = random.nextLong();
+        int sequenceNumber = 0;
+        for (int cur = 0; cur < message.length;) {
+            int len = Integer.min(message.length - cur, FRAGMENTATION_SIZE);
+            Gossip.Subpacket subpacket = Gossip.Subpacket.newBuilder()
+                    .setData(ByteString.copyFrom(message, cur, len))
+                    .setSequenceNr(sequenceNumber)
+                    .setPacketId(packetId)
+                    .setSubpacketCount(size)
+                    .build();
+            subpackets.add(subpacket);
+            cur += len;
+            ++sequenceNumber;
+        }
+        return subpackets;
     }
 
 
     public void sendMsg(core.Gossip.GossipMessageUDP gossip, SocketAddress address) throws IOException {
         byte bytes[] = gossip.toByteArray();
-        DatagramPacket packet
-                = new DatagramPacket(bytes, bytes.length, address);
-        receivingSocket.send(packet);
+
+        List<Gossip.Subpacket> packets = splitPacket(bytes);
+        for (Gossip.Subpacket subpacket: packets) {
+            byte subpacketBytes[] = subpacket.toByteArray();
+            DatagramPacket datagramPacket
+                    = new DatagramPacket(subpacketBytes, subpacketBytes.length, address);
+            receivingSocket.send(datagramPacket);
+            System.err.println("UDP packet sent");
+        }
     }
 
 
@@ -117,13 +213,9 @@ public class Network {
             while (true) {
                 try {
                     Message message = receive();
-                    System.out.println("Got message from " + message.senderAddress.toString());
-                    handleMessage(message);
-
-                    try {
-                        sleep(3*1000);
-                    } catch (InterruptedException ie) {
-                        return;
+                    if (message != null) {
+                        System.out.println("Got message from " + message.senderAddress.toString());
+                        handleMessage(message);
                     }
                 } catch (IOException ex) {
                     System.err.println("Receiver exception: " + ex);
