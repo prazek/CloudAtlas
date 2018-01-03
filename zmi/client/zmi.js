@@ -20,7 +20,7 @@ $(function() {
         });
     }
 
-    var myInterval = setInterval(update, 1000);
+    //var myInterval = setInterval(update, 1000);
 
     update();
 

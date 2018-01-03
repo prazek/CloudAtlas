@@ -5,9 +5,9 @@ import interpreter.QueryResult;
 import interpreter.TestHierarchy;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
-import model.Attribute;
-import model.ZMI;
+import model.*;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -20,9 +20,28 @@ import java.util.Map;
 class QuerySignerService extends SignerGrpc.SignerImplBase {
     private Map<Attribute, List<Attribute>> queryAttributes = new HashMap<>();
     private ZMI fakeZMI;
+    AttributesMap queries = new AttributesMap();
 
     QuerySignerService(ZMI fakeZMI) {
         this.fakeZMI = fakeZMI;
+    }
+
+    class BadQueryException extends Exception {
+        String msg;
+
+        BadQueryException(String msg) {
+            this.msg = msg;
+        }
+    }
+
+    @Override
+    public void getQueries(Model.Empty request, StreamObserver<Model.AttributesMap> responseObserver) {
+        try {
+            responseObserver.onNext(queries.serialize());
+            responseObserver.onCompleted();
+        } catch (Exception r) {
+            responseObserver.onError(r);
+        }
     }
 
     @Override
@@ -33,11 +52,16 @@ class QuerySignerService extends SignerGrpc.SignerImplBase {
         try {
 
             Interpreter interpreter = new Interpreter(fakeZMI);
-            List<QueryResult> results = interpreter.run(query);
+            List<QueryResult> results;
+            try {
+                results = interpreter.run(query);
+            } catch (Exception e) {
+                throw new BadQueryException(e.getMessage());
+            }
 
             // Put attributes if first run of this query
             if (queryAttributes.containsKey(queryCertificate)) {
-                throw new RuntimeException("Query already exist");
+                throw new BadQueryException("Query already exist");
             }
 
             ArrayList<Attribute> createdAttributes = new ArrayList<>();
@@ -45,7 +69,7 @@ class QuerySignerService extends SignerGrpc.SignerImplBase {
                 Attribute producedValueName = r.getName();
                 createdAttributes.add(producedValueName);
                 if (fakeZMI.getAttributes().getOrNull(producedValueName) != null) {
-                    throw new RuntimeException(
+                    throw new BadQueryException(
                             "Query [" + query + "] is producing value [" + producedValueName +
                                     "] that was added by other query or saved as attribute");
                 }
@@ -56,15 +80,30 @@ class QuerySignerService extends SignerGrpc.SignerImplBase {
                 System.out.println("Applying result for [" + r.getName() + "] with value [" + r.getValue() + "]");
             }
 
+            System.out.println("adding query to the set");
 
+            queries.add(request.getName().getS(), new ValueString(query));
+
+            System.out.println("replying");
+            // TODO sign something
+            Model.Query returnedQuery = Model.Query.newBuilder().setName(request.getName()).setCode(request.getCode()).build();
+            System.err.println("query prepared");
+            responseObserver.onNext(SignerOuterClass.SignedQuery.newBuilder().setQuery(returnedQuery).build());
+            System.err.println("response sent");
+            responseObserver.onCompleted();
+            System.out.println("installed");
+        } catch (BadQueryException ex) {
+            System.err.println(ex);
+            responseObserver.onError(Status.INTERNAL
+                .withDescription(ex.msg)
+                .withCause(ex) // This can be attached to the Status locally, but NOT transmitted to the client!
+                .asRuntimeException());
         } catch (Exception ex) {
+            System.err.println(ex);
             responseObserver.onError(ex);
         }
 
-        // TODO sign something
-        Model.Query returnedQuery = Model.Query.newBuilder().setName(request.getName()).setCode(request.getCode()).build();
-        responseObserver.onNext(SignerOuterClass.SignedQuery.newBuilder().setQuery(returnedQuery).build());
-        responseObserver.onCompleted();
+
     }
 
     @Override
@@ -93,25 +132,17 @@ class QuerySignerService extends SignerGrpc.SignerImplBase {
         }
     }
 
-    public static void main(String[] args) throws IOException, ParseException {
-        /*
-        QuerySignerService signerService = new QuerySignerService();
-        Server signerServer = InProcessServerBuilder.forName("signer_module").addService(signerService).build();
-        signerServer.start();
-        ManagedChannel signerChannel = InProcessChannelBuilder.forName("signer_module").build();
-        SignerGrpc.SignerStub signerStub = SignerGrpc.newStub(signerChannel);
-        */
+    public static void main(String[] args) throws IOException, ParseException, InterruptedException {
         ZMI fakeZMI = TestHierarchy.createTestHierarchy();
 
-        int port = 2137;
-        ServerBuilder serverBuilder = ServerBuilder.forPort(port);
+        int port = 9876;
+        ServerBuilder serverBuilder = ServerBuilder.forPort(port).directExecutor();
         serverBuilder.addService(new QuerySignerService(fakeZMI));
         Server server = serverBuilder.build();
         server.start();
 
         System.err.println("Server started, listening on " + port);
-
-
+        server.awaitTermination();
     }
 
 }

@@ -16,4 +16,5 @@ message SignedUnistallQuery {
 service Signer {
     rpc SignInstallQuery(Query) returns (SignedQuery);
     rpc SignQueryRemove(QueryName) returns (SignedUnistallQuery);
+    rpc GetQueries(Empty) returns (AttributesMap);
 }

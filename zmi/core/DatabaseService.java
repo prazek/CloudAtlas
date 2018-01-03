@@ -131,6 +131,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     @Override
     public void installQuery(Model.Query request, StreamObserver<Model.Empty> responseObserver) {
         try {
+            System.err.println("db: install query");
             installQuery(request.getName().getS(), request.getCode());
             responseObserver.onNext(Model.Empty.newBuilder().build());
             responseObserver.onCompleted();
@@ -191,8 +192,9 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     @Override
     public void getQueries(Model.Empty request, StreamObserver<Model.AttributesMap> responseObserver) {
         try {
-            AttributesMap contacts = getQueries();
-            responseObserver.onNext(contacts.serialize());
+            AttributesMap queries = getQueries();
+            responseObserver.onNext(queries.serialize());
+            responseObserver.onCompleted();
         } catch (Exception r) {
             responseObserver.onError(r);
         }

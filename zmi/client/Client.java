@@ -34,7 +34,7 @@ public class Client {
 
             AgentGrpc.AgentBlockingStub agentStub = AgentGrpc.newBlockingStub(channel);
 
-            ManagedChannel signerChannel = ManagedChannelBuilder.forAddress("127.0.0.1", 2137).usePlaintext(true).build();
+            ManagedChannel signerChannel = ManagedChannelBuilder.forAddress("127.0.0.1", 9876).usePlaintext(true).build();
 
             SignerGrpc.SignerBlockingStub signerStub = SignerGrpc.newBlockingStub(signerChannel);
 
@@ -44,9 +44,9 @@ public class Client {
             server.createContext("/", new MainPage());
             server.createContext("/zmi/", new ServeFileHandler("client/ZMI.html", "text/html"));
             server.createContext("/fallbackContacts/", new ContactsPage(agentStub));
-            //server.createContext("/installedQueries/", new InstalledQueriesPage(signerStub));
-            //server.createContext("/installQuery/", new InstallQueryPage(signerStub, agentStub));
-            //server.createContext("/uninstallQuery/", new UninstallQueryPage(signerStub, agentStub));
+            server.createContext("/installedQueries/", new InstalledQueriesPage(signerStub));
+            server.createContext("/installQuery/", new InstallQueryPage(signerStub, agentStub));
+            server.createContext("/uninstallQuery/", new UninstallQueryPage(signerStub, agentStub));
             server.createContext("/attributes/", new AttributesPage(agentStub));
             server.createContext("/plot/", new PlotPage());
 
@@ -252,23 +252,30 @@ public class Client {
 
     // TODO should it communicate with Signer? probably not
     private static class InstalledQueriesPage implements HttpHandler {
-        private final AgentGrpc.AgentBlockingStub agent;
+        private final SignerGrpc.SignerBlockingStub signer;
 
-        InstalledQueriesPage(AgentGrpc.AgentBlockingStub agent) {
-            this.agent = agent;
+        InstalledQueriesPage(SignerGrpc.SignerBlockingStub signer) {
+            this.signer = signer;
         }
+
         @Override
-        public void handle(HttpExchange t) throws IOException {
+        public void handle(HttpExchange t) {
             try {
+                System.err.println("Installed queries request");
                 Gson gson = CustomJsonSerializer.getSerializer();
-                AttributesMap queries = AttributesMap.fromProtobuf(agent.getQueries(Model.Empty.newBuilder().build()));
-                //ZMI other = agent.zone(new PathName("/pjwstk"));
+                System.err.println("getQueries");
+                Model.AttributesMap fromAgent = signer.getQueries(Model.Empty.newBuilder().build());
+                System.err.println("getQueries finished");
+                AttributesMap queries = AttributesMap.fromProtobuf(fromAgent);
+                System.err.println("converted to Internal");
                 String response = gson.toJson(queries);
+                System.err.println("converted to json");
                 t.getResponseHeaders().add("Content-Type", "application/json");
                 t.sendResponseHeaders(200, response.length());
                 OutputStream os = t.getResponseBody();
                 os.write(response.getBytes());
                 os.close();
+                System.err.println("finished installed queries");
 
             } catch (Exception e) {
                 e.printStackTrace();
