@@ -2,6 +2,7 @@ package core;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 import static java.lang.Thread.sleep;
@@ -22,7 +23,7 @@ public class NetworkTest {
                                 core.Gossip.GossipResponseUDP.newBuilder().setResponseTimestamp(id++).build();
 
                         network.sendMsg(core.Gossip.GossipMessageUDP.newBuilder().
-                                setGossipResponseUDP(gossip).build(), addr);
+                                setGossipResponseUDP(gossip).build(), new InetSocketAddress(addr, 2137));
 
                     } catch (IOException ex) {
                         System.err.println("IO exception: " + ex);

@@ -28,6 +28,13 @@ message GossipMessageUDP {
     }
 }
 
+message Subpacket {
+    int64 subpacketId = 1;
+    int32 sequenceNr = 2;
+    int32 subpacketCount = 3;
+    bytes data = 4;
+}
+
 service Network {
     rpc RequestGossip(GossipingRequestFromDB) returns (Empty);
 }

@@ -6,7 +6,7 @@ import java.util.Map;
 public class ZoneChoiceStrategy {
 
     public PathName chooseZone(Map<PathName, ZMI> zmiMap, PathName current) {
-        ZMI zmi = zmiMap.get(new PathName("/uw/")); // TODO not always /uw/
+        ZMI zmi = zmiMap.get(new PathName("/uw")); // TODO not always /uw
         for (Map.Entry<PathName, ZMI> z: zmiMap.entrySet()) {
             if (z.getValue() == zmi) {
                 return z.getKey();

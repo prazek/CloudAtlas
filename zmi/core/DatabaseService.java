@@ -24,7 +24,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     private Set<ValueContact> fallbackContacts = new HashSet<>();
     // TODO remove it
     private Map<Attribute, List<Attribute>> queryAttributes = new HashMap<>();
-    private Map<PathName, Map<String, Long>> freshness;
+    private Map<PathName, Map<String, Long>> freshness = new HashMap<>();
 
     static private int GOSSIPING_DELAY = 4000;
 
@@ -63,14 +63,14 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
 
                 System.err.println("gossiping onNext");
                 try {
-//                    NoOpResponseObserver observer = new NoOpResponseObserver();
-//                    ZoneChoiceStrategy zoneChoiceStrategy = new ZoneChoiceStrategy();
-//                    zoneChoiceStrategy.chooseZone(zones, current);
+                    NoOpResponseObserver observer = new NoOpResponseObserver();
+                    ZoneChoiceStrategy zoneChoiceStrategy = new ZoneChoiceStrategy();
+                    zoneChoiceStrategy.chooseZone(zones, current);
 
                     // TODO dupa
-//                    ValueContact contact = new ValueContact(new PathName("/dupa"), InetAddress.getLocalHost());
-//                    networkStub.requestGossip(
-//                            Gossip.GossipingRequestFromDB.newBuilder().setContact(contact.serialize()).build(), observer);
+                    ValueContact contact = new ValueContact(new PathName("/dupa"), InetAddress.getLocalHost());
+                    networkStub.requestGossip(
+                            Gossip.GossipingRequestFromDB.newBuilder().setContact(contact.serialize()).build(), observer);
 
                 } catch (Exception ex) {
                     System.err.println("gossiping onNext error");
@@ -231,7 +231,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         AttributesMap attrs = AttributesMap.fromProtobuf(request.getAttributesMap());
         for (Map.Entry<Attribute, Value> e: attrs) {
             // TODO freshness comparison
-            zones.get(new PathName("/uw/violet07" /* TODO */)).getAttributes().add(e);
+            zones.get(new PathName("/uw/violet07" /* TODO */)).getAttributes().addOrChange(e);
         }
         responseObserver.onNext(Model.Empty.newBuilder().build());
         responseObserver.onCompleted();
@@ -241,7 +241,12 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     public void getCurrentDatabase(Database.CurrentDatabaseRequest request, StreamObserver<Database.UpdateDatabase> responseObserver) {
         // TODO choose pathname
         PathName pathName = new PathName("/uw/violet07");
-        Database.UpdateDatabase db = Database.UpdateDatabase.newBuilder().setAttributesMap(zones.get(pathName).getAttributes().serialize()).putAllFreshness(freshness.get(pathName)).build();
+        Model.AttributesMap attrMap = zones.get(pathName).getAttributes().serialize();
+        Map<String, Long> zoneFreshness = freshness.getOrDefault(pathName, new HashMap<>());
+        Database.UpdateDatabase db = Database.UpdateDatabase.newBuilder()
+                .setAttributesMap(attrMap)
+                .putAllFreshness(zoneFreshness)
+                .build();
         responseObserver.onNext(db);
         responseObserver.onCompleted();
     }

@@ -6,10 +6,7 @@ import model.ValueContact;
 import model.ZMI;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
+import java.net.*;
 import java.security.Timestamp;
 import java.util.Arrays;
 import java.util.Currency;
@@ -44,14 +41,13 @@ public class Network {
 
     }
 
-
     class Message {
-        Message(core.Gossip.GossipMessageUDP messageUDP, InetAddress senderAddress) {
+        Message(core.Gossip.GossipMessageUDP messageUDP, SocketAddress senderAddress) {
             this.messageUDP = messageUDP;
             this.senderAddress = senderAddress;
         }
         core.Gossip.GossipMessageUDP messageUDP;
-        InetAddress senderAddress;
+        SocketAddress senderAddress;
     }
 
     Message receive() throws IOException {
@@ -61,14 +57,15 @@ public class Network {
         receivingSocket.receive(packet);
 
         byte buf2[] = Arrays.copyOf(buf, packet.getLength());
-        return new Message(core.Gossip.GossipMessageUDP.parseFrom(buf2), packet.getAddress());
+
+        return new Message(core.Gossip.GossipMessageUDP.parseFrom(buf2), packet.getSocketAddress());
     }
 
 
-    public void sendMsg(core.Gossip.GossipMessageUDP gossip, InetAddress address) throws IOException {
+    public void sendMsg(core.Gossip.GossipMessageUDP gossip, SocketAddress address) throws IOException {
         byte bytes[] = gossip.toByteArray();
         DatagramPacket packet
-                = new DatagramPacket(bytes, bytes.length, address, 2137);
+                = new DatagramPacket(bytes, bytes.length, address);
         receivingSocket.send(packet);
     }
 
@@ -87,25 +84,25 @@ public class Network {
         InetAddress address;
     }
 
-    private void handleGossipingResponseFromDB(Database.UpdateDatabase response) {
-        // TODO
-        RequestExtraData extraData = requestsExtraData.get(2137L);
+    private void handleGossipingResponseFromDB(Database.UpdateDatabase response, SocketAddress address, long requestTimestamp, long responseTimestamp) {
 
         Gossip.GossipResponseUDP responseUDP = Gossip.GossipResponseUDP.newBuilder()
                 .setResponseTimestamp(System.currentTimeMillis())
                 .setAttributesMap(response.getAttributesMap())
                 .putAllFreshness(response.getFreshnessMap())
-                .setRequestReceivedTimestamp(extraData.requestReceivedTimestamp)
-                .setRequestTimestamp(extraData.requestTimestamp).build();
+                .setRequestReceivedTimestamp(requestTimestamp)
+                .setRequestTimestamp(responseTimestamp).build();
 
         try {
-            sendMsg(Gossip.GossipMessageUDP.newBuilder().setGossipResponseUDP(responseUDP).build(), extraData.address);
+            sendMsg(Gossip.GossipMessageUDP.newBuilder().setGossipResponseUDP(responseUDP).build(), address);
         } catch(IOException ex) {
             // TODO redo 5 times?
+            System.err.println(ex);
         }
     }
 
     private void handleGossipingRequestFromDB(Gossip.GossipingRequestFromDB request) {
+        System.out.println("Handling request of gossiping");
         Gossip.GossipRequestUDP requestUDP = Gossip.GossipRequestUDP.newBuilder()
                 .setRequestTimestamp(System.currentTimeMillis()).build();
 
@@ -114,9 +111,10 @@ public class Network {
 
         try {
             sendMsg(Gossip.GossipMessageUDP.newBuilder().setGossipRequestUDP(requestUDP).build(),
-                    contact.getAddress());
+                    new InetSocketAddress(contact.getAddress(), 2137));
         } catch (IOException ex) {
-            // TODO handle
+            // TODO redo?
+            System.err.println(ex);
         }
     }
 
@@ -203,17 +201,19 @@ public class Network {
             databaseStub.receiveGossip(updateDatabase, responseObserver);
         }
 
-        void handleGossipRequest(core.Gossip.GossipRequestUDP request, InetAddress address) {
-
-            // TODO
-            int id = 42;
-            requestsExtraData.put(42L,
-                    new RequestExtraData(request.getRequestTimestamp(), System.currentTimeMillis(), address));
+        void handleGossipRequest(core.Gossip.GossipRequestUDP request, SocketAddress address) {
+            System.out.println("Handling gossiping request");
 
             StreamObserver<Database.UpdateDatabase> responseObserver = new StreamObserver<Database.UpdateDatabase>() {
                 @Override
                 public void onNext(Database.UpdateDatabase updateDatabase) {
-                    handleGossipingResponseFromDB(updateDatabase);
+                    try {
+                        handleGossipingResponseFromDB(updateDatabase, address, request.getRequestTimestamp(), System.currentTimeMillis());
+                    } catch (Exception e) {
+                        System.err.println("onNext CurrentDatabase");
+                        System.err.println(e);
+                    }
+
                 }
 
                 @Override
@@ -236,9 +236,15 @@ public class Network {
 
         @Override
         public void requestGossip(Gossip.GossipingRequestFromDB request, StreamObserver<Model.Empty> responseObserver) {
-            handleGossipingRequestFromDB(request);
-            responseObserver.onNext(Model.Empty.newBuilder().build());
-            responseObserver.onCompleted();
+            try {
+                handleGossipingRequestFromDB(request);
+                responseObserver.onNext(Model.Empty.newBuilder().build());
+                responseObserver.onCompleted();
+            }
+            catch (Exception ex) {
+                responseObserver.onError(ex);
+            }
+
         }
     }
 
