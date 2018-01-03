@@ -118,17 +118,16 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
                     if (contacts.isEmpty()) {
                         if (fallbackContacts.isEmpty()) {
                               System.err.println("No available contacts in zone and fallback contacts not set");
-                              //return;
+                              return;
                         }
                         contacts.addAll(fallbackContacts);
                     }
 
-                    //int index = randomGenerator.nextInt(contacts.size());
+                    int index = randomGenerator.nextInt(contacts.size());
 
                     // TODO just for now pick localhost for testing.
-                    //ValueContact contact = (ValueContact)contacts.get(index);
-                    ValueContact contact = new ValueContact(choosedZone, InetAddress.getByName("192.168.1.116"));
-
+                    ValueContact contact = (ValueContact)contacts.get(index);
+                    //ValueContact contact = new ValueContact(choosedZone, InetAddress.getByName("192.168.1.116"));
                     networkStub.requestGossip(
                             Gossip.GossipingRequestFromDB.newBuilder()
                                     .setContact(contact.serialize()).build(), observer);
