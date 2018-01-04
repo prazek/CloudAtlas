@@ -537,7 +537,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         }
         freshness.put(queryCertificate.getName(), System.currentTimeMillis());
         applyQueryRunChanges(zmi, freshness, results);
-        zmi.getAttributes().add(queryCertificate, q);
+        zmi.getAttributes().addOrChange(queryCertificate, q);
     }
 
     private synchronized void uninstallQueryInZone(ZMI z, Map<String, Long> freshness, String queryName) {
