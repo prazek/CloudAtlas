@@ -35,7 +35,7 @@ public class Client {
 
             AgentGrpc.AgentBlockingStub agentStub = AgentGrpc.newBlockingStub(channel);
 
-            ManagedChannel signerChannel = ManagedChannelBuilder.forAddress("127.0.0.1", Config.getSignerPort()).usePlaintext(true).build();
+            ManagedChannel signerChannel = ManagedChannelBuilder.forAddress(Config.getSignerAddress(), Config.getSignerPort()).usePlaintext(true).build();
 
             SignerGrpc.SignerBlockingStub signerStub = SignerGrpc.newBlockingStub(signerChannel);
 

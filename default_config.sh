@@ -8,5 +8,6 @@ export gossiping_delay=4000
 export client_port=8043
 export agent_port=4321
 export signer_port=9876
+export signer_addr=192.168.1.153
 export global_network_service_port=2222
 export freshness_tolerance=20

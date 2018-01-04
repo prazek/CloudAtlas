@@ -25,8 +25,6 @@
 package model;
 
 import core.Model;
-import model.Value;
-import model.ValueNull;
 
 /**
  * A special null value of an unknown type introduced to deal with nulls. This class is a singleton.
