@@ -1,5 +1,7 @@
 package core;
 
+import sun.awt.ConstrainableGraphics;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -23,7 +25,7 @@ public class NetworkTest {
                                 core.Gossip.GossipResponseUDP.newBuilder().setResponseTimestamp(id++).build();
 
                         network.sendMsg(core.Gossip.GossipMessageUDP.newBuilder().
-                                setGossipResponseUDP(gossip).build(), new InetSocketAddress(addr, Network.GLOBAL_NETWORK_SERVICE_PORT));
+                                setGossipResponseUDP(gossip).build(), new InetSocketAddress(addr, Config.getGlobalNetworkServicePort()));
 
                     } catch (IOException ex) {
                         System.err.println("IO exception: " + ex);
