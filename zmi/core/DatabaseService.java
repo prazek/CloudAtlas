@@ -518,9 +518,6 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         }
         Value q = new ValueString(query);
 
-        if (zmi.getAttributes().getOrNull(queryCertificate) != null) {
-            throw new RuntimeException("Duplicated query of name [" + queryCertificate + "]");
-        }
 
         List<QueryResult> results = runQueryInZone(zmi, query);
 
@@ -537,8 +534,8 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
                 }
             }
             queryAttributes.put(queryCertificate, createdAttributes);
-            freshness.put(queryCertificate.getName(), System.currentTimeMillis());
         }
+        freshness.put(queryCertificate.getName(), System.currentTimeMillis());
         applyQueryRunChanges(zmi, freshness, results);
         zmi.getAttributes().add(queryCertificate, q);
     }
