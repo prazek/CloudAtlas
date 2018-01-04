@@ -58,6 +58,8 @@ public class Client {
             server.createContext("/jquery.js", new ServeFileHandler("client/jquery.js", "application/javascript"));
             server.createContext("/jquery.flot.js", new ServeFileHandler("client/jquery.flot.js", "application/javascript"));
             server.createContext("/zmi.css", new ServeFileHandler("client/zmi.css", "text/css"));
+            server.createContext("/papaj.jpg", new ServeImageHandler("client/button.jpg", "image/jpg"));
+
 
             server.setExecutor(null); // creates a default executor
             server.start();
@@ -140,6 +142,47 @@ public class Client {
             String responseHtml;
             try {
                 responseHtml = stringFromFile(path);
+            } catch (Exception e) {
+                System.err.println(e);
+                t.sendResponseHeaders(500, 0);
+                OutputStream os = t.getResponseBody();
+                os.close();
+                return;
+            }
+            byte[] response = responseHtml.getBytes();
+            t.getResponseHeaders().add("Content-Type", mimeType);
+            t.sendResponseHeaders(200, response.length);
+            OutputStream os = t.getResponseBody();
+            os.write(response);
+            os.close();
+        }
+    }
+
+
+    private static String inputStreamToString2(InputStream is) throws IOException {
+        return new BufferedReader(new InputStreamReader(is))
+                .lines().collect(Collectors.joining());
+    }
+
+    private static String stringFromFile2(String path) throws IOException {
+        InputStream html = Client.class.getClassLoader().getResourceAsStream(path);
+        return inputStreamToString2(html);
+
+    }
+
+    private static class ServeImageHandler implements HttpHandler {
+        String path;
+        String mimeType;
+        ServeImageHandler(String path, String mimeType) {
+            this.path = path;
+            this.mimeType = mimeType;
+        }
+
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            String responseHtml;
+            try {
+                responseHtml = stringFromFile2(path);
             } catch (Exception e) {
                 System.err.println(e);
                 t.sendResponseHeaders(500, 0);
