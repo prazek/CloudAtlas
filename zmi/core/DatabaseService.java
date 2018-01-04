@@ -37,15 +37,28 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         this.current = current;
         this.setRoot(initialTree(current));
 
+        String myAddr = System.getenv("my_ip");
+        ValueContact myself;
+        if (myAddr == null)
+            myself = new ValueContact(current, InetAddress.getLocalHost());
+        else
+            myself = new ValueContact(current, InetAddress.getByName(myAddr));
+
+        SortedSet<Value> contacts = new TreeSet<>();
+        contacts.add(myself);
+        zones.get(current).getAttributes().add("contacts",
+                new ValueSet(contacts, TypePrimitive.CONTACT));
+
         freshness = startupFreshness();
         this.networkStub = networkStub;
         fallbackContacts.add(new ValueContact(new PathName(System.getenv("fallback_contact_path")),
                 InetAddress.getByName(System.getenv("fallback_contact"))));
+
     }
 
     static ZMI getSonByName(ZMI node, String name) {
         for (ZMI son: node.getSons()) {
-            if (son.getAttributes().get("name").equals(name)) {
+            if (son.getAttributes().get("name").equals(new ValueString(name))) {
                 return son;
             }
         }
@@ -317,7 +330,8 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     private void receiveGossipForZone(Database.DatabaseState dbState) throws Exception {
         Map<String, Long> gossipFreshness = dbState.getFreshnessMap();
         PathName updatingZMIName = new PathName(dbState.getZmiPathName());
-        Map<String, Long> databaseFresshness = freshness.getOrDefault(updatingZMIName, new HashMap<>());
+        freshness.putIfAbsent(updatingZMIName, new HashMap<>());
+        Map<String, Long> databaseFresshness = freshness.get(updatingZMIName);
         AttributesMap attrs = AttributesMap.fromProtobuf(dbState.getAttributesMap());
 
         for (Map.Entry<Attribute, Value> e: attrs) {
@@ -339,7 +353,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
                 databaseFresshness.put(e.getKey().getName(), newFreshness);
             }
         }
-        freshness.put(updatingZMIName, databaseFresshness);
+
     }
 
     @Override

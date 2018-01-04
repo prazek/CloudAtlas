@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
 
 
 public class Client {
+
+    static int CLIENT_PORT = 8043;
     public static void main(String[] args) {
         if (System.getSecurityManager() == null) {
             System.setSecurityManager(new SecurityManager());
@@ -39,7 +41,7 @@ public class Client {
             SignerGrpc.SignerBlockingStub signerStub = SignerGrpc.newBlockingStub(signerChannel);
 
 
-            HttpServer server = HttpServer.create(new InetSocketAddress(8043), 0);
+            HttpServer server = HttpServer.create(new InetSocketAddress(CLIENT_PORT), 0);
             // Pages
             server.createContext("/", new MainPage());
             server.createContext("/zmi/", new ServeFileHandler("client/ZMI.html", "text/html"));
@@ -59,7 +61,7 @@ public class Client {
 
             server.setExecutor(null); // creates a default executor
             server.start();
-            System.out.println("Client running!");
+            System.out.println("Client running on port " + CLIENT_PORT + "!");
         } catch (Exception e) {
             System.err.println("ComputeEngine exception:");
             e.printStackTrace();
