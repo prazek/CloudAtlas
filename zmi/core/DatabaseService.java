@@ -28,6 +28,8 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     private Map<PathName, Map<String, Long>> freshness;
     private Random randomGenerator = new Random();
 
+    static private final long FRESHNESS_TOLERANCE = 20;
+
     ZMI root;
 
     static private int GOSSIPING_DELAY = 4000;
@@ -337,7 +339,8 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         for (Map.Entry<Attribute, Value> e: attrs) {
             Long currentFreshness = databaseFresshness.get(e.getKey().getName());
             Long newFreshness = gossipFreshness.get(e.getKey().getName());
-            if (currentFreshness == null || (newFreshness > currentFreshness )) {
+            if (currentFreshness == null || (newFreshness > currentFreshness + FRESHNESS_TOLERANCE)) {
+                System.err.println("current: " + currentFreshness + " new freshness: " + newFreshness);
                 System.out.println("Fresher data from gossip [" + e.getKey() + ":" + e.getValue() + "] in zone " + dbState.getZmiPathName());
                 if (e.getKey().getName().startsWith("&")) {
                     if (e.getValue().isNull()) {
