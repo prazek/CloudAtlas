@@ -497,7 +497,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         for (QueryResult r : results) {
             freshness.put(r.getName().getName(), System.currentTimeMillis());
             zmi.getAttributes().addOrChange(r.getName(), r.getValue());
-            System.out.println("Applying result for [" + r.getName() + "] with value [" + r.getValue() + "]");
+            System.out.println("Applying result for [" + r.getName() + "] with value [" + r.getValue() + "] in zone " + getPathNameForZone(zmi));
         }
     }
 
