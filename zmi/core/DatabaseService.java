@@ -27,16 +27,18 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     private Map<PathName, Map<String, Long>> freshness;
     private Random randomGenerator = new Random();
 
-    static private final long FRESHNESS_TOLERANCE = 20;
+    private long FRESHNESS_TOLERANCE;
     private ZoneChoiceStrategy zoneChoiceStrategy;
     ZMI root;
 
-    static private int GOSSIPING_DELAY = 4000;
+    static int GOSSIPING_DELAY;
 
     DatabaseService(PathName current,
-                    NetworkGrpc.NetworkStub networkStub) throws ParseException, UnknownHostException {
+                    NetworkGrpc.NetworkStub networkStub) throws UnknownHostException {
         this.current = current;
         this.setRoot(initialTree(current));
+
+        FRESHNESS_TOLERANCE = Integer.parseInt(System.getenv("freshness_tolerance"));
 
         String myAddr = System.getenv("my_ip");
         ValueContact myself;
@@ -55,6 +57,8 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         fallbackContacts.add(new ValueContact(new PathName(System.getenv("fallback_contact_path")),
                 InetAddress.getByName(System.getenv("fallback_contact"))));
         zoneChoiceStrategy = ZoneChoiceStrategyFactory.getChoice(System.getenv("zone_choice_strategy"));
+
+        GOSSIPING_DELAY = Integer.parseInt(System.getenv("gossiping_delay"));
     }
 
     static ZMI getSonByName(ZMI node, String name) {

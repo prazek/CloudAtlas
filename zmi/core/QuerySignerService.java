@@ -222,7 +222,7 @@ class QuerySignerService extends SignerGrpc.SignerImplBase {
 
         ZMI fakeZMI = TestHierarchy.createTestHierarchy();
 
-        int port = 9876;
+        int port = Config.getSignerPort();
         ServerBuilder serverBuilder = ServerBuilder.forPort(port).directExecutor();
         serverBuilder.addService(new QuerySignerService(fakeZMI, publicKey, privateKey));
         Server server = serverBuilder.build();

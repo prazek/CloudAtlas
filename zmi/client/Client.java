@@ -25,23 +25,23 @@ import java.util.stream.Collectors;
 
 public class Client {
 
-    static int CLIENT_PORT = 8043;
     public static void main(String[] args) {
         if (System.getSecurityManager() == null) {
             System.setSecurityManager(new SecurityManager());
         }
         String agentName = args[0];
         try {
-            ManagedChannel channel = ManagedChannelBuilder.forAddress("127.0.0.1", 4321).usePlaintext(true).build();
+            ManagedChannel channel = ManagedChannelBuilder.forAddress("127.0.0.1", Config.getAgentPort()).usePlaintext(true).build();
 
             AgentGrpc.AgentBlockingStub agentStub = AgentGrpc.newBlockingStub(channel);
 
-            ManagedChannel signerChannel = ManagedChannelBuilder.forAddress("127.0.0.1", 9876).usePlaintext(true).build();
+            ManagedChannel signerChannel = ManagedChannelBuilder.forAddress("127.0.0.1", Config.getSignerPort()).usePlaintext(true).build();
 
             SignerGrpc.SignerBlockingStub signerStub = SignerGrpc.newBlockingStub(signerChannel);
 
+            int clientPort = Config.getClientPort();
 
-            HttpServer server = HttpServer.create(new InetSocketAddress(CLIENT_PORT), 0);
+            HttpServer server = HttpServer.create(new InetSocketAddress(clientPort), 0);
             // Pages
             server.createContext("/", new MainPage());
             server.createContext("/zmi/", new ServeFileHandler("client/ZMI.html", "text/html"));
@@ -61,7 +61,7 @@ public class Client {
 
             server.setExecutor(null); // creates a default executor
             server.start();
-            System.out.println("Client running on port " + CLIENT_PORT + "!");
+            System.out.println("Client running on port " + clientPort + "!");
         } catch (Exception e) {
             System.err.println("ComputeEngine exception:");
             e.printStackTrace();

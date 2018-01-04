@@ -5,6 +5,7 @@ import java.io.InputStream;
 
 import core.AgentGrpc;
 import core.AgentOuterClass;
+import core.Config;
 import core.Database;
 import interpreter.MachineInfoFetcher;
 import io.grpc.ManagedChannel;
@@ -86,7 +87,7 @@ public class Fetcher {
         String agentName = args[0];
         String iniFileName = args[1];
         try {
-            ManagedChannel channel = ManagedChannelBuilder.forAddress("127.0.0.1", 4321).usePlaintext(true).build();
+            ManagedChannel channel = ManagedChannelBuilder.forAddress("127.0.0.1", Config.getAgentPort()).usePlaintext(true).build();
 
             AgentGrpc.AgentBlockingStub stub = AgentGrpc.newBlockingStub(channel);
             AttributesMap machineInfo = MachineInfoFetcher.getMachineInfo();

@@ -134,7 +134,7 @@ public class Agent {
 
         network.setDatabaseStub(dbStub);
 
-        int port = 4321;
+        int port = Config.getAgentPort();
         ServerBuilder serverBuilder = ServerBuilder.forPort(port).executor(Executors.newFixedThreadPool(1));
         serverBuilder.addService(new AgentService(dbStub));
         Server server = serverBuilder.build();

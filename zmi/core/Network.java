@@ -16,7 +16,7 @@ public class Network {
 
     private DatagramSocket receivingSocket;
     DatabaseServiceGrpc.DatabaseServiceStub databaseStub;
-    public static final int GLOBAL_NETWORK_SERVICE_PORT = 2222;
+    private int GLOBAL_NETWORK_SERVICE_PORT = 2222;
     static final int FRAGMENTATION_SIZE = 1000;
     static final int MAX_SUBPACKETS = 1000;
 
@@ -25,7 +25,7 @@ public class Network {
 
     Network() {
         try {
-            // TODO make it configurable
+            GLOBAL_NETWORK_SERVICE_PORT = Config.getGlobalNetworkServicePort();
             receivingSocket = new DatagramSocket(GLOBAL_NETWORK_SERVICE_PORT);
         } catch (SocketException ex) {
             System.err.println("Socket exception: " + ex);
