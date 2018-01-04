@@ -11,7 +11,6 @@ import model.*;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.*;
 
@@ -29,7 +28,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     private Random randomGenerator = new Random();
 
     static private final long FRESHNESS_TOLERANCE = 20;
-
+    private ZoneChoiceStrategy zoneChoiceStrategy;
     ZMI root;
 
     static private int GOSSIPING_DELAY = 4000;
@@ -55,7 +54,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         this.networkStub = networkStub;
         fallbackContacts.add(new ValueContact(new PathName(System.getenv("fallback_contact_path")),
                 InetAddress.getByName(System.getenv("fallback_contact"))));
-
+        zoneChoiceStrategy = ZoneChoiceStrategyFactory.getChoice(System.getenv("zone_choice_strategy"));
     }
 
     static ZMI getSonByName(ZMI node, String name) {
@@ -143,14 +142,14 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
             public void onNext(TimerOuterClass.TimerResponse timerResponse) {
                 try {
                     NoOpResponseObserver observer = new NoOpResponseObserver();
-                    ZoneChoiceStrategy zoneChoiceStrategy = new ZoneChoiceStrategy();
+                    ZoneChoiceStrategy zoneChoiceStrategy = new UniformRandomZoneChoiceStrategy();
 
-                    PathName choosedZone = chooseSybling(zoneChoiceStrategy.chooseZone(zones, current));
+                    PathName chosenZone = chooseSybling(zoneChoiceStrategy.chooseZone(zones, current));
 
                     Value vcontacts = null;
-                    if (choosedZone != null) {
-                        vcontacts = zones.get(choosedZone).getAttributes().getOrNull("contacts");
-                        System.out.println("Choosing [" + choosedZone + "] for gossiping");
+                    if (chosenZone != null) {
+                        vcontacts = zones.get(chosenZone).getAttributes().getOrNull("contacts");
+                        System.out.println("Choosing [" + chosenZone + "] for gossiping");
                     }
 
                     ArrayList<Value> contacts = new ArrayList<>();
@@ -170,7 +169,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
                     int index = randomGenerator.nextInt(contacts.size());
 
                     ValueContact contact = (ValueContact)contacts.get(index);
-                    //ValueContact contact = new ValueContact(choosedZone, InetAddress.getByName("192.168.1.116"));
+                    //ValueContact contact = new ValueContact(chosenZone, InetAddress.getByName("192.168.1.116"));
                     networkStub.requestGossip(
                             Gossip.GossipingRequestFromDB.newBuilder()
                                     .setContact(contact.serialize()).build(), observer);
@@ -527,11 +526,6 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
             for (QueryResult r : results) {
                 Attribute producedValueName = r.getName();
                 createdAttributes.add(producedValueName);
-                if (zmi.getAttributes().getOrNull(producedValueName) != null) {
-                    throw new RuntimeException(
-                            "Query [" + query + "] is producing value [" + producedValueName +
-                                    "] that was added by other query or saved as attribute");
-                }
             }
             queryAttributes.put(queryCertificate, createdAttributes);
         }
@@ -571,30 +565,34 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
             System.out.println("Updater running...");
             while (true) {
                 System.out.println("Updating");
-                for (Map.Entry<PathName, ZMI> zone: zones.entrySet()) {
-                    ZMI zmi = zone.getValue();
-                    for (Map.Entry<Attribute, Value >attribute : zmi.getAttributes()) {
-                        if (!Attribute.isQuery(attribute.getKey()))
-                            continue;
-                        Attribute queryName = attribute.getKey();
-                        if (attribute.getValue() instanceof ValueNull) {
-                            continue;
-                        }
-                        ValueString query = (ValueString)attribute.getValue();
-                        try {
-                            List<QueryResult> results = runQueryInZone(zmi, query.getValue());
-                            applyQueryRunChanges(zmi, freshness.get(zone.getKey()), results);
-                        }
-                        catch (Exception ex) {
-                            System.err.println("Exception in updater:");
-                            System.err.println(ex);
-                        }
-                    }
-                }
+                runQueriesInZone(new PathName(""), root);
                 try {
                     sleep(10 * 1000); // 10s sleep
                 } catch (InterruptedException ex) {
                     return;
+                }
+            }
+        }
+
+        void runQueriesInZone(PathName pathName, ZMI zmi) {
+            for (ZMI son : zmi.getSons())
+                runQueriesInZone(getPathNameForZone(son), son);
+
+            for (Map.Entry<Attribute, Value >attribute : zmi.getAttributes()) {
+                if (!Attribute.isQuery(attribute.getKey()))
+                    continue;
+                Attribute queryName = attribute.getKey();
+                if (attribute.getValue() instanceof ValueNull) {
+                    continue;
+                }
+                ValueString query = (ValueString)attribute.getValue();
+                try {
+                    List<QueryResult> results = runQueryInZone(zmi, query.getValue());
+                    applyQueryRunChanges(zmi, freshness.get(pathName), results);
+                }
+                catch (Exception ex) {
+                    System.err.println("Exception in updater:");
+                    System.err.println(ex);
                 }
             }
         }

@@ -10,6 +10,7 @@ message GossipingRequestFromDB {
 
 message GossipRequestUDP {
     int64 requestTimestamp = 1;
+    bool isReflexiveRequest = 2;
 };
 
 message GossipResponseUDP {

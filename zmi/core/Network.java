@@ -46,12 +46,12 @@ public class Network {
     }
 
     class Message {
-        Message(core.Gossip.GossipMessageUDP messageUDP, SocketAddress senderAddress) {
+        Message(core.Gossip.GossipMessageUDP messageUDP, InetSocketAddress senderAddress) {
             this.messageUDP = messageUDP;
             this.senderAddress = senderAddress;
         }
         core.Gossip.GossipMessageUDP messageUDP;
-        SocketAddress senderAddress;
+        InetSocketAddress senderAddress;
     }
 
     List<Gossip.Subpacket> splitPacket(byte message[]) {
@@ -94,18 +94,15 @@ public class Network {
 
     private void handleGossipingRequestFromDB(Gossip.GossipingRequestFromDB request) {
         System.out.println("Handling request of gossiping");
-        Gossip.GossipRequestUDP requestUDP = Gossip.GossipRequestUDP.newBuilder()
+        Gossip.GossipRequestUDP requestUDP = Gossip.GossipRequestUDP.newBuilder().setIsReflexiveRequest(false)
                 .setRequestTimestamp(System.currentTimeMillis()).build();
 
 
         ValueContact contact = ValueContact.fromProtobuf(request.getContact());
-        // TODO set any data indicating that we are waiting for response?
-
         try {
             sendMsg(Gossip.GossipMessageUDP.newBuilder().setGossipRequestUDP(requestUDP).build(),
                     new InetSocketAddress(contact.getAddress(), GLOBAL_NETWORK_SERVICE_PORT));
         } catch (IOException ex) {
-            // TODO redo?
             System.err.println(ex);
         }
     }
@@ -182,8 +179,20 @@ public class Network {
         }
     }
 
-    void handleGossipRequestFromNetwork(Gossip.GossipRequestUDP request, SocketAddress address) {
+    void handleGossipRequestFromNetwork(Gossip.GossipRequestUDP request, InetSocketAddress address) {
         System.out.println("Handling gossiping request");
+        if (!request.getIsReflexiveRequest()) {
+            Gossip.GossipRequestUDP requestUDP = Gossip.GossipRequestUDP.newBuilder().setIsReflexiveRequest(true)
+                    .setRequestTimestamp(System.currentTimeMillis()).build();
+
+            try {
+                sendMsg(Gossip.GossipMessageUDP.newBuilder().setGossipRequestUDP(requestUDP).build(),
+                        address);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
 
         StreamObserver<Database.UpdateDatabase> responseObserver = new StreamObserver<Database.UpdateDatabase>() {
             @Override
