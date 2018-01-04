@@ -98,6 +98,28 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         }
     }
 
+    PathName getPathNameForZone(ZMI zone) {
+        for (Map.Entry<PathName, ZMI> entry : zones.entrySet()) {
+            if (entry.getValue() == zone)
+                return entry.getKey();
+        }
+        throw new RuntimeException("Unknown zone");
+    }
+
+
+    private PathName chooseSybling(PathName name) {
+        PathName parent = name.levelUp();
+        List<PathName> validSons = new ArrayList<>();
+        for (ZMI son : zones.get(parent).getSons()) {
+            if (getPathNameForZone(son).equals(name))
+                continue;
+            if (son.getAttributes().getOrNull("contacts") != null)
+                validSons.add(getPathNameForZone(son));
+        }
+        if (validSons.isEmpty())
+            return null;
+        return validSons.get(randomGenerator.nextInt(validSons.size()));
+    }
 
     public void startGossiping() {
         System.err.println("Attempting gossiping");
@@ -107,16 +129,22 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
                 try {
                     NoOpResponseObserver observer = new NoOpResponseObserver();
                     ZoneChoiceStrategy zoneChoiceStrategy = new ZoneChoiceStrategy();
-                    PathName choosedZone = zoneChoiceStrategy.chooseZone(zones, current);
+
+                    PathName choosedZone = chooseSybling(zoneChoiceStrategy.chooseZone(zones, current));
+
+                    Value vcontacts = null;
+                    if (choosedZone != null) {
+                        vcontacts = zones.get(choosedZone).getAttributes().getOrNull("contacts");
+                        System.out.println("Choosing [" + choosedZone + "] for gossiping");
+                    }
 
                     ArrayList<Value> contacts = new ArrayList<>();
-
-                    Value vcontacts = zones.get(choosedZone).getAttributes().getOrNull("contacts");
                     if (vcontacts != null) {
                         contacts.addAll(((ValueSet)vcontacts).getValue());
                     }
 
                     if (contacts.isEmpty()) {
+                        System.out.println("Trying fallback contact");
                         if (fallbackContacts.isEmpty()) {
                               System.err.println("No available contacts in zone and fallback contacts not set");
                               return;
@@ -126,7 +154,6 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
 
                     int index = randomGenerator.nextInt(contacts.size());
 
-                    // TODO just for now pick localhost for testing.
                     ValueContact contact = (ValueContact)contacts.get(index);
                     //ValueContact contact = new ValueContact(choosedZone, InetAddress.getByName("192.168.1.116"));
                     networkStub.requestGossip(
