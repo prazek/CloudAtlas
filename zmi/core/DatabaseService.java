@@ -90,6 +90,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         }
         @Override
         public void onError(Throwable throwable) {
+            throwable.printStackTrace();
             System.err.println("Error from NoOpResponseObserver");
         }
         @Override
@@ -296,7 +297,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
             Long currentFreshness = databaseFresshness.get(e.getKey().getName());
             Long newFreshness = gossipFreshness.get(e.getKey().getName());
             if (currentFreshness == null || (newFreshness > currentFreshness )) {
-                System.out.println("Fresher data from gossip [" + e.getKey() + ":" + e.getValue() + "]");
+                System.out.println("Fresher data from gossip [" + e.getKey() + ":" + e.getValue() + "] in zone " + dbState.getZmiPathName());
                 if (e.getKey().getName().startsWith("&")) {
                     if (e.getValue().isNull()) {
                         uninstallQueryInZone(zones.get(updatingZMIName), databaseFresshness, e.getKey().getName());
@@ -317,15 +318,19 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     @Override
     public void receiveGossip(Database.UpdateDatabase request, StreamObserver<Model.Empty> responseObserver) {
         try {
+            System.err.println("db: received Gossip!");
             for (Database.DatabaseState dbState: request.getDatabaseStateList()) {
                 attachTreeFromPath(root, new PathName(dbState.getZmiPathName()), 1);
             }
+            addZMI(root, null);
             for (Database.DatabaseState dbState: request.getDatabaseStateList()) {
                 receiveGossipForZone(dbState);
             }
+            System.err.println("db: gossip applied!");
             responseObserver.onNext(Model.Empty.newBuilder().build());
             responseObserver.onCompleted();
         } catch (Exception e) {
+            e.printStackTrace();
             responseObserver.onError(e);
         }
     }
@@ -381,6 +386,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
             addZMI(son, path);
         }
     }
+
     public Map<PathName, ZMI> zones() {
         return this.zones;
     }
@@ -394,7 +400,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
         if (!queryCertificate.startsWith("&"))
             throw new RuntimeException("name must start with &");
         for (Map.Entry<PathName, ZMI> zone: this.zones.entrySet()) {
-            // Dont install query in leaf node.
+            // Don't install query in a leaf node.
             if (!zone.getValue().getSons().isEmpty())
                 installQueryInZone(zone.getValue(), freshness.get(zone.getKey()), new Attribute(queryCertificate), query);
         }

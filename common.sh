@@ -19,3 +19,5 @@ source default_config.sh
 if [ -e config.sh ]; then
     source config.sh
 fi
+
+echo "$name"
