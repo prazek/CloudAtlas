@@ -160,7 +160,7 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
                         contacts.addAll(((ValueSet)vcontacts).getValue());
                     }
 
-                    if (contacts.isEmpty()) {
+                    if (contacts.isEmpty() || tryFallbackAnyway()) {
                         System.out.println("Trying fallback contact");
                         if (fallbackContacts.isEmpty()) {
                               System.err.println("No available contacts in zone and fallback contacts not set");
@@ -181,6 +181,10 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
                     System.err.println("Gossiping on next error: " + ex);
                     //throw new RuntimeException(ex.getMessage());
                 }
+            }
+
+            private boolean tryFallbackAnyway() {
+                return randomGenerator.nextInt(7) == 0;
             }
 
             @Override
