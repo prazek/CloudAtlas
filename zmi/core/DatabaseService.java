@@ -543,7 +543,11 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
     private synchronized void uninstallQueryInZone(ZMI z, Map<String, Long> freshness, String queryName) {
         z.getAttributes().addOrChange(queryName, new ValueNull());
         freshness.put(queryName, System.currentTimeMillis());
-        for (Attribute attr :  queryAttributes.get(new Attribute(queryName))) {
+        List<Attribute> attrs = queryAttributes.get(new Attribute(queryName));
+        if (attrs == null) {
+            return;
+        }
+        for (Attribute attr:  attrs) {
             z.getAttributes().addOrChange(attr, new ValueNull());
             freshness.put(attr.getName(), System.currentTimeMillis());
         }
@@ -573,6 +577,9 @@ class DatabaseService extends DatabaseServiceGrpc.DatabaseServiceImplBase {
                         if (!Attribute.isQuery(attribute.getKey()))
                             continue;
                         Attribute queryName = attribute.getKey();
+                        if (attribute.getValue() instanceof ValueNull) {
+                            continue;
+                        }
                         ValueString query = (ValueString)attribute.getValue();
                         try {
                             List<QueryResult> results = runQueryInZone(zmi, query.getValue());
