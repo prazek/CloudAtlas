@@ -1,1 +1,9 @@
-Distributed system course - first task
+CloadAtlas
+
+Cloud Atlas is a distributed system based on paper 
+"Astrolabe: A robust and scalable technology for distributed system monitoring, management, and data mining".
+The main purpose is to monitor machine statistics in distributed network. Nodes communiates between each other by
+gossiping statistics.
+There is also a sql-like language for creating queries of accumulated statistics like
+SELECT sum(cpu_usage)/count(cpu_usage) AS cpu_usage
+
